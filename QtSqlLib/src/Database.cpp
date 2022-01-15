@@ -17,6 +17,61 @@ static const unsigned int s_versionColId = 0;
 static const unsigned int s_versionTableid = std::numeric_limits<unsigned int>::max();
 static const QString s_versionTableName = "database_version";
 
+static QString getDataTypeName(TableConfigurator::DataType type, int varcharLength)
+{
+  switch (type)
+  {
+  case TableConfigurator::DataType::Integer:
+    return "INTEGER";
+  case TableConfigurator::DataType::Real:
+    return "REAL";
+  case TableConfigurator::DataType::Varchar:
+    return QString("VARCHAR(%1)").arg(varcharLength);
+  case TableConfigurator::DataType::Blob:
+    return "BLOB";
+  default:
+    throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
+  }
+}
+
+class CreateTable : public IQuery
+{
+public:
+  CreateTable(const TableConfigurator::Table& table)
+    : IQuery()
+    , m_table(table)
+  {}
+
+  ~CreateTable() override = default;
+
+  QSqlQuery getQueryString(const SchemaConfigurator::Schema& schema) const override
+  {
+    QString columns;
+    for (const auto& column : m_table.columns)
+    {
+      columns += QString(" '%1' %2 %3 %4 %5,")
+        .arg(column.second.name)
+        .arg(getDataTypeName(column.second.type, column.second.varcharLength))
+        .arg(column.second.isPrimaryKey ? "PRIMARY KEY" : "")
+        .arg(column.second.isAutoIncrement ? "AUTOINCREMENT" : "")
+        .arg(column.second.isNotNull ? "NOT NULL" : "");
+    }
+    columns = columns.left(columns.length() - 1).simplified();
+
+    const auto queryString = QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns);
+    UTILS_LOG_DEBUG(queryString.toStdString().c_str());
+
+    QSqlQuery query;
+    query.prepare(queryString);
+
+    return query;
+  }
+
+private:
+  const TableConfigurator::Table& m_table;
+
+};
+
 Database::Database()
   : m_isInitialized(false)
 {
@@ -59,6 +114,8 @@ void Database::execQuery(const IQuery& query) const
   auto q = query.getQueryString(m_schema);
   if (!q.exec())
   {
+    const auto t = q.lastError().text();
+
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Could not execute query: %1").arg(q.lastError().text()));
   }
@@ -134,7 +191,7 @@ void Database::createOrMigrateTables(int currentVersion) const
     {
       for (const auto& table : m_schema.tables)
       {
-        queryCreateTable(table.second);
+        execQuery(CreateTable(table.second));
       }
 
       execQuery(InsertInto(s_versionTableid).value(s_versionColId, targetVersion));
@@ -145,49 +202,6 @@ void Database::createOrMigrateTables(int currentVersion) const
 int Database::getDatabaseVersion() const
 {
   return 1;
-}
-
-void Database::queryCreateTable(const TableConfigurator::Table& table) const
-{
-  QSqlQuery query;
-
-  QString columns;
-  for (const auto& column : table.columns)
-  {
-    columns += QString(" '%1' %2 %3 %4 %5,")
-      .arg(column.second.name)
-      .arg(getDataTypeName(column.second.type, column.second.varcharLength))
-      .arg(column.second.isPrimaryKey ? "PRIMARY KEY" : "")
-      .arg(column.second.isAutoIncrement ? "AUTOINCREMENT" : "")
-      .arg(column.second.isNotNull ? "NOT NULL" : "");
-  }
-  columns = columns.left(columns.length() - 1).trimmed();
-
-  const auto queryString = QString("CREATE TABLE '%1' (%2);").arg(table.name).arg(columns);
-  UTILS_LOG_DEBUG(queryString.toStdString().c_str());
-
-  if (!query.exec(queryString))
-  {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
-      QString("Could not create table %1.").arg(table.name));
-  }
-}
-
-QString Database::getDataTypeName(TableConfigurator::DataType type, int varcharLength)
-{
-  switch (type)
-  {
-  case TableConfigurator::DataType::Integer:
-    return "INTEGER";
-  case TableConfigurator::DataType::Real:
-    return "REAL";
-  case TableConfigurator::DataType::Varchar:
-    return QString("VARCHAR(%1)").arg(varcharLength);
-  case TableConfigurator::DataType::Blob:
-    return "BLOB";
-  default:
-    throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
-  }
 }
 
 }

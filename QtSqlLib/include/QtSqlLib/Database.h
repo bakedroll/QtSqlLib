@@ -35,10 +35,6 @@ private:
 
   int getDatabaseVersion() const;
 
-  void queryCreateTable(const TableConfigurator::Table& table) const;
-
-  static QString getDataTypeName(TableConfigurator::DataType type, int varcharLength);
-
 };
 
 }
