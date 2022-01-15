@@ -41,11 +41,6 @@ TableConfigurator& SchemaConfigurator::configureTable(unsigned int tableId, cons
   return *m_tableConfigurators.at(tableId);
 }
 
-QString SchemaConfigurator::getVersionTableName()
-{
-  return "database_version";
-}
-
 bool SchemaConfigurator::isTableNameExisting(const QString& name) const
 {
   for (const auto& table : m_schema.tables)

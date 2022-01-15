@@ -15,6 +15,7 @@ namespace QtSqlLib
 
 static const unsigned int s_versionColId = 0;
 static const unsigned int s_versionTableid = std::numeric_limits<unsigned int>::max();
+static const QString s_versionTableName = "database_version";
 
 Database::Database()
   : m_isInitialized(false)
@@ -37,9 +38,10 @@ void Database::initialize(const QString& filename)
     return;
   }
 
-  m_schema.tables[s_versionTableid] = getVersionTable();
-
   SchemaConfigurator configurator(m_schema);
+  configurator.configureTable(s_versionTableid, s_versionTableName)
+    .column(s_versionColId, "version", TableConfigurator::DataType::Integer).primaryKey().notNull();
+
   configureSchema(configurator);
 
   loadDatabaseFile(filename);
@@ -57,8 +59,6 @@ void Database::execQuery(const IQuery& query) const
   auto q = query.getQueryString(m_schema);
   if (!q.exec())
   {
-    const auto text = q.lastError().text();
-
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Could not execute query: %1").arg(q.lastError().text()));
   }
@@ -76,7 +76,7 @@ void Database::loadDatabaseFile(const QString& filename)
   }
 
   QSqlQuery versionTableQuery(QString("SELECT name FROM sqlite_master WHERE type='table' AND name='%1';")
-    .arg(SchemaConfigurator::getVersionTableName()));
+    .arg(s_versionTableName));
 
   if (!versionTableQuery.exec())
   {
@@ -113,7 +113,7 @@ void Database::loadDatabaseFile(const QString& filename)
 int Database::queryDatabaseVersion() const
 {
   // TODO: refactor
-  QSqlQuery query(QString("SELECT version FROM %1;").arg(SchemaConfigurator::getVersionTableName()));
+  QSqlQuery query(QString("SELECT version FROM %1;").arg(s_versionTableName));
   if (query.exec())
   {
     while (query.next())
@@ -188,23 +188,6 @@ QString Database::getDataTypeName(TableConfigurator::DataType type, int varcharL
   default:
     throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
   }
-}
-
-TableConfigurator::Table Database::getVersionTable()
-{
-  TableConfigurator::Column column;
-  column.name = "version";
-  column.type = TableConfigurator::DataType::Integer;
-  column.varcharLength = 0;
-  column.isPrimaryKey = true;
-  column.isAutoIncrement = false;
-  column.isNotNull = true;
-
-  TableConfigurator::Table table;
-  table.name = SchemaConfigurator::getVersionTableName();
-  table.columns[s_versionColId] = column;
-
-  return table;
 }
 
 }

@@ -23,8 +23,6 @@ public:
 
   TableConfigurator& configureTable(unsigned int tableId, const QString& tableName);
 
-  static QString getVersionTableName();
-
 private:
   Schema& m_schema;
 
