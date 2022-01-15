@@ -32,12 +32,6 @@ TableConfigurator& SchemaConfigurator::configureTable(unsigned int tableId, cons
       "Table name must not start with 'sqlite_'.");
   }
 
-  if (tableName == getVersionTableName())
-  {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
-      QString("Table name '%1' is not allowed.").arg(getVersionTableName()));
-  }
-
   TableConfigurator::Table table;
   table.name = tableName;
 

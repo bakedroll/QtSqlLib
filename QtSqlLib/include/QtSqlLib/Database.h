@@ -17,6 +17,8 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
+  void execQuery(const IQuery& query) const override;
+
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;
 

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <QtSqlLib/Database.h>
+#include <QtSqlLib/InsertInto.h>
 
 #include <utilsLib/Utils.h>
 
@@ -12,6 +13,7 @@ static const QString s_dbFilename = "test.db";
 
 class TestDb : public QtSqlLib::Database
 {
+public:
   enum class TableIds
   {
     Table1
@@ -20,14 +22,17 @@ class TestDb : public QtSqlLib::Database
   enum class Table1Cols
   {
     Id,
-    Name
+    Text,
+    Mandatory
   };
 
+protected:
   void configureSchema(QtSqlLib::SchemaConfigurator& configurator) override
   {
     configurator.configureTable(utilsLib::underlying(TableIds::Table1), "table1")
       .column(utilsLib::underlying(Table1Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(utilsLib::underlying(Table1Cols::Name), "name", DataType::Varchar, 128);
+      .column(utilsLib::underlying(Table1Cols::Text), "text", DataType::Varchar, 128)
+      .column(utilsLib::underlying(Table1Cols::Mandatory), "mandatory", DataType::Real).notNull();
   }
 };
 
@@ -46,4 +51,8 @@ public:
 TEST_F(DatabaseTest, initializeDatabase)
 {
   m_db.initialize(s_dbFilename);
+
+  m_db.execQuery(QtSqlLib::InsertInto(utilsLib::underlying(TestDb::TableIds::Table1))
+    .value(utilsLib::underlying(TestDb::Table1Cols::Text), "test")
+    .value(utilsLib::underlying(TestDb::Table1Cols::Mandatory), 0.5f));
 }

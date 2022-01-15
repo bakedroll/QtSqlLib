@@ -1,9 +1,12 @@
 #include "QtSqlLib/Database.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/InsertInto.h"
+#include "QtSqlLib/IQuery.h"
 
 #include <utilsLib/Utils.h>
 
+#include <QSqlError>
 #include <QSqlQuery>
 #include <QVariant>
 
@@ -11,6 +14,7 @@ namespace QtSqlLib
 {
 
 static const unsigned int s_versionColId = 0;
+static const unsigned int s_versionTableid = std::numeric_limits<unsigned int>::max();
 
 Database::Database()
   : m_isInitialized(false)
@@ -33,6 +37,8 @@ void Database::initialize(const QString& filename)
     return;
   }
 
+  m_schema.tables[s_versionTableid] = getVersionTable();
+
   SchemaConfigurator configurator(m_schema);
   configureSchema(configurator);
 
@@ -44,6 +50,18 @@ void Database::initialize(const QString& filename)
 void Database::close()
 {
   m_db.close();
+}
+
+void Database::execQuery(const IQuery& query) const
+{
+  auto q = query.getQueryString(m_schema);
+  if (!q.exec())
+  {
+    const auto text = q.lastError().text();
+
+    throw DatabaseException(DatabaseException::Type::InvalidQuery,
+      QString("Could not execute query: %1").arg(q.lastError().text()));
+  }
 }
 
 void Database::loadDatabaseFile(const QString& filename)
@@ -112,30 +130,14 @@ void Database::createOrMigrateTables(int currentVersion) const
   const auto targetVersion = getDatabaseVersion();
   for (auto version = currentVersion+1; version <= targetVersion; version++)
   {
-    QSqlQuery query;
-
     if (version == 1)
     {
-      queryCreateTable(getVersionTable());
-
-      // TODO: refactor
-      QSqlQuery insertVersionQuery;
-      insertVersionQuery.prepare(QString(
-        "INSERT INTO %1 (version) " \
-        "VALUES (?);").arg(SchemaConfigurator::getVersionTableName()));
-
-      insertVersionQuery.addBindValue(targetVersion);
-
-      if (!insertVersionQuery.exec())
-      {
-        throw DatabaseException(DatabaseException::Type::UnableToLoad,
-          "Could not write database version.");
-      }
-
       for (const auto& table : m_schema.tables)
       {
         queryCreateTable(table.second);
       }
+
+      execQuery(InsertInto(s_versionTableid).value(s_versionColId, targetVersion));
     }
   }
 }
