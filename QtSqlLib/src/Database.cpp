@@ -44,7 +44,7 @@ public:
 
   ~CreateTable() override = default;
 
-  QSqlQuery getQueryString(const SchemaConfigurator::Schema& schema) const override
+  QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const override
   {
     QString columns;
     for (const auto& column : m_table.columns)
@@ -111,11 +111,9 @@ void Database::close()
 
 void Database::execQuery(const IQuery& query) const
 {
-  auto q = query.getQueryString(m_schema);
+  auto q = query.getSqlQuery(m_schema);
   if (!q.exec())
   {
-    const auto t = q.lastError().text();
-
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Could not execute query: %1").arg(q.lastError().text()));
   }
@@ -199,7 +197,7 @@ void Database::createOrMigrateTables(int currentVersion) const
   }
 }
 
-int Database::getDatabaseVersion() const
+int Database::getDatabaseVersion()
 {
   return 1;
 }

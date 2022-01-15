@@ -33,7 +33,7 @@ private:
   int  queryDatabaseVersion() const;
   void createOrMigrateTables(int currentVersion = 1) const;
 
-  int getDatabaseVersion() const;
+  static int getDatabaseVersion();
 
 };
 

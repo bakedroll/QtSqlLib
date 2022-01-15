@@ -26,7 +26,7 @@ InsertInto& InsertInto::value(unsigned columnId, const QVariant& value)
   return *this;
 }
 
-QSqlQuery InsertInto::getQueryString(const SchemaConfigurator::Schema& schema) const
+QSqlQuery InsertInto::getSqlQuery(const SchemaConfigurator::Schema& schema) const
 {
   if (schema.tables.count(m_tableId) == 0)
   {

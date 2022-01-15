@@ -17,7 +17,7 @@ public:
 
   InsertInto& value(unsigned int columnId, const QVariant& value);
 
-  QSqlQuery getQueryString(const SchemaConfigurator::Schema& schema) const override;
+  QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const override;
 
 private:
   unsigned int m_tableId;

@@ -13,7 +13,7 @@ public:
   IQuery() = default;
   virtual ~IQuery() = default;
 
-  virtual QSqlQuery getQueryString(const SchemaConfigurator::Schema& schema) const = 0;
+  virtual QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const = 0;
 
 };
 
