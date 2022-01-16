@@ -14,6 +14,7 @@ public:
   virtual ~IQuery() = default;
 
   virtual QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const = 0;
+  virtual bool isBatchExecution() const { return false; }
 
 };
 

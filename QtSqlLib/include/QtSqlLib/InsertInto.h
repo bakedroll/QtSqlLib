@@ -1,15 +1,15 @@
 #pragma once
 
-#include <QtSqlLib/IQuery.h>
+#include <QtSqlLib/BaseInsert.h>
 
 #include <QVariant>
 
-#include <map>
+#include <vector>
 
 namespace QtSqlLib
 {
 
-class InsertInto : public IQuery
+class InsertInto : public BaseInsert
 {
 public:
   InsertInto(unsigned int tableId);
@@ -20,8 +20,7 @@ public:
   QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const override;
 
 private:
-  unsigned int m_tableId;
-  std::map<unsigned int, QVariant> m_values;
+  std::vector<QVariant> m_values;
 
 };
 

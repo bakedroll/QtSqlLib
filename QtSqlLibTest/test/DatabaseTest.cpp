@@ -2,6 +2,7 @@
 
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/InsertInto.h>
+#include <QtSqlLib/BatchInsertInto.h>
 
 #include <utilsLib/Utils.h>
 
@@ -55,4 +56,8 @@ TEST_F(DatabaseTest, initializeDatabase)
   m_db.execQuery(QtSqlLib::InsertInto(utilsLib::underlying(TestDb::TableIds::Table1))
     .value(utilsLib::underlying(TestDb::Table1Cols::Text), "test")
     .value(utilsLib::underlying(TestDb::Table1Cols::Mandatory), 0.5f));
+
+  m_db.execQuery(QtSqlLib::BatchInsertInto(utilsLib::underlying(TestDb::TableIds::Table1))
+    .values(utilsLib::underlying(TestDb::Table1Cols::Text), QVariantList() << "test1" << "test2" << "test3")
+    .values(utilsLib::underlying(TestDb::Table1Cols::Mandatory), QVariantList() << 0.6f << 0.7f << 0.8f));
 }

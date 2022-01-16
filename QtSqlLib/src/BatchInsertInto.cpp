@@ -1,17 +1,17 @@
-#include "QtSqlLib/InsertInto.h"
+#include "QtSqlLib/BatchInsertInto.h"
 
 #include "QtSqlLib/DatabaseException.h"
 
 namespace QtSqlLib
 {
-InsertInto::InsertInto(unsigned int tableId)
+BatchInsertInto::BatchInsertInto(unsigned int tableId)
   : BaseInsert(tableId)
 {
 }
 
-InsertInto::~InsertInto() = default;
+BatchInsertInto::~BatchInsertInto() = default;
 
-InsertInto& InsertInto::value(unsigned int columnId, const QVariant& value)
+BatchInsertInto& BatchInsertInto::values(unsigned int columnId, const QVariantList& value)
 {
   checkColumnIdExisting(columnId);
 
@@ -20,7 +20,7 @@ InsertInto& InsertInto::value(unsigned int columnId, const QVariant& value)
   return *this;
 }
 
-QSqlQuery InsertInto::getSqlQuery(const SchemaConfigurator::Schema& schema) const
+QSqlQuery BatchInsertInto::getSqlQuery(const SchemaConfigurator::Schema& schema) const
 {
   QSqlQuery query;
   const auto queryString = getSqlQueryString(schema);
@@ -35,4 +35,8 @@ QSqlQuery InsertInto::getSqlQuery(const SchemaConfigurator::Schema& schema) cons
   return query;
 }
 
+bool BatchInsertInto::isBatchExecution() const
+{
+  return true;
+}
 }

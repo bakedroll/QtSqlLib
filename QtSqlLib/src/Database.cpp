@@ -112,7 +112,9 @@ void Database::close()
 void Database::execQuery(const IQuery& query) const
 {
   auto q = query.getSqlQuery(m_schema);
-  if (!q.exec())
+  const auto isBatch = query.isBatchExecution();
+
+  if ((!isBatch && !q.exec()) || (isBatch && !q.execBatch()))
   {
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Could not execute query: %1").arg(q.lastError().text()));
