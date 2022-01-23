@@ -11,14 +11,14 @@ namespace QtSqlLib
 class FromTable : public IQuery
 {
 public:
-  FromTable(unsigned int tableId);
+  FromTable(Schema::Id tableId);
   ~FromTable() override;
 
-  FromTable& select(unsigned int columnId);
+  FromTable& select(Schema::Id columnId);
   FromTable& where(Expr& expr);
 
   template <typename... T>
-  FromTable& select(unsigned int columnId, T... args)
+  FromTable& select(Schema::Id columnId, T... args)
   {
     m_bIsSelecting = true;
 
@@ -30,12 +30,12 @@ public:
     return *this;
   }
 
-  QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const override;
-  QueryResults getQueryResults(const SchemaConfigurator::Schema& schema, QSqlQuery& query) const override;
+  QSqlQuery getSqlQuery(Schema& schema) const override;
+  QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:
-  unsigned int m_tableId;
-  std::vector<unsigned int> m_columnIds;
+  Schema::Id m_tableId;
+  std::vector<Schema::Id> m_columnIds;
 
   bool m_bColumnsSelected;
   bool m_bIsSelecting;

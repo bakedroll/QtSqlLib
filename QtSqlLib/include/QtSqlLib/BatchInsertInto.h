@@ -9,20 +9,20 @@
 namespace QtSqlLib
 {
 
-  class BatchInsertInto : public BaseInsert
-  {
-  public:
-    BatchInsertInto(unsigned int tableId);
-    ~BatchInsertInto() override;
+class BatchInsertInto : public BaseInsert
+{
+public:
+  BatchInsertInto(Schema::Id tableId);
+  ~BatchInsertInto() override;
 
-    BatchInsertInto& values(unsigned int columnId, const QVariantList& values);
+  BatchInsertInto& values(Schema::Id columnId, const QVariantList& values);
 
-    QSqlQuery getSqlQuery(const SchemaConfigurator::Schema& schema) const override;
-    bool isBatchExecution() const override;
+  QSqlQuery getSqlQuery(Schema& schema) const override;
+  bool isBatchExecution() const override;
 
-  private:
-    std::vector<QVariantList> m_values;
+private:
+  std::vector<QVariantList> m_values;
 
-  };
+};
 
 }

@@ -4,14 +4,14 @@
 
 namespace QtSqlLib
 {
-BatchInsertInto::BatchInsertInto(unsigned int tableId)
+BatchInsertInto::BatchInsertInto(Schema::Id tableId)
   : BaseInsert(tableId)
 {
 }
 
 BatchInsertInto::~BatchInsertInto() = default;
 
-BatchInsertInto& BatchInsertInto::values(unsigned int columnId, const QVariantList& value)
+BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList& value)
 {
   checkColumnIdExisting(columnId);
 
@@ -20,7 +20,7 @@ BatchInsertInto& BatchInsertInto::values(unsigned int columnId, const QVariantLi
   return *this;
 }
 
-QSqlQuery BatchInsertInto::getSqlQuery(const SchemaConfigurator::Schema& schema) const
+QSqlQuery BatchInsertInto::getSqlQuery(Schema& schema) const
 {
   QSqlQuery query;
   const auto queryString = getSqlQueryString(schema);

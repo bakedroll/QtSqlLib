@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/RelationshipConfigurator.h>
+#include <QtSqlLib/Schema.h>
 #include <QtSqlLib/TableConfigurator.h>
 
 #include <QString>
@@ -14,25 +15,18 @@ namespace QtSqlLib
 class SchemaConfigurator
 {
 public:
-  struct Schema
-  {
-    std::map<unsigned int, TableConfigurator::Table> tables;
-    std::map<unsigned int, RelationshipConfigurator::Relationship> relationships;
-  };
-
   SchemaConfigurator(Schema& schema);
   virtual ~SchemaConfigurator();
 
-  TableConfigurator& configureTable(unsigned int tableId, const QString& tableName);
-  RelationshipConfigurator& configureRelationship(unsigned int relationshipId, unsigned int tableFromId,
-    unsigned int tableToId, RelationshipConfigurator::RelationshipType type);
-
+  TableConfigurator& configureTable(Schema::Id tableId, const QString& tableName);
+  RelationshipConfigurator& configureRelationship(Schema::Id relationshipId, Schema::Id tableFromId,
+                                                  Schema::Id tableToId, Schema::RelationshipType type);
 
 private:
   Schema& m_schema;
 
-  std::map<unsigned int, std::unique_ptr<TableConfigurator>> m_tableConfigurators;
-  std::map<unsigned int, std::unique_ptr<RelationshipConfigurator>> m_relationshipConfigurators;
+  std::map<Schema::Id, std::unique_ptr<TableConfigurator>> m_tableConfigurators;
+  std::map<Schema::Id, std::unique_ptr<RelationshipConfigurator>> m_relationshipConfigurators;
 
   bool isTableNameExisting(const QString& name) const;
 

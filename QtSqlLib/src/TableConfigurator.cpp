@@ -5,7 +5,7 @@
 namespace QtSqlLib
 {
 
-  TableConfigurator::TableConfigurator(Table& table)
+TableConfigurator::TableConfigurator(Schema::Table& table)
   : m_table(table)
   , m_lastColumn(-1)
 {
@@ -13,7 +13,7 @@ namespace QtSqlLib
 
 TableConfigurator::~TableConfigurator() = default;
 
-TableConfigurator& TableConfigurator::column(unsigned int columnId, const QString& columnName, DataType type, int varcharLength)
+TableConfigurator& TableConfigurator::column(Schema::Id columnId, const QString& columnName, Schema::DataType type, int varcharLength)
 {
   if (m_table.columns.count(columnId) > 0)
   {
@@ -33,13 +33,13 @@ TableConfigurator& TableConfigurator::column(unsigned int columnId, const QStrin
       QString("Column with name '%1' already exists for table '%2'.").arg(columnName).arg(m_table.name));
   }
 
-  if ((type == DataType::Varchar) && (varcharLength <= 0))
+  if ((type == Schema::DataType::Varchar) && (varcharLength <= 0))
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("Varchar length must greater that 0 for column '%1' of table '%2'.").arg(columnName).arg(m_table.name));
   }
 
-  Column column;
+  Schema::Column column;
   column.name = columnName;
   column.type = type;
   column.varcharLength = varcharLength;

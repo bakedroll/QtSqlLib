@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/IDatabase.h>
+#include <QtSqlLib/Schema.h>
 #include <QtSqlLib/SchemaConfigurator.h>
 
 #include <QSqlDatabase>
@@ -17,7 +18,7 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
-  IQuery::QueryResults execQuery(const IQuery& query) const override;
+  IQuery::QueryResults execQuery(const IQuery& query) override;
 
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;
@@ -25,15 +26,15 @@ protected:
 private:
   QSqlDatabase m_db;
 
-  SchemaConfigurator::Schema m_schema;
+  Schema m_schema;
 
   bool m_isInitialized;
 
-  IQuery::QueryResults execQuery(const SchemaConfigurator::Schema& schema, const IQuery& query) const;
+  IQuery::QueryResults execQuery(Schema& schema, const IQuery& query) const;
 
   void loadDatabaseFile(const QString& filename);
-  int  queryDatabaseVersion() const;
-  void createOrMigrateTables(int currentVersion = 1) const;
+  int  queryDatabaseVersion();
+  void createOrMigrateTables(int currentVersion = 1);
 
   void addRelationshipsToSchema();
 

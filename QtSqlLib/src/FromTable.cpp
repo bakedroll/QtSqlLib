@@ -5,7 +5,7 @@
 namespace QtSqlLib
 {
 
-FromTable::FromTable(unsigned int tableId)
+FromTable::FromTable(Schema::Id tableId)
   : m_tableId(tableId)
   , m_bColumnsSelected(false)
   , m_bIsSelecting(false)
@@ -14,7 +14,7 @@ FromTable::FromTable(unsigned int tableId)
 
 FromTable::~FromTable() = default;
 
-FromTable& FromTable::select(unsigned int columnId)
+FromTable& FromTable::select(Schema::Id columnId)
 {
   if (m_bColumnsSelected)
   {
@@ -43,15 +43,15 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-QSqlQuery FromTable::getSqlQuery(const SchemaConfigurator::Schema& schema) const
+QSqlQuery FromTable::getSqlQuery(Schema& schema) const
 {
-  if (schema.tables.count(m_tableId) == 0)
+  if (schema.getTables().count(m_tableId) == 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Invalid query: Unknown table id %1").arg(m_tableId));
   }
 
-  const auto& table = schema.tables.at(m_tableId);
+  const auto& table = schema.getTables().at(m_tableId);
 
   QString selectColsStr = "";
   if (m_columnIds.empty())
@@ -89,7 +89,7 @@ QSqlQuery FromTable::getSqlQuery(const SchemaConfigurator::Schema& schema) const
   return QSqlQuery(queryStr);
 }
 
-IQuery::QueryResults FromTable::getQueryResults(const SchemaConfigurator::Schema& schema, QSqlQuery& query) const
+IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
   QueryResults results;
 

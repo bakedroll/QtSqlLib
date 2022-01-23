@@ -7,22 +7,23 @@
 namespace QtSqlLib
 {
 
-BaseInsert::BaseInsert(unsigned int tableId)
-  : m_tableId(tableId)
+BaseInsert::BaseInsert(Schema::Id tableId)
+  : IQuery()
+  , m_tableId(tableId)
 {
 }
 
 BaseInsert::~BaseInsert() = default;
 
-QString BaseInsert::getSqlQueryString(const SchemaConfigurator::Schema& schema) const
+QString BaseInsert::getSqlQueryString(Schema& schema) const
 {
-  if (schema.tables.count(m_tableId) == 0)
+  if (schema.getTables().count(m_tableId) == 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Invalid insert query: Unknown table with id %1.").arg(m_tableId));
   }
 
-  const auto& table = schema.tables.at(m_tableId);
+  const auto& table = schema.getTables().at(m_tableId);
 
   QString columnsString;
   QString valuesString;
@@ -48,12 +49,12 @@ QString BaseInsert::getSqlQueryString(const SchemaConfigurator::Schema& schema) 
   return queryString;
 }
 
-void BaseInsert::addColumnId(unsigned int id)
+void BaseInsert::addColumnId(Schema::Id id)
 {
   m_columnIds.emplace_back(id);
 }
 
-void BaseInsert::checkColumnIdExisting(unsigned int id) const
+void BaseInsert::checkColumnIdExisting(Schema::Id id) const
 {
   for (const auto& cid : m_columnIds)
   {

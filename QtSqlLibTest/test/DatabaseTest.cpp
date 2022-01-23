@@ -14,7 +14,7 @@
 using namespace QtSqlLib;
 using namespace utilsLib;
 
-using DataType = TableConfigurator::DataType;
+using DataType = Schema::DataType;
 
 static const QString s_dbFilename = "test.db";
 
@@ -279,9 +279,9 @@ TEST_F(DatabaseTest, initializeThrowsOnInvalidConfig)
 
 TEST_F(DatabaseTest, expressionStringsCorrectTest)
 {
-  SchemaConfigurator::Schema schema;
+  Schema schema;
 
-  auto& table = schema.tables[underlying(TIds::Table1)];
+  auto& table = schema.getTables()[underlying(TIds::Table1)];
   table.name = "test";
   table.columns[underlying(T1Cols::Id)].name = "id";
   table.columns[underlying(T1Cols::Text)].name = "test";
@@ -305,9 +305,9 @@ TEST_F(DatabaseTest, expressionStringsCorrectTest)
 
 TEST_F(DatabaseTest, expressionThrowsTest)
 {
-  SchemaConfigurator::Schema schema;
+  Schema schema;
 
-  auto& table = schema.tables[underlying(TIds::Table1)];
+  auto& table = schema.getTables()[underlying(TIds::Table1)];
   table.name = "test";
   table.columns[underlying(T1Cols::Id)].name = "id";
   table.columns[underlying(T1Cols::Text)].name = "test";
@@ -366,15 +366,15 @@ TEST_F(DatabaseTest, oneToManyRelationshipTest)
       .column(underlying(T2Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
       .column(underlying(T2Cols::Text), "text", DataType::Varchar, 128);
 
-    configurator.configureTable(underlying(TIds::Table2), "table3")
+    configurator.configureTable(underlying(TIds::Table3), "table3")
       .column(underlying(T2Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
       .column(underlying(T2Cols::Text), "text", DataType::Varchar, 128);
 
     configurator.configureRelationship(underlying(Rs::Relationship1), underlying(TIds::Table1), underlying(TIds::Table2),
-      RelationshipConfigurator::RelationshipType::OneToMany).onDelete(RelationshipConfigurator::ForeignKeyAction::Cascade);
+      Schema::RelationshipType::OneToMany).onDelete(Schema::ForeignKeyAction::Cascade);
 
-    configurator.configureRelationship(underlying(Rs::Relationship1), underlying(TIds::Table1), underlying(TIds::Table3),
-      RelationshipConfigurator::RelationshipType::ManyToMany);
+    configurator.configureRelationship(underlying(Rs::Relationship2), underlying(TIds::Table1), underlying(TIds::Table3),
+      Schema::RelationshipType::ManyToMany);
   });
 
   m_db->initialize(s_dbFilename);
