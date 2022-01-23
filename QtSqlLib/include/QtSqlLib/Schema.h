@@ -72,6 +72,8 @@ public:
   std::map<Id, Table>& getTables();
   std::map<Id, Relationship>& getRelationships();
 
+  void configureRelationships();
+
 private:
   std::map<Id, Table> m_tables;
   std::map<Id, Relationship> m_relationships;

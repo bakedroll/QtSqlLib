@@ -36,8 +36,6 @@ private:
   int  queryDatabaseVersion();
   void createOrMigrateTables(int currentVersion = 1);
 
-  void addRelationshipsToSchema();
-
   static int getDatabaseVersion();
 
   bool isVersionTableExisting() const;
