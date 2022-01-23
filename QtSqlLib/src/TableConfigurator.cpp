@@ -21,6 +21,12 @@ TableConfigurator& TableConfigurator::column(unsigned int columnId, const QStrin
       QString("Column with id %1 already exists for table '%2'.").arg(columnId).arg(m_table.name));
   }
 
+  if (columnName.isEmpty())
+  {
+    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      QString("Column name must not be empty for table '%1'.").arg(m_table.name));
+  }
+
   if (isColumnNameExisting(columnName))
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
@@ -37,9 +43,9 @@ TableConfigurator& TableConfigurator::column(unsigned int columnId, const QStrin
   column.name = columnName;
   column.type = type;
   column.varcharLength = varcharLength;
-  column.isPrimaryKey = false;
-  column.isAutoIncrement = false;
-  column.isNotNull = false;
+  column.bIsPrimaryKey = false;
+  column.bIsAutoIncrement = false;
+  column.bIsNotNull = false;
 
   m_table.columns[columnId] = column;
   m_lastColumn = columnId;
@@ -54,20 +60,20 @@ TableConfigurator& TableConfigurator::primaryKey()
 
   for (const auto& c : m_table.columns)
   {
-    if (c.second.isPrimaryKey)
+    if (c.second.bIsPrimaryKey)
     {
       throw DatabaseException(DatabaseException::Type::UnableToLoad,
         QString("Only one column of a table can be the primary, see table '%1', columns '%2' and '%3'.").arg(m_table.name).arg(col.name).arg(c.second.name));
     }
   }
 
-  if (col.isPrimaryKey)
+  if (col.bIsPrimaryKey)
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("primaryKey() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
-  col.isPrimaryKey = true;
+  col.bIsPrimaryKey = true;
   return *this;
 }
 
@@ -76,13 +82,13 @@ TableConfigurator& TableConfigurator::autoIncrement()
   checkColumn();
   auto& col = m_table.columns.at(m_lastColumn);
 
-  if (col.isAutoIncrement)
+  if (col.bIsAutoIncrement)
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("autoIncrement() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
-  col.isAutoIncrement = true;
+  col.bIsAutoIncrement = true;
   return *this;
 }
 
@@ -91,13 +97,13 @@ TableConfigurator& TableConfigurator::notNull()
   checkColumn();
   auto& col = m_table.columns.at(m_lastColumn);
 
-  if (col.isNotNull)
+  if (col.bIsNotNull)
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("notNull() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
-  col.isNotNull = true;
+  col.bIsNotNull = true;
   return *this;
 }
 

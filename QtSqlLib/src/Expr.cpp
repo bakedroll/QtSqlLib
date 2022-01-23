@@ -155,7 +155,7 @@ QString Expr::Comparison::toQString(const SchemaConfigurator::Schema& schema, un
         throw DatabaseException(DatabaseException::Type::InvalidQuery, QString("Invalid Expression: Unknown column id %1 for table id %2").arg(colId).arg(defaultTableId));
       }
 
-      return QString("%1.%2").arg(table.name).arg(table.columns.at(colId).name);
+      return QString("'%1'.%2").arg(table.name).arg(table.columns.at(colId).name);
     }
     case OperandType::Value:
     {

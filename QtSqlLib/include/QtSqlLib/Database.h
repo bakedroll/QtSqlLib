@@ -4,7 +4,6 @@
 #include <QtSqlLib/SchemaConfigurator.h>
 
 #include <QSqlDatabase>
-#include <QVariant>
 
 namespace QtSqlLib
 {
@@ -35,6 +34,8 @@ private:
   void loadDatabaseFile(const QString& filename);
   int  queryDatabaseVersion() const;
   void createOrMigrateTables(int currentVersion = 1) const;
+
+  void addRelationshipsToSchema();
 
   static int getDatabaseVersion();
 

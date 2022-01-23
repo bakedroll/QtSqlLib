@@ -11,6 +11,8 @@
 #include <QSqlQuery>
 #include <QVariant>
 
+#include <set>
+
 namespace QtSqlLib
 {
 
@@ -57,9 +59,9 @@ public:
       columns += QString(" '%1' %2 %3 %4 %5,")
         .arg(column.second.name)
         .arg(getDataTypeName(column.second.type, column.second.varcharLength))
-        .arg(column.second.isPrimaryKey ? "PRIMARY KEY" : "")
-        .arg(column.second.isAutoIncrement ? "AUTOINCREMENT" : "")
-        .arg(column.second.isNotNull ? "NOT NULL" : "");
+        .arg(column.second.bIsPrimaryKey ? "PRIMARY KEY" : "")
+        .arg(column.second.bIsAutoIncrement ? "AUTOINCREMENT" : "")
+        .arg(column.second.bIsNotNull ? "NOT NULL" : "");
     }
     columns = columns.left(columns.length() - 1).simplified();
 
@@ -103,6 +105,7 @@ void Database::initialize(const QString& filename)
     .column(s_versionColId, "version", TableConfigurator::DataType::Integer).primaryKey().notNull();
 
   configureSchema(configurator);
+  addRelationshipsToSchema();
 
   loadDatabaseFile(filename);
 
@@ -194,6 +197,74 @@ void Database::createOrMigrateTables(int currentVersion) const
       }
 
       execQuery(InsertInto(s_versionTableid).value(s_versionColId, targetVersion));
+    }
+  }
+}
+
+void Database::addRelationshipsToSchema()
+{
+  const auto checkTableIdExisting = [this](unsigned int relId, unsigned int tableId)
+  {
+    if (m_schema.tables.count(tableId) == 0)
+    {
+      throw DatabaseException(DatabaseException::Type::UnableToLoad,
+        QString("Relationship with id %1 references an unknown table with id %2.").arg(relId).arg(tableId));
+    }
+  };
+
+  for (auto& relationship : m_schema.relationships)
+  {
+    checkTableIdExisting(relationship.first, relationship.second.tableFromId);
+    checkTableIdExisting(relationship.first, relationship.second.tableToId);
+
+    if ((relationship.second.type == RelationshipConfigurator::RelationshipType::ManyToOne) ||
+      (relationship.second.type == RelationshipConfigurator::RelationshipType::OneToMany))
+    {
+      auto parentTableId = relationship.second.tableFromId;
+      auto childTableId = relationship.second.tableToId;
+
+      if (relationship.second.type == RelationshipConfigurator::RelationshipType::ManyToOne)
+      {
+        std::swap(parentTableId, childTableId);
+      }
+
+      const auto& parentTable = m_schema.tables.at(parentTableId);
+      auto& childTable = m_schema.tables.at(childTableId);
+
+      TableConfigurator::Column parentIdColumn;
+      for (const auto& col : parentTable.columns)
+      {
+        if (col.second.bIsPrimaryKey)
+        {
+          parentIdColumn = col.second;
+          break;
+        }
+      }
+
+      if (parentIdColumn.name.isEmpty())
+      {
+        throw DatabaseException(DatabaseException::Type::UnableToLoad,
+          QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
+      }
+
+      auto nextAvailableChildTableColid = 0U;
+      while (childTable.columns.count(nextAvailableChildTableColid) > 0)
+      {
+        nextAvailableChildTableColid++;
+      }
+
+      TableConfigurator::Column foreignKeyColumn;
+      foreignKeyColumn.name = QString("rel_%1_foreign_key").arg(relationship.first);
+      foreignKeyColumn.type = parentIdColumn.type;
+      foreignKeyColumn.varcharLength = parentIdColumn.varcharLength;
+
+      childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
+
+      relationship.second.foreignKeyColId = nextAvailableChildTableColid;
+    }
+    else if (relationship.second.type == RelationshipConfigurator::RelationshipType::ManyToMany)
+    {
+      
     }
   }
 }

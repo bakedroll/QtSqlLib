@@ -20,6 +20,12 @@ TableConfigurator& SchemaConfigurator::configureTable(unsigned int tableId, cons
       QString("Table with id %1 already exists.").arg(tableId));
   }
 
+  if (tableName.isEmpty())
+  {
+    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      QString("Table name with id %1 must not be empty.").arg(tableId));
+  }
+
   if (isTableNameExisting(tableName))
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
@@ -39,6 +45,23 @@ TableConfigurator& SchemaConfigurator::configureTable(unsigned int tableId, cons
   m_tableConfigurators[tableId] = std::make_unique<TableConfigurator>(m_schema.tables.at(tableId));
 
   return *m_tableConfigurators.at(tableId);
+}
+
+RelationshipConfigurator& SchemaConfigurator::configureRelationship(unsigned int relationshipId, unsigned int tableFromId,
+                                                                    unsigned int tableToId, RelationshipConfigurator::RelationshipType type)
+{
+  if (m_schema.relationships.count(relationshipId) > 0)
+  {
+    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      QString("Relationship with id %1 already exists.").arg(relationshipId));
+  }
+
+  const RelationshipConfigurator::Relationship relationship{ tableFromId, tableToId, type };
+
+  m_schema.relationships[relationshipId] = relationship;
+  m_relationshipConfigurators[relationshipId] = std::make_unique<RelationshipConfigurator>(m_schema.relationships.at(relationshipId));
+
+  return *m_relationshipConfigurators.at(relationshipId);
 }
 
 bool SchemaConfigurator::isTableNameExisting(const QString& name) const

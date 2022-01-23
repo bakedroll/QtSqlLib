@@ -72,12 +72,12 @@ QSqlQuery FromTable::getSqlQuery(const SchemaConfigurator::Schema& schema) const
       {
         selectColsStr.append(", ");
       }
-      selectColsStr.append(QString("%1.%2").arg(table.name).arg(table.columns.at(col).name));
+      selectColsStr.append(QString("'%1'.%2").arg(table.name).arg(table.columns.at(col).name));
     }
   }
 
   QString queryStr;
-  queryStr.append(QString("SELECT %1 FROM %2").arg(selectColsStr).arg(table.name));
+  queryStr.append(QString("SELECT %1 FROM '%2'").arg(selectColsStr).arg(table.name));
 
   if (m_whereExpr)
   {

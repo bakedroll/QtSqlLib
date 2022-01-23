@@ -21,12 +21,12 @@ public:
   struct Column
   {
     QString name;
-    DataType type;
-    int varcharLength;
+    DataType type = DataType::Integer;
+    int varcharLength = 0;
 
-    bool isPrimaryKey;
-    bool isAutoIncrement;
-    bool isNotNull;
+    bool bIsPrimaryKey = false;
+    bool bIsAutoIncrement = false;
+    bool bIsNotNull = false;
   };
 
   struct Table
@@ -40,6 +40,7 @@ public:
   virtual ~TableConfigurator();
 
   TableConfigurator& column(unsigned int columnId, const QString& columnName, DataType type, int varcharLength = 64);
+
   TableConfigurator& primaryKey();
   TableConfigurator& autoIncrement();
   TableConfigurator& notNull();
