@@ -18,13 +18,13 @@ TableConfigurator& TableConfigurator::column(unsigned int columnId, const QStrin
   if (m_table.columns.count(columnId) > 0)
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
-      QString("Column with id %1 already exists for table.").arg(columnId).arg(m_table.name));
+      QString("Column with id %1 already exists for table '%2'.").arg(columnId).arg(m_table.name));
   }
 
   if (isColumnNameExisting(columnName))
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
-      QString("Column with name '%1' already exists for table.").arg(columnName).arg(m_table.name));
+      QString("Column with name '%1' already exists for table '%2'.").arg(columnName).arg(m_table.name));
   }
 
   if ((type == DataType::Varchar) && (varcharLength <= 0))
@@ -51,6 +51,15 @@ TableConfigurator& TableConfigurator::primaryKey()
 {
   checkColumn();
   auto& col = m_table.columns.at(m_lastColumn);
+
+  for (const auto& c : m_table.columns)
+  {
+    if (c.second.isPrimaryKey)
+    {
+      throw DatabaseException(DatabaseException::Type::UnableToLoad,
+        QString("Only one column of a table can be the primary, see table '%1', columns '%2' and '%3'.").arg(m_table.name).arg(col.name).arg(c.second.name));
+    }
+  }
 
   if (col.isPrimaryKey)
   {

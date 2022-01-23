@@ -4,6 +4,7 @@
 #include <QtSqlLib/SchemaConfigurator.h>
 
 #include <QSqlDatabase>
+#include <QVariant>
 
 namespace QtSqlLib
 {
@@ -17,7 +18,7 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
-  void execQuery(const IQuery& query) const override;
+  IQuery::QueryResults execQuery(const IQuery& query) const override;
 
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;
@@ -29,11 +30,15 @@ private:
 
   bool m_isInitialized;
 
+  IQuery::QueryResults execQuery(const SchemaConfigurator::Schema& schema, const IQuery& query) const;
+
   void loadDatabaseFile(const QString& filename);
   int  queryDatabaseVersion() const;
   void createOrMigrateTables(int currentVersion = 1) const;
 
   static int getDatabaseVersion();
+
+  bool isVersionTableExisting() const;
 
 };
 

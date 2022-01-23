@@ -1,6 +1,7 @@
 #include "QtSqlLib/Database.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/FromTable.h"
 #include "QtSqlLib/InsertInto.h"
 #include "QtSqlLib/IQuery.h"
 
@@ -12,6 +13,10 @@
 
 namespace QtSqlLib
 {
+
+static const unsigned int s_sqliteMasterTableId = 0;
+static const unsigned int s_sqliteMasterTypeColId = 0;
+static const unsigned int s_sqliteMasterNameColId = 1;
 
 static const unsigned int s_versionColId = 0;
 static const unsigned int s_versionTableid = std::numeric_limits<unsigned int>::max();
@@ -109,9 +114,14 @@ void Database::close()
   m_db.close();
 }
 
-void Database::execQuery(const IQuery& query) const
+IQuery::QueryResults Database::execQuery(const IQuery& query) const
 {
-  auto q = query.getSqlQuery(m_schema);
+  return execQuery(m_schema, query);
+}
+
+IQuery::QueryResults Database::execQuery(const SchemaConfigurator::Schema& schema, const IQuery& query) const
+{
+  auto q = query.getSqlQuery(schema);
   const auto isBatch = query.isBatchExecution();
 
   if ((!isBatch && !q.exec()) || (isBatch && !q.execBatch()))
@@ -119,6 +129,8 @@ void Database::execQuery(const IQuery& query) const
     throw DatabaseException(DatabaseException::Type::InvalidQuery,
       QString("Could not execute query: %1").arg(q.lastError().text()));
   }
+
+  return query.getQueryResults(schema, q);
 }
 
 void Database::loadDatabaseFile(const QString& filename)
@@ -132,16 +144,7 @@ void Database::loadDatabaseFile(const QString& filename)
       QString("Could not load database file: %1.").arg(filename));
   }
 
-  QSqlQuery versionTableQuery(QString("SELECT name FROM sqlite_master WHERE type='table' AND name='%1';")
-    .arg(s_versionTableName));
-
-  if (!versionTableQuery.exec())
-  {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
-      "Could not query version.");
-  }
-
-  if (!versionTableQuery.next())
+  if (!isVersionTableExisting())
   {
     createOrMigrateTables(0);
   }
@@ -169,17 +172,13 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion() const
 {
-  // TODO: refactor
-  QSqlQuery query(QString("SELECT version FROM %1;").arg(s_versionTableName));
-  if (query.exec())
+  const auto results = execQuery(FromTable(s_versionTableid).select(s_versionColId));
+  if (results.empty())
   {
-    while (query.next())
-    {
-      return query.value(0).toInt();
-    }
+    return -1;
   }
 
-  return -1;
+  return results[0].at({ s_versionTableid, s_versionColId }).toInt();
 }
 
 void Database::createOrMigrateTables(int currentVersion) const
@@ -202,6 +201,26 @@ void Database::createOrMigrateTables(int currentVersion) const
 int Database::getDatabaseVersion()
 {
   return 1;
+}
+
+bool Database::isVersionTableExisting() const
+{
+  SchemaConfigurator::Schema sqliteMasterSchema;
+
+  auto& table = sqliteMasterSchema.tables[s_sqliteMasterTableId];
+  table.name = "sqlite_master";
+  table.columns[s_sqliteMasterTypeColId].name = "type";
+  table.columns[s_sqliteMasterNameColId].name = "name";
+
+  const auto results = execQuery(sqliteMasterSchema,
+    FromTable(s_sqliteMasterTableId)
+      .select(s_sqliteMasterNameColId)
+      .where(Expr()
+        .equal(s_sqliteMasterTypeColId, "table")
+        .and()
+        .equal(s_sqliteMasterNameColId, s_versionTableName)));
+
+  return !results.empty();
 }
 
 }
