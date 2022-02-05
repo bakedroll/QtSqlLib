@@ -53,17 +53,45 @@ public:
 
   QSqlQuery getSqlQuery(Schema& schema) const override
   {
+    const auto bIsSinglePrimaryKey = (m_table.primaryKeys.size() == 1);
+
     QString columns;
     for (const auto& column : m_table.columns)
     {
-      columns += QString(" '%1' %2 %3 %4 %5,")
+      columns += QString("'%1' %2")
         .arg(column.second.name)
-        .arg(getDataTypeName(column.second.type, column.second.varcharLength))
-        .arg(column.second.bIsPrimaryKey ? "PRIMARY KEY" : "")
-        .arg(column.second.bIsAutoIncrement ? "AUTOINCREMENT" : "")
-        .arg(column.second.bIsNotNull ? "NOT NULL" : "");
+        .arg(getDataTypeName(column.second.type, column.second.varcharLength));
+
+      if (bIsSinglePrimaryKey && (m_table.primaryKeys.count(column.first) > 0))
+      {
+        columns += " PRIMARY KEY";
+      }
+      if (column.second.bIsAutoIncrement)
+      {
+        columns += " AUTOINCREMENT";
+      }
+      if (column.second.bIsNotNull)
+      {
+        columns += " NOT NULL";
+      }
+      columns.append(", ");
     }
-    columns = columns.left(columns.length() - 1).simplified();
+
+    if (m_table.primaryKeys.size() < 2)
+    {
+      columns = columns.left(columns.length() - 2);
+    }
+    else
+    {
+      QString primaryKeyNames;
+      for (const auto& primaryKeyId : m_table.primaryKeys)
+      {
+        primaryKeyNames += QString("'%1', ").arg(m_table.columns.at(primaryKeyId).name);
+      }
+      primaryKeyNames = primaryKeyNames.left(primaryKeyNames.length() - 2);
+      columns += QString(" PRIMARY KEY(%1)").arg(primaryKeyNames);
+    }
+    columns = columns.simplified();
 
     const auto queryString = QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns);
     UTILS_LOG_DEBUG(queryString.toStdString().c_str());

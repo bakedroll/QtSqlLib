@@ -3,6 +3,7 @@
 #include <QString>
 
 #include <map>
+#include <set>
 
 namespace QtSqlLib
 {
@@ -35,7 +36,6 @@ public:
     DataType type = DataType::Integer;
     int varcharLength = 0;
 
-    bool bIsPrimaryKey = false;
     bool bIsAutoIncrement = false;
     bool bIsNotNull = false;
   };
@@ -43,7 +43,7 @@ public:
   struct ForeignKeyReference
   {
     Id referenceTableId = 0;
-    Id referenceColumnId = 0;
+    std::set<Id> referenceKeyColumnIds;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
   };
@@ -53,6 +53,7 @@ public:
     QString name;
     std::map<Id, Column> columns;
     std::map<Id, ForeignKeyReference> foreignKeyReferences;
+    std::set<Id> primaryKeys;
   };
 
   enum class RelationshipType

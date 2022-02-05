@@ -7,7 +7,8 @@ namespace QtSqlLib
 
 TableConfigurator::TableConfigurator(Schema::Table& table)
   : m_table(table)
-  , m_lastColumn(-1)
+  , m_bIsConfiguringPrimaryKeys(false)
+  , m_bIsPrimaryKeysConfigured(false)
 {
 }
 
@@ -43,12 +44,11 @@ TableConfigurator& TableConfigurator::column(Schema::Id columnId, const QString&
   column.name = columnName;
   column.type = type;
   column.varcharLength = varcharLength;
-  column.bIsPrimaryKey = false;
   column.bIsAutoIncrement = false;
   column.bIsNotNull = false;
 
   m_table.columns[columnId] = column;
-  m_lastColumn = columnId;
+  m_lastColumnId = columnId;
 
   return *this;
 }
@@ -56,31 +56,30 @@ TableConfigurator& TableConfigurator::column(Schema::Id columnId, const QString&
 TableConfigurator& TableConfigurator::primaryKey()
 {
   checkColumn();
-  auto& col = m_table.columns.at(m_lastColumn);
+  const auto colId = m_lastColumnId.value();
+  auto& col = m_table.columns.at(colId);
 
-  for (const auto& c : m_table.columns)
-  {
-    if (c.second.bIsPrimaryKey)
-    {
-      throw DatabaseException(DatabaseException::Type::UnableToLoad,
-        QString("Only one column of a table can be the primary, see table '%1', columns '%2' and '%3'.").arg(m_table.name).arg(col.name).arg(c.second.name));
-    }
-  }
-
-  if (col.bIsPrimaryKey)
+  if (m_table.primaryKeys.count(colId) > 0)
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("primaryKey() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
-  col.bIsPrimaryKey = true;
+  if (!m_table.primaryKeys.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      QString("Only one column of a table can be the primary, see table '%1'.").arg(m_table.name));
+  }
+
+  m_table.primaryKeys.insert(colId);
+
   return *this;
 }
 
 TableConfigurator& TableConfigurator::autoIncrement()
 {
   checkColumn();
-  auto& col = m_table.columns.at(m_lastColumn);
+  auto& col = m_table.columns.at(m_lastColumnId.value());
 
   if (col.bIsAutoIncrement)
   {
@@ -95,7 +94,7 @@ TableConfigurator& TableConfigurator::autoIncrement()
 TableConfigurator& TableConfigurator::notNull()
 {
   checkColumn();
-  auto& col = m_table.columns.at(m_lastColumn);
+  auto& col = m_table.columns.at(m_lastColumnId.value());
 
   if (col.bIsNotNull)
   {
@@ -104,6 +103,23 @@ TableConfigurator& TableConfigurator::notNull()
   }
 
   col.bIsNotNull = true;
+  return *this;
+}
+
+TableConfigurator& TableConfigurator::primaryKeys(Schema::Id columnId)
+{
+  if (m_bIsPrimaryKeysConfigured)
+  {
+    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
+  }
+
+  m_table.primaryKeys.insert(columnId);
+
+  if (!m_bIsConfiguringPrimaryKeys)
+  {
+    m_bIsPrimaryKeysConfigured = true;
+  }
   return *this;
 }
 
@@ -122,7 +138,7 @@ bool TableConfigurator::isColumnNameExisting(const QString& name) const
 
 void TableConfigurator::checkColumn() const
 {
-  if (m_lastColumn < 0)
+  if (!m_lastColumnId.has_value())
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       "No column defined");

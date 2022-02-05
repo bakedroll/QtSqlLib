@@ -49,41 +49,36 @@ void Schema::configureRelationships()
       const auto& parentTable = m_tables.at(parentTableId);
       auto& childTable = m_tables.at(childTableId);
 
-      Column parentTableKeyColumn;
-      auto parentTableKeyColumnId = 0;
+      const auto parentPrimaryKeyColIds = parentTable.primaryKeys;
 
-      for (const auto& col : parentTable.columns)
-      {
-        if (col.second.bIsPrimaryKey)
-        {
-          parentTableKeyColumn = col.second;
-          parentTableKeyColumnId = col.first;
-          break;
-        }
-      }
-
-      if (parentTableKeyColumn.name.isEmpty())
+      if (parentPrimaryKeyColIds.empty())
       {
         throw DatabaseException(DatabaseException::Type::UnableToLoad,
           QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
       }
 
-      auto nextAvailableChildTableColid = 0U;
-      while (childTable.columns.count(nextAvailableChildTableColid) > 0)
+      const ForeignKeyReference foreignKeyReference { parentTableId, parentPrimaryKeyColIds,
+                                                      relationship.second.onUpdateAction,
+                                                      relationship.second.onDeleteAction };
+
+      for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
-        nextAvailableChildTableColid++;
+        auto nextAvailableChildTableColid = 0U;
+        while (childTable.columns.count(nextAvailableChildTableColid) > 0)
+        {
+          nextAvailableChildTableColid++;
+        }
+
+        const auto& parentKeyCol = parentTable.columns.at(parentKeyColId);
+
+        Column foreignKeyColumn;
+        foreignKeyColumn.name = QString("rel_%1_foreign_key_%2").arg(relationship.first).arg(parentKeyCol.name);
+        foreignKeyColumn.type = parentKeyCol.type;
+        foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
+
+        childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
+        childTable.foreignKeyReferences[nextAvailableChildTableColid] = foreignKeyReference;
       }
-
-      Column foreignKeyColumn;
-      foreignKeyColumn.name = QString("rel_%1_foreign_key").arg(relationship.first);
-      foreignKeyColumn.type = parentTableKeyColumn.type;
-      foreignKeyColumn.varcharLength = parentTableKeyColumn.varcharLength;
-
-      ForeignKeyReference foreignKeyReference { parentTableId, parentTableKeyColumnId, relationship.second.onUpdateAction,
-                                                relationship.second.onDeleteAction };
-
-      childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-      childTable.foreignKeyReferences[nextAvailableChildTableColid] = foreignKeyReference;
     }
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {

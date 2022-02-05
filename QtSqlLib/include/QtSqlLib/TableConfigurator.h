@@ -5,6 +5,7 @@
 #include <QString>
 
 #include <map>
+#include <optional>
 
 namespace QtSqlLib
 {
@@ -21,9 +22,27 @@ public:
   TableConfigurator& autoIncrement();
   TableConfigurator& notNull();
 
+  TableConfigurator& primaryKeys(Schema::Id columnId);
+
+  template <typename... T>
+  TableConfigurator& primaryKeys(Schema::Id columnId, T... args)
+  {
+    m_bIsConfiguringPrimaryKeys = true;
+
+    primaryKeys(columnId);
+    primaryKeys(args...);
+
+    m_bIsConfiguringPrimaryKeys = false;
+    m_bIsPrimaryKeysConfigured = true;
+    return *this;
+  }
+
 private:
   Schema::Table& m_table;
-  int m_lastColumn;
+  std::optional<Schema::Id> m_lastColumnId;
+
+  bool m_bIsConfiguringPrimaryKeys;
+  bool m_bIsPrimaryKeysConfigured;
 
   bool isColumnNameExisting(const QString& name) const;
   void checkColumn() const;
