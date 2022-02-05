@@ -123,6 +123,7 @@ void Schema::configureRelationships()
       }
 
       m_tables[nextAvailableTableId] = linkTable;
+      m_mapManyToManyRelationshipToLinkTableId[relationship.first] = nextAvailableTableId;
     }
   }
 }
