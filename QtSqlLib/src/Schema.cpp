@@ -21,7 +21,7 @@ std::map<Schema::Id, Schema::Relationship>& Schema::getRelationships()
 
 void Schema::configureRelationships()
 {
-  const auto checkTableIdExisting = [this](Schema::Id relId, Schema::Id tableId)
+  const auto checkTableIdExisting = [this](Id relId, Id tableId)
   {
     if (m_tables.count(tableId) == 0)
     {
@@ -35,13 +35,13 @@ void Schema::configureRelationships()
     checkTableIdExisting(relationship.first, relationship.second.tableFromId);
     checkTableIdExisting(relationship.first, relationship.second.tableToId);
 
-    if ((relationship.second.type == Schema::RelationshipType::ManyToOne) ||
-      (relationship.second.type == Schema::RelationshipType::OneToMany))
+    if ((relationship.second.type == RelationshipType::ManyToOne) ||
+      (relationship.second.type == RelationshipType::OneToMany))
     {
       auto parentTableId = relationship.second.tableFromId;
       auto childTableId = relationship.second.tableToId;
 
-      if (relationship.second.type == Schema::RelationshipType::ManyToOne)
+      if (relationship.second.type == RelationshipType::ManyToOne)
       {
         std::swap(parentTableId, childTableId);
       }
@@ -49,17 +49,20 @@ void Schema::configureRelationships()
       const auto& parentTable = m_tables.at(parentTableId);
       auto& childTable = m_tables.at(childTableId);
 
-      Schema::Column parentIdColumn;
+      Column parentTableKeyColumn;
+      auto parentTableKeyColumnId = 0;
+
       for (const auto& col : parentTable.columns)
       {
         if (col.second.bIsPrimaryKey)
         {
-          parentIdColumn = col.second;
+          parentTableKeyColumn = col.second;
+          parentTableKeyColumnId = col.first;
           break;
         }
       }
 
-      if (parentIdColumn.name.isEmpty())
+      if (parentTableKeyColumn.name.isEmpty())
       {
         throw DatabaseException(DatabaseException::Type::UnableToLoad,
           QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
@@ -71,16 +74,18 @@ void Schema::configureRelationships()
         nextAvailableChildTableColid++;
       }
 
-      Schema::Column foreignKeyColumn;
+      Column foreignKeyColumn;
       foreignKeyColumn.name = QString("rel_%1_foreign_key").arg(relationship.first);
-      foreignKeyColumn.type = parentIdColumn.type;
-      foreignKeyColumn.varcharLength = parentIdColumn.varcharLength;
+      foreignKeyColumn.type = parentTableKeyColumn.type;
+      foreignKeyColumn.varcharLength = parentTableKeyColumn.varcharLength;
+
+      ForeignKeyReference foreignKeyReference { parentTableId, parentTableKeyColumnId, relationship.second.onUpdateAction,
+                                                relationship.second.onDeleteAction };
 
       childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-
-      relationship.second.foreignKeyColId = nextAvailableChildTableColid;
+      childTable.foreignKeyReferences[nextAvailableChildTableColid] = foreignKeyReference;
     }
-    else if (relationship.second.type == Schema::RelationshipType::ManyToMany)
+    else if (relationship.second.type == RelationshipType::ManyToMany)
     {
       
     }

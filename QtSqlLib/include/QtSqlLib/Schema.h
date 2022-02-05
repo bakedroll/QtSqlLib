@@ -12,6 +12,15 @@ class Schema
 public:
   using Id = unsigned int;
 
+  enum class ForeignKeyAction
+  {
+    NoAction,
+    Restrict,
+    SetNull,
+    SetDefault,
+    Cascade
+  };
+
   enum class DataType
   {
     Integer,
@@ -31,10 +40,19 @@ public:
     bool bIsNotNull = false;
   };
 
+  struct ForeignKeyReference
+  {
+    Id referenceTableId = 0;
+    Id referenceColumnId = 0;
+    ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
+    ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
+  };
+
   struct Table
   {
     QString name;
     std::map<Id, Column> columns;
+    std::map<Id, ForeignKeyReference> foreignKeyReferences;
   };
 
   enum class RelationshipType
@@ -44,24 +62,11 @@ public:
     ManyToMany
   };
 
-  enum class ForeignKeyAction
-  {
-    NoAction,
-    Restrict,
-    SetNull,
-    SetDefault,
-    Cascade
-  };
-
   struct Relationship
   {
     Id tableFromId = 0;
     Id tableToId = 0;
     RelationshipType type = RelationshipType::OneToMany;
-
-    // TODO: refactor
-    Id foreignKeyColId = 0;
-
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
   };
