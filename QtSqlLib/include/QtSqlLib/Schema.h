@@ -84,6 +84,7 @@ public:
 private:
   std::map<Id, Table> m_tables;
   std::map<Id, Relationship> m_relationships;
+  std::map<Id, Id> m_mapManyToManyRelationshipToLinkTableId;
 
 };
 
