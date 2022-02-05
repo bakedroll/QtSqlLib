@@ -20,6 +20,8 @@ protected:
   void addColumnId(Schema::Id id);
   void checkColumnIdExisting(Schema::Id id) const;
 
+  Schema::Id getTableId() const;
+
 private:
   Schema::Id m_tableId;
   std::vector<Schema::Id> m_columnIds;

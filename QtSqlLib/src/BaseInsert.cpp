@@ -66,4 +66,9 @@ void BaseInsert::checkColumnIdExisting(Schema::Id id) const
   }
 }
 
+Schema::Id BaseInsert::getTableId() const
+{
+  return m_tableId;
+}
+
 }

@@ -379,3 +379,34 @@ TEST_F(DatabaseTest, oneToManyRelationshipTest)
 
   m_db->initialize(s_dbFilename);
 }
+
+TEST_F(DatabaseTest, multiplePrimaryKeysTable)
+{
+  m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+  {
+    configurator.configureTable(underlying(TIds::Table1), "table1")
+      .column(underlying(T1Cols::Id), "id", DataType::Integer).notNull()
+      .column(underlying(T1Cols::Text), "text", DataType::Varchar, 128).notNull()
+      .primaryKeys(underlying(T1Cols::Id), underlying(T1Cols::Text));
+  });
+
+  m_db->initialize(s_dbFilename);
+
+  const auto results = m_db->execQuery(InsertInto(underlying(TIds::Table1))
+    .value(underlying(T1Cols::Id), 1)
+    .value(underlying(T1Cols::Text), "text")
+    .returnIds());
+
+  EXPECT_EQ(results.size(), 1);
+
+  const auto resultId = results[0].at({ underlying(TIds::Table1), underlying(T1Cols::Id) });
+  const auto resultText = results[0].at({ underlying(TIds::Table1), underlying(T1Cols::Text) });
+
+  EXPECT_EQ(resultId.userType(), QMetaType::LongLong);
+  EXPECT_EQ(resultText.userType(), QMetaType::QString);
+
+  EXPECT_EQ(resultId.toLongLong(), 1);
+  EXPECT_EQ(resultText.toString(), "text");
+}
+
+// TODO: foreignKeys() test

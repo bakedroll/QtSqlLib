@@ -72,7 +72,7 @@ QSqlQuery FromTable::getSqlQuery(Schema& schema) const
       {
         selectColsStr.append(", ");
       }
-      selectColsStr.append(QString("'%1'.%2").arg(table.name).arg(table.columns.at(col).name));
+      selectColsStr.append(QString("'%1'.'%2'").arg(table.name).arg(table.columns.at(col).name));
     }
   }
 
