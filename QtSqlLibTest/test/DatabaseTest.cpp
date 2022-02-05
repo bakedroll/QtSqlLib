@@ -25,7 +25,9 @@ public:
   {
     Table1,
     Table2,
-    Table3
+    Students,
+    Projects,
+    Lectures
   };
 
   enum class Table1Cols
@@ -42,10 +44,28 @@ public:
     Mandatory
   };
 
+  enum class StudentsCols
+  {
+    Id,
+    Name
+  };
+
+  enum class ProjectsCols
+  {
+    Id,
+    Title
+  };
+
+  enum class LecturesCols
+  {
+    Id,
+    Topic
+  };
+
   enum class Relationships
   {
-    Relationship1,
-    Relationship2
+    RelationshipStudentsProjects,
+    RelationshipStudentsLectures
   };
 
   using ConfigFunc = std::function<void(SchemaConfigurator&)>;
@@ -69,6 +89,9 @@ private:
 
 using T1Cols = TestDb::Table1Cols;
 using T2Cols = TestDb::Table2Cols;
+using StudentsCols = TestDb::StudentsCols;
+using ProjectsCols = TestDb::ProjectsCols;
+using LecturesCols = TestDb::LecturesCols;
 using TIds = TestDb::TableIds;
 using Rs = TestDb::Relationships;
 
@@ -358,26 +381,57 @@ TEST_F(DatabaseTest, oneToManyRelationshipTest)
 {
   m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
   {
-    configurator.configureTable(underlying(TIds::Table1), "table1")
-      .column(underlying(T1Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(underlying(T1Cols::Text), "text", DataType::Varchar, 128);
+    configurator.configureTable(underlying(TIds::Students), "students")
+      .column(underlying(StudentsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+      .column(underlying(StudentsCols::Name), "name", DataType::Varchar, 128);
 
-    configurator.configureTable(underlying(TIds::Table2), "table2")
-      .column(underlying(T2Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(underlying(T2Cols::Text), "text", DataType::Varchar, 128);
+    configurator.configureTable(underlying(TIds::Projects), "projects")
+      .column(underlying(ProjectsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+      .column(underlying(ProjectsCols::Title), "title", DataType::Varchar, 128);
 
-    configurator.configureTable(underlying(TIds::Table3), "table3")
-      .column(underlying(T2Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(underlying(T2Cols::Text), "text", DataType::Varchar, 128);
+    configurator.configureTable(underlying(TIds::Lectures), "lectures")
+      .column(underlying(LecturesCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+      .column(underlying(LecturesCols::Topic), "topic", DataType::Varchar, 128);
 
-    configurator.configureRelationship(underlying(Rs::Relationship1), underlying(TIds::Table1), underlying(TIds::Table2),
+    configurator.configureRelationship(underlying(Rs::RelationshipStudentsProjects), underlying(TIds::Students), underlying(TIds::Projects),
       Schema::RelationshipType::OneToMany).onDelete(Schema::ForeignKeyAction::Cascade);
 
-    configurator.configureRelationship(underlying(Rs::Relationship2), underlying(TIds::Table1), underlying(TIds::Table3),
+    configurator.configureRelationship(underlying(Rs::RelationshipStudentsLectures), underlying(TIds::Students), underlying(TIds::Lectures),
       Schema::RelationshipType::ManyToMany);
   });
 
   m_db->initialize(s_dbFilename);
+
+  const auto studentJohn = m_db->execQuery(InsertInto(underlying(TIds::Students))
+    .value(underlying(StudentsCols::Name), "John")
+    .returnIds());
+
+  const auto studentMary = m_db->execQuery(InsertInto(underlying(TIds::Students))
+    .value(underlying(StudentsCols::Name), "Mary")
+    .returnIds());
+
+  const auto projectGameProgramming = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+    .value(underlying(ProjectsCols::Title), "Game Programming")
+    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
+    .returnIds());
+
+  const auto projectComputerVision = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+    .value(underlying(ProjectsCols::Title), "Computer Vision")
+    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
+    .returnIds());
+
+  const auto projectMachineLearning = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+    .value(underlying(ProjectsCols::Title), "Machine Learning")
+    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentMary[0])
+    .returnIds());
+
+  const auto lectureMath = m_db->execQuery(InsertInto(underlying(TIds::Lectures))
+    .value(underlying(LecturesCols::Topic), "Math")
+    .returnIds());
+
+  const auto lectureProgramming = m_db->execQuery(InsertInto(underlying(TIds::Lectures))
+    .value(underlying(LecturesCols::Topic), "Programming")
+    .returnIds());
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)

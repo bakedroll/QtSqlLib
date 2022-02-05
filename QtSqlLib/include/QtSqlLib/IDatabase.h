@@ -16,7 +16,7 @@ public:
   virtual void initialize(const QString& filename) = 0;
   virtual void close() = 0;
 
-  virtual IQuery::QueryResults execQuery(const IQuery& query) = 0;
+  virtual IQuery::QueryResults execQuery(IQuery& query) = 0;
 
 };
 

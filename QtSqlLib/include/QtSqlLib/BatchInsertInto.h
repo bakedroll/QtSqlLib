@@ -17,7 +17,7 @@ public:
 
   BatchInsertInto& values(Schema::Id columnId, const QVariantList& values);
 
-  QSqlQuery getSqlQuery(Schema& schema) const override;
+  QSqlQuery getSqlQuery(Schema& schema) override;
   bool isBatchExecution() const override;
 
 private:

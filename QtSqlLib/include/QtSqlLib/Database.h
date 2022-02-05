@@ -18,7 +18,7 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
-  IQuery::QueryResults execQuery(const IQuery& query) override;
+  IQuery::QueryResults execQuery(IQuery& query) override;
 
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;
@@ -30,7 +30,7 @@ private:
 
   bool m_isInitialized;
 
-  IQuery::QueryResults execQuery(Schema& schema, const IQuery& query) const;
+  IQuery::QueryResults execQuery(Schema& schema, IQuery& query) const;
 
   void loadDatabaseFile(const QString& filename);
   int  queryDatabaseVersion();

@@ -20,7 +20,7 @@ BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList
   return *this;
 }
 
-QSqlQuery BatchInsertInto::getSqlQuery(Schema& schema) const
+QSqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
 {
   QSqlQuery query;
   const auto queryString = getSqlQueryString(schema);

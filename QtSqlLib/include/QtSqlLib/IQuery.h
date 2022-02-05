@@ -23,7 +23,7 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual QSqlQuery getSqlQuery(Schema& schema) const = 0;
+  virtual QSqlQuery getSqlQuery(Schema& schema) = 0;
   virtual QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const { return {}; }
 
   virtual bool isBatchExecution() const { return false; }

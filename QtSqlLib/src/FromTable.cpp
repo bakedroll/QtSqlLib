@@ -43,7 +43,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-QSqlQuery FromTable::getSqlQuery(Schema& schema) const
+QSqlQuery FromTable::getSqlQuery(Schema& schema)
 {
   if (schema.getTables().count(m_tableId) == 0)
   {

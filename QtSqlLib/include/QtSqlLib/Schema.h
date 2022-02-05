@@ -53,7 +53,7 @@ public:
   {
     QString name;
     std::map<Id, Column> columns;
-    std::vector<ForeignKeyReference> foreignKeyReferences;
+    std::map<Id, ForeignKeyReference> mapRelationshioToForeignKeyReferences;
     std::set<Id> primaryKeys;
   };
 

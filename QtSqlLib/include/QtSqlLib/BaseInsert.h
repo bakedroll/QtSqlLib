@@ -19,6 +19,7 @@ protected:
   QString getSqlQueryString(Schema& schema) const;
   void addColumnId(Schema::Id id);
   void checkColumnIdExisting(Schema::Id id) const;
+  void checkTableExisting(Schema& schema) const;
 
   Schema::Id getTableId() const;
 

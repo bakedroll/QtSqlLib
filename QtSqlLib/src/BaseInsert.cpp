@@ -17,11 +17,7 @@ BaseInsert::~BaseInsert() = default;
 
 QString BaseInsert::getSqlQueryString(Schema& schema) const
 {
-  if (schema.getTables().count(m_tableId) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      QString("Invalid insert query: Unknown table with id %1.").arg(m_tableId));
-  }
+  checkTableExisting(schema);
 
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -63,6 +59,15 @@ void BaseInsert::checkColumnIdExisting(Schema::Id id) const
       throw DatabaseException(DatabaseException::Type::InvalidQuery,
         QString("Invalid insert query: More than one column with id %1 specified.").arg(id));
     }
+  }
+}
+
+void BaseInsert::checkTableExisting(Schema& schema) const
+{
+  if (schema.getTables().count(m_tableId) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidQuery,
+      QString("Invalid insert query: Unknown table with id %1.").arg(m_tableId));
   }
 }
 
