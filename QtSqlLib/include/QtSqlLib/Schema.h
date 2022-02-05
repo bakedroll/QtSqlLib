@@ -4,6 +4,7 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 namespace QtSqlLib
 {
@@ -43,16 +44,16 @@ public:
   struct ForeignKeyReference
   {
     Id referenceTableId = 0;
-    std::set<Id> referenceKeyColumnIds;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
+    std::map<Id, Id> mapReferenceParentColIdToChildColId;
   };
 
   struct Table
   {
     QString name;
     std::map<Id, Column> columns;
-    std::map<Id, ForeignKeyReference> foreignKeyReferences;
+    std::vector<ForeignKeyReference> foreignKeyReferences;
     std::set<Id> primaryKeys;
   };
 

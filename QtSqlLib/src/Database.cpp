@@ -41,6 +41,27 @@ static QString getDataTypeName(Schema::DataType type, int varcharLength)
   }
 }
 
+static QString getActionString(Schema::ForeignKeyAction action)
+{
+  switch (action)
+  {
+  case Schema::ForeignKeyAction::NoAction:
+    return "NO ACTION";
+  case Schema::ForeignKeyAction::Restrict:
+    return "RESTRICT";
+  case Schema::ForeignKeyAction::SetNull:
+    return "SET NULL";
+  case Schema::ForeignKeyAction::SetDefault:
+    return "SET DEFAULT";
+  case Schema::ForeignKeyAction::Cascade:
+    return "CASCADE";
+  default:
+    break;
+  }
+
+  return "";
+}
+
 class CreateTable : public IQuery
 {
 public:
@@ -53,6 +74,11 @@ public:
 
   QSqlQuery getSqlQuery(Schema& schema) const override
   {
+    const auto cutTailingComma = [](QString& str)
+    {
+      str = str.left(str.length() - 2);
+    };
+
     const auto bIsSinglePrimaryKey = (m_table.primaryKeys.size() == 1);
 
     QString columns;
@@ -77,19 +103,55 @@ public:
       columns.append(", ");
     }
 
-    if (m_table.primaryKeys.size() < 2)
-    {
-      columns = columns.left(columns.length() - 2);
-    }
-    else
+    if (m_table.primaryKeys.size() > 1)
     {
       QString primaryKeyNames;
       for (const auto& primaryKeyId : m_table.primaryKeys)
       {
         primaryKeyNames += QString("'%1', ").arg(m_table.columns.at(primaryKeyId).name);
       }
-      primaryKeyNames = primaryKeyNames.left(primaryKeyNames.length() - 2);
-      columns += QString(" PRIMARY KEY(%1)").arg(primaryKeyNames);
+      cutTailingComma(primaryKeyNames);
+      columns += QString("PRIMARY KEY(%1), ").arg(primaryKeyNames);
+    }
+
+    if (!m_table.foreignKeyReferences.empty())
+    {
+      for (const auto& foreignKeyReference : m_table.foreignKeyReferences)
+      {
+        QString foreignKeyColNames;
+        QString parentKeyColNames;
+
+        const auto& parentTable = schema.getTables().at(foreignKeyReference.referenceTableId);
+
+        for (const auto& refKeyColumn : foreignKeyReference.mapReferenceParentColIdToChildColId)
+        {
+          foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
+          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first).name);
+        }
+        cutTailingComma(foreignKeyColNames);
+        cutTailingComma(parentKeyColNames);
+
+        QString onDeleteStr;
+        if (foreignKeyReference.onDeleteAction != Schema::ForeignKeyAction::NoAction)
+        {
+          onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyReference.onDeleteAction));
+        }
+
+        QString onUpdateStr;
+        if (foreignKeyReference.onUpdateAction != Schema::ForeignKeyAction::NoAction)
+        {
+          onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyReference.onUpdateAction));
+        }
+
+        columns += QString("FOREIGN KEY (%1) REFERENCES '%2'(%3)%4%5, ")
+          .arg(foreignKeyColNames).arg(parentTable.name).arg(parentKeyColNames)
+          .arg(onDeleteStr).arg(onUpdateStr);
+      }
+    }
+
+    if (columns.right(2) == ", ")
+    {
+      cutTailingComma(columns);
     }
     columns = columns.simplified();
 

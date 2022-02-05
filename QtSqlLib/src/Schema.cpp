@@ -57,9 +57,9 @@ void Schema::configureRelationships()
           QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
       }
 
-      const ForeignKeyReference foreignKeyReference { parentTableId, parentPrimaryKeyColIds,
-                                                      relationship.second.onUpdateAction,
-                                                      relationship.second.onDeleteAction };
+      ForeignKeyReference foreignKeyReference { parentTableId,
+                                                relationship.second.onUpdateAction,
+                                                relationship.second.onDeleteAction };
 
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
@@ -77,8 +77,10 @@ void Schema::configureRelationships()
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-        childTable.foreignKeyReferences[nextAvailableChildTableColid] = foreignKeyReference;
+        foreignKeyReference.mapReferenceParentColIdToChildColId[parentKeyColId] = nextAvailableChildTableColid;
       }
+
+      childTable.foreignKeyReferences.emplace_back(foreignKeyReference);
     }
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {
