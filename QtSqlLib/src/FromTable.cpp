@@ -18,8 +18,8 @@ FromTable& FromTable::select(Schema::Id columnId)
 {
   if (m_bColumnsSelected)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      "Invalid query: select() should only be called once.");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "select() should only be called once.");
   }
 
   m_columnIds.emplace_back(columnId);
@@ -35,8 +35,8 @@ FromTable& FromTable::where(Expr& expr)
 {
   if (m_whereExpr)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      "Invalid query: where() should only be called once.");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "where() should only be called once.");
   }
 
   m_whereExpr = std::make_unique<Expr>(std::move(expr));
@@ -45,11 +45,7 @@ FromTable& FromTable::where(Expr& expr)
 
 QueryDefines::SqlQuery FromTable::getSqlQuery(Schema& schema)
 {
-  if (schema.getTables().count(m_tableId) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      QString("Invalid query: Unknown table id %1").arg(m_tableId));
-  }
+  schema.throwIfTableIdNotExisting(m_tableId);
 
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -62,11 +58,7 @@ QueryDefines::SqlQuery FromTable::getSqlQuery(Schema& schema)
   {
     for (const auto& col : m_columnIds)
     {
-      if (table.columns.count(col) == 0)
-      {
-        throw DatabaseException(DatabaseException::Type::InvalidQuery,
-          QString("Invalid query: Unknown column id %1 for table id %2").arg(col).arg(m_tableId));
-      }
+      schema.throwIfColumnIdNotExisting(table, col);
 
       if (!selectColsStr.isEmpty())
       {

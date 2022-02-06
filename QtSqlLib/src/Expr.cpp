@@ -90,7 +90,7 @@ Expr& Expr::braces(Expr& nestedExpr)
 {
   if (m_nextExpectation != NextTermExpectation::ComparisonOrNestedExpr)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, "Nested Expression not expected");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Nested Expression not expected");
   }
 
   m_termElements.emplace_back(std::make_unique<NestedExpression>(nestedExpr));
@@ -103,12 +103,12 @@ QString Expr::toQString(Schema& schema, Schema::Id defaultTableId) const
 {
   if (m_termElements.size() == 0)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, "Invalid Expression: Expression must not be empty");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Expression must not be empty");
   }
 
   if (m_nextExpectation == NextTermExpectation::ComparisonOrNestedExpr)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, "Invalid Expression: Expression must not end with a logical operator");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Expression must not end with a logical operator");
   }
 
   QString result;
@@ -143,17 +143,12 @@ QString Expr::Comparison::toQString(Schema& schema, Schema::Id defaultTableId) c
     {
     case OperandType::Attribute:
     {
-      if (schema.getTables().count(defaultTableId) == 0)
-      {
-        throw DatabaseException(DatabaseException::Type::InvalidQuery, QString("Invalid Expression: Unknown table id %1").arg(defaultTableId));
-      }
+      schema.throwIfTableIdNotExisting(defaultTableId);
 
       const auto colId = operand.value.toUInt();
       const auto& table = schema.getTables().at(defaultTableId);
-      if (table.columns.count(colId) == 0)
-      {
-        throw DatabaseException(DatabaseException::Type::InvalidQuery, QString("Invalid Expression: Unknown column id %1 for table id %2").arg(colId).arg(defaultTableId));
-      }
+
+      schema.throwIfColumnIdNotExisting(table, colId);
 
       return QString("'%1'.%2").arg(table.name).arg(table.columns.at(colId).name);
     }
@@ -256,7 +251,7 @@ Expr& Expr::addComparison(std::unique_ptr<Comparison>&& comparison)
 {
   if (m_nextExpectation != NextTermExpectation::ComparisonOrNestedExpr)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, "Comparison not expected");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Comparison not expected");
   }
 
   m_termElements.emplace_back(std::move(comparison));
@@ -269,7 +264,7 @@ Expr& Expr::addLogic(std::unique_ptr<Logic>&& logic)
 {
   if (m_nextExpectation != NextTermExpectation::LogicalOperator)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, "Logical operator not expected");
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Logical operator not expected");
   }
 
   m_termElements.emplace_back(std::move(logic));

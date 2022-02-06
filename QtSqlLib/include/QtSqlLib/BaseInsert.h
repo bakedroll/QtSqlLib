@@ -15,15 +15,15 @@ public:
   BaseInsert(Schema::Id tableId);
   ~BaseInsert() override;
 
-protected:
-  QString getSqlQueryString(Schema& schema) const;
   void addColumnId(Schema::Id id);
-  void checkColumnIdExisting(Schema::Id id) const;
-  void checkTableExisting(Schema& schema) const;
-
   Schema::Id getTableId() const;
 
+protected:
+  QString getSqlQueryString(Schema& schema) const;
+
 private:
+  void throwIfColumnIdAlreadyExisting(Schema::Id id) const;
+
   Schema::Id m_tableId;
   std::vector<Schema::Id> m_columnIds;
 

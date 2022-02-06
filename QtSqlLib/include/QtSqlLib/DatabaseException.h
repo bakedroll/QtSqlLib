@@ -13,7 +13,9 @@ public:
   enum class Type
   {
     UnableToLoad,
-    InvalidQuery
+    InvalidId,
+    InvalidSyntax,
+    QueryError
   };
 
   DatabaseException(Type type, const QString& message);

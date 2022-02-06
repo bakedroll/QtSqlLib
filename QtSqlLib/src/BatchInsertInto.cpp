@@ -13,8 +13,6 @@ BatchInsertInto::~BatchInsertInto() = default;
 
 BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList& value)
 {
-  checkColumnIdExisting(columnId);
-
   addColumnId(columnId);
   m_values.emplace_back(value);
   return *this;

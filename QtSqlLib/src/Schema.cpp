@@ -25,7 +25,7 @@ void Schema::configureRelationships()
   {
     if (m_tables.count(tableId) == 0)
     {
-      throw DatabaseException(DatabaseException::Type::UnableToLoad,
+      throw DatabaseException(DatabaseException::Type::InvalidId,
         QString("Relationship with id %1 references an unknown table with id %2.").arg(relId).arg(tableId));
     }
   };
@@ -53,7 +53,7 @@ void Schema::configureRelationships()
 
       if (parentPrimaryKeyColIds.empty())
       {
-        throw DatabaseException(DatabaseException::Type::UnableToLoad,
+        throw DatabaseException(DatabaseException::Type::InvalidSyntax,
           QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
       }
 
@@ -125,6 +125,24 @@ void Schema::configureRelationships()
       m_tables[nextAvailableTableId] = linkTable;
       m_mapManyToManyRelationshipToLinkTableId[relationship.first] = nextAvailableTableId;
     }
+  }
+}
+
+void Schema::throwIfTableIdNotExisting(Id tableId) const
+{
+  if (m_tables.count(tableId) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Unknown table id: %1.").arg(tableId));
+  }
+}
+
+void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
+{
+  if (table.columns.count(colId) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Unknown column id %1 in table '%2'.").arg(colId).arg(table.name));
   }
 }
 

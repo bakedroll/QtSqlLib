@@ -16,25 +16,25 @@ TableConfigurator& SchemaConfigurator::configureTable(Schema::Id tableId, const 
 {
   if (m_schema.getTables().count(tableId) > 0)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Table with id %1 already exists.").arg(tableId));
   }
 
   if (tableName.isEmpty())
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Table name with id %1 must not be empty.").arg(tableId));
   }
 
   if (isTableNameExisting(tableName))
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Table with name '%1' already exists.").arg(tableName));
   }
 
   if (tableName.startsWith("sqlite_"))
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "Table name must not start with 'sqlite_'.");
   }
 
@@ -52,7 +52,7 @@ RelationshipConfigurator& SchemaConfigurator::configureRelationship(Schema::Id r
 {
   if (m_schema.getRelationships().count(relationshipId) > 0)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Relationship with id %1 already exists.").arg(relationshipId));
   }
 

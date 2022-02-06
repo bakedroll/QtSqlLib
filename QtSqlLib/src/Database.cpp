@@ -68,7 +68,7 @@ static void execSqlQueryForSchema(Schema& schema, QueryDefines::SqlQuery& query)
 
   if ((!isBatch && !query.qtQuery.exec()) || (isBatch && !query.qtQuery.execBatch()))
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
+    throw DatabaseException(DatabaseException::Type::QueryError,
       QString("Could not execute query: %1").arg(query.qtQuery.lastError().text()));
   }
 }
@@ -315,17 +315,15 @@ void Database::createOrMigrateTables(int currentVersion)
   {
     if (version == 1)
     {
-      QuerySequence sequence;
+      InsertInto query(s_versionTableid);
+      query.value(s_versionColId, targetVersion);
+
       for (const auto& table : m_schema.getTables())
       {
-        sequence.addQuery(std::make_unique<CreateTable>(table.second));
+        query.insertQuery(0, std::make_unique<CreateTable>(table.second));
       }
 
-      auto query = std::make_unique<InsertInto>(s_versionTableid);
-      query->value(s_versionColId, targetVersion);
-
-      sequence.addQuery(std::move(query));
-      execQuery(sequence);
+      execQuery(query);
     }
   }
 }

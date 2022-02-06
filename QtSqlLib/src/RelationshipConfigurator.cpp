@@ -20,7 +20,7 @@ RelationshipConfigurator& RelationshipConfigurator::onDelete(Schema::ForeignKeyA
 {
   if (m_bOnDeleteCalled)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("onDelete() should only be called once for a relationshio."));
   }
 
@@ -34,7 +34,7 @@ RelationshipConfigurator& RelationshipConfigurator::onUpdate(Schema::ForeignKeyA
 {
   if (m_bOnUpdateCalled)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("onUpdate() should only be called once for a relationshio."));
   }
 

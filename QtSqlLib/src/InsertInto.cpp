@@ -7,49 +7,60 @@
 namespace QtSqlLib
 {
 InsertInto::InsertInto(Schema::Id tableId)
-  : BaseInsert(tableId)
-  , m_returnIdMode(ReturnIdMode::Undefined)
+  : QuerySequence()
 {
+  addQuery(std::make_unique<QueryInsert>(tableId));
 }
 
 InsertInto::~InsertInto() = default;
 
 InsertInto& InsertInto::value(Schema::Id columnId, const QVariant& value)
 {
-  checkColumnIdExisting(columnId);
+  auto& queryInsert = dynamic_cast<QueryInsert&>(getQuery(0));
 
-  addColumnId(columnId);
-  m_values.emplace_back(value);
+  queryInsert.addColumnId(columnId);
+  queryInsert.values().emplace_back(value);
   return *this;
 }
 
 InsertInto& InsertInto::relatedEntity(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& entryIdsMap)
 {
-  if (m_relatedEntities.count(relationshipId) > 0)
+  auto& queryInsert = dynamic_cast<QueryInsert&>(getQuery(0));
+
+  if (queryInsert.relatedEntities().count(relationshipId) > 0)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      QString("Invalid insert query: More than one related entity of same relationship with id %1 specified.").arg(relationshipId));
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("More than one related entity of same relationship with id %1 specified.").arg(relationshipId));
   }
 
-  m_relatedEntities[relationshipId] = entryIdsMap;
+  queryInsert.relatedEntities()[relationshipId] = entryIdsMap;
   return *this;
 }
 
 InsertInto& InsertInto::returnIds()
 {
-  if (m_returnIdMode != ReturnIdMode::Undefined)
+  if (getNumQueries() > 1)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, 
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, 
       "returnId() can only be called once per query.");
   }
 
-  m_returnIdMode = ReturnIdMode::Yes;
+  auto& queryInsert = dynamic_cast<QueryInsert&>(getQuery(0));
+
+  addQuery(std::make_unique<QueryInsertedIds>(queryInsert.getTableId()));
   return *this;
 }
 
-QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
+InsertInto::QueryInsert::QueryInsert(Schema::Id tableId)
+  : BaseInsert(tableId)
 {
-  checkTableExisting(schema);
+}
+
+InsertInto::QueryInsert::~QueryInsert() = default;
+
+QueryDefines::SqlQuery InsertInto::QueryInsert::getSqlQuery(Schema& schema)
+{
+  schema.throwIfTableIdNotExisting(getTableId());
 
   const auto& table = schema.getTables().at(getTableId());
 
@@ -60,7 +71,7 @@ QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
   {
     if (relationships.count(relatedEntity.first) == 0)
     {
-      throw DatabaseException(DatabaseException::Type::InvalidQuery, 
+      throw DatabaseException(DatabaseException::Type::QueryError, 
         QString("No relationship found with with id %1.").arg(relatedEntity.first));
     }
 
@@ -70,9 +81,9 @@ QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
       ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == getTableId())) ||
       ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == getTableId())))
     {
-      throw DatabaseException(DatabaseException::Type::InvalidQuery, 
+      throw DatabaseException(DatabaseException::Type::QueryError, 
         QString("Direct related entity insertion not alowed for relation with id %1 to table with id %2.")
-          .arg(relatedEntity.first).arg(getTableId()));
+        .arg(relatedEntity.first).arg(getTableId()));
     }
 
     const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
@@ -83,7 +94,7 @@ QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
     {
       if (relatedEntity.second.count({ parentTableId, parentKeyCol }) == 0)
       {
-        throw DatabaseException(DatabaseException::Type::InvalidQuery,
+        throw DatabaseException(DatabaseException::Type::QueryError,
           QString("Missing related entity key %1.").arg(parentKeyCol));
       }
 
@@ -109,14 +120,28 @@ QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
   return { query, QueryDefines::QueryMode::Single };
 }
 
-QueryDefines::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery& query) const
+std::vector<QVariant>& InsertInto::QueryInsert::values()
 {
-  if (m_returnIdMode != ReturnIdMode::Yes)
-  {
-    return {};
-  }
+  return m_values;
+}
 
-  const auto& table = schema.getTables().at(getTableId());
+std::map<Schema::Id, QueryDefines::ColumnResultMap>& InsertInto::QueryInsert::relatedEntities()
+{
+  return m_relatedEntities;
+}
+
+InsertInto::QueryInsertedIds::QueryInsertedIds(Schema::Id tableId)
+  : IQuery()
+  , m_tableId(tableId)
+{
+}
+
+InsertInto::QueryInsertedIds::~QueryInsertedIds() = default;
+
+QueryDefines::SqlQuery InsertInto::QueryInsertedIds::getSqlQuery(Schema& schema)
+{
+  schema.throwIfTableIdNotExisting(m_tableId);
+  const auto& table = schema.getTables().at(m_tableId);
 
   QString keyColumns;
   for (const auto& primaryKey : table.primaryKeys)
@@ -125,12 +150,17 @@ QueryDefines::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery
   }
   keyColumns = keyColumns.left(keyColumns.length() - 2);
 
-  QSqlQuery lastIdQuery(QString("SELECT rowid, %1 FROM '%2' WHERE rowid = last_insert_rowid();")
-    .arg(keyColumns).arg(table.name));
+  return { QSqlQuery(QString("SELECT rowid, %1 FROM '%2' WHERE rowid = last_insert_rowid();")
+    .arg(keyColumns).arg(table.name)) };
+}
 
-  if (!lastIdQuery.exec() || !lastIdQuery.next())
+QueryDefines::QueryResults InsertInto::QueryInsertedIds::getQueryResults(Schema& schema, QSqlQuery& query) const
+{
+  const auto& table = schema.getTables().at(m_tableId);
+
+  if (!query.next())
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery, 
+    throw DatabaseException(DatabaseException::Type::QueryError, 
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
@@ -139,7 +169,7 @@ QueryDefines::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)
   {
-    resultsMap[{ getTableId(), primaryKey }] = lastIdQuery.value(currentValue);
+    resultsMap[{ m_tableId, primaryKey }] = query.value(currentValue);
     currentValue++;
   }
 

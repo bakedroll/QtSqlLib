@@ -18,25 +18,25 @@ TableConfigurator& TableConfigurator::column(Schema::Id columnId, const QString&
 {
   if (m_table.columns.count(columnId) > 0)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Column with id %1 already exists for table '%2'.").arg(columnId).arg(m_table.name));
   }
 
   if (columnName.isEmpty())
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Column name must not be empty for table '%1'.").arg(m_table.name));
   }
 
   if (isColumnNameExisting(columnName))
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Column with name '%1' already exists for table '%2'.").arg(columnName).arg(m_table.name));
   }
 
   if ((type == Schema::DataType::Varchar) && (varcharLength <= 0))
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Varchar length must greater that 0 for column '%1' of table '%2'.").arg(columnName).arg(m_table.name));
   }
 
@@ -61,13 +61,13 @@ TableConfigurator& TableConfigurator::primaryKey()
 
   if (m_table.primaryKeys.count(colId) > 0)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("primaryKey() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
   if (!m_table.primaryKeys.empty())
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Only one column of a table can be the primary, see table '%1'.").arg(m_table.name));
   }
 
@@ -83,7 +83,7 @@ TableConfigurator& TableConfigurator::autoIncrement()
 
   if (col.bIsAutoIncrement)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("autoIncrement() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
@@ -98,7 +98,7 @@ TableConfigurator& TableConfigurator::notNull()
 
   if (col.bIsNotNull)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("notNull() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
   }
 
@@ -110,7 +110,7 @@ TableConfigurator& TableConfigurator::primaryKeys(Schema::Id columnId)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
@@ -140,7 +140,7 @@ void TableConfigurator::checkColumn() const
 {
   if (!m_lastColumnId.has_value())
   {
-    throw DatabaseException(DatabaseException::Type::UnableToLoad,
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "No column defined");
   }
 }

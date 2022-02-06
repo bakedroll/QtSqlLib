@@ -4,7 +4,6 @@
 
 #include <map>
 #include <set>
-#include <vector>
 
 namespace QtSqlLib
 {
@@ -80,6 +79,9 @@ public:
   std::map<Id, Relationship>& getRelationships();
 
   void configureRelationships();
+
+  void throwIfTableIdNotExisting(Id tableId) const;
+  void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
 
 private:
   std::map<Id, Table> m_tables;
