@@ -2,6 +2,8 @@
 
 #include "QtSqlLib/DatabaseException.h"
 
+#include <QSqlDriver>
+
 namespace QtSqlLib
 {
 InsertInto::InsertInto(Schema::Id tableId)
@@ -21,7 +23,7 @@ InsertInto& InsertInto::value(Schema::Id columnId, const QVariant& value)
   return *this;
 }
 
-InsertInto& InsertInto::relatedEntity(Schema::Id relationshipId, const ColumnResultMap& entryIdsMap)
+InsertInto& InsertInto::relatedEntity(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& entryIdsMap)
 {
   if (m_relatedEntities.count(relationshipId) > 0)
   {
@@ -45,7 +47,7 @@ InsertInto& InsertInto::returnIds()
   return *this;
 }
 
-QSqlQuery InsertInto::getSqlQuery(Schema& schema)
+QueryDefines::SqlQuery InsertInto::getSqlQuery(Schema& schema)
 {
   checkTableExisting(schema);
 
@@ -81,7 +83,7 @@ QSqlQuery InsertInto::getSqlQuery(Schema& schema)
     {
       if (relatedEntity.second.count({ parentTableId, parentKeyCol }) == 0)
       {
-        throw DatabaseException(DatabaseException::Type::InvalidQuery, 
+        throw DatabaseException(DatabaseException::Type::InvalidQuery,
           QString("Missing related entity key %1.").arg(parentKeyCol));
       }
 
@@ -104,10 +106,10 @@ QSqlQuery InsertInto::getSqlQuery(Schema& schema)
     query.addBindValue(value);
   }
 
-  return query;
+  return { query, QueryDefines::QueryMode::Single };
 }
 
-IQuery::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery& query) const
+QueryDefines::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
   if (m_returnIdMode != ReturnIdMode::Yes)
   {
@@ -126,14 +128,13 @@ IQuery::QueryResults InsertInto::getQueryResults(Schema& schema, QSqlQuery& quer
   QSqlQuery lastIdQuery(QString("SELECT rowid, %1 FROM '%2' WHERE rowid = last_insert_rowid();")
     .arg(keyColumns).arg(table.name));
 
-  lastIdQuery.exec();
-  if (!lastIdQuery.next())
+  if (!lastIdQuery.exec() || !lastIdQuery.next())
   {
     throw DatabaseException(DatabaseException::Type::InvalidQuery, 
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  ColumnResultMap resultsMap;
+  QueryDefines::ColumnResultMap resultsMap;
 
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)

@@ -16,12 +16,12 @@ public:
   ~InsertInto() override;
 
   InsertInto& value(Schema::Id columnId, const QVariant& value);
-  InsertInto& relatedEntity(Schema::Id relationshipId, const ColumnResultMap& entryIdsMap);
+  InsertInto& relatedEntity(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& entryIdsMap);
 
   InsertInto& returnIds();
 
-  QSqlQuery getSqlQuery(Schema& schema) override;
-  QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
+  QueryDefines::QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:
   enum class ReturnIdMode
@@ -32,7 +32,7 @@ private:
   };
 
   std::vector<QVariant> m_values;
-  std::map<Schema::Id, ColumnResultMap> m_relatedEntities;
+  std::map<Schema::Id, QueryDefines::ColumnResultMap> m_relatedEntities;
 
   ReturnIdMode m_returnIdMode;
 

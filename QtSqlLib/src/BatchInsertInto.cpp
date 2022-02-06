@@ -20,7 +20,7 @@ BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList
   return *this;
 }
 
-QSqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
+QueryDefines::SqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
 {
   QSqlQuery query;
   const auto queryString = getSqlQueryString(schema);
@@ -32,11 +32,7 @@ QSqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
     query.addBindValue(value);
   }
 
-  return query;
+  return { query, QueryDefines::QueryMode::Batch };
 }
 
-bool BatchInsertInto::isBatchExecution() const
-{
-  return true;
-}
 }

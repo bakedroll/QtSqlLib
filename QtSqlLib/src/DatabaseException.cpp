@@ -1,5 +1,7 @@
 #include "QtSqlLib/DatabaseException.h"
 
+#include <QSqlDatabase>
+
 namespace QtSqlLib
 {
 
@@ -7,6 +9,10 @@ DatabaseException::DatabaseException(Type type, const QString& message)
   : std::exception(message.toStdString().c_str())
   , m_type(type)
 {
+  if (m_type == Type::InvalidQuery)
+  {
+    QSqlDatabase::database().rollback();
+  }
 }
 
 DatabaseException::~DatabaseException() = default;

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "QtSqlLib/IQuery.h"
+#include <QtSqlLib/IQuery.h>
+#include <QtSqlLib/IQuerySequence.hpp>
 
 #include <vector>
 
@@ -16,7 +17,8 @@ public:
   virtual void initialize(const QString& filename) = 0;
   virtual void close() = 0;
 
-  virtual IQuery::QueryResults execQuery(IQuery& query) = 0;
+  virtual QueryDefines::QueryResults execQuery(IQuery& query) = 0;
+  virtual QueryDefines::QueryResults execQuery(IQuerySequence& query) = 0;
 
 };
 

@@ -3,7 +3,7 @@
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/FromTable.h"
 #include "QtSqlLib/InsertInto.h"
-#include "QtSqlLib/IQuery.h"
+#include "QtSqlLib/QuerySequence.hpp"
 
 #include <utilsLib/Utils.h>
 
@@ -62,6 +62,25 @@ static QString getActionString(Schema::ForeignKeyAction action)
   return "";
 }
 
+static void execSqlQueryForSchema(Schema& schema, QueryDefines::SqlQuery& query) 
+{
+  const auto isBatch = (query.mode == QueryDefines::QueryMode::Batch);
+
+  if ((!isBatch && !query.qtQuery.exec()) || (isBatch && !query.qtQuery.execBatch()))
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidQuery,
+      QString("Could not execute query: %1").arg(query.qtQuery.lastError().text()));
+  }
+}
+
+static QueryDefines::QueryResults execQueryForSchema(Schema& schema, IQuery& query)
+{
+  auto q = query.getSqlQuery(schema);
+  execSqlQueryForSchema(schema, q);
+
+  return query.getQueryResults(schema, q.qtQuery);
+}
+
 class CreateTable : public IQuery
 {
 public:
@@ -72,7 +91,7 @@ public:
 
   ~CreateTable() override = default;
 
-  QSqlQuery getSqlQuery(Schema& schema) override
+  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -161,7 +180,7 @@ public:
     QSqlQuery query;
     query.prepare(queryString);
 
-    return query;
+    return { query };
   }
 
 private:
@@ -207,23 +226,38 @@ void Database::close()
   m_db.close();
 }
 
-IQuery::QueryResults Database::execQuery(IQuery& query)
+QueryDefines::QueryResults Database::execQuery(IQuery& query)
 {
-  return execQuery(m_schema, query);
+  return execQueryForSchema(m_schema, query);
 }
 
-IQuery::QueryResults Database::execQuery(Schema& schema, IQuery& query) const
+QueryDefines::QueryResults Database::execQuery(IQuerySequence& query)
 {
-  auto q = query.getSqlQuery(schema);
-  const auto isBatch = query.isBatchExecution();
+  QueryDefines::QueryResults results;
+  const auto numQueries = query.getNumQueries();
 
-  if ((!isBatch && !q.exec()) || (isBatch && !q.execBatch()))
+  if (numQueries > 1)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidQuery,
-      QString("Could not execute query: %1").arg(q.lastError().text()));
+    QSqlDatabase::database().transaction();
   }
 
-  return query.getQueryResults(schema, q);
+  for (auto i=0; i<numQueries; i++)
+  {
+    auto q = query.getSqlQuery(i, m_schema);
+    execSqlQueryForSchema(m_schema, q);
+  
+    if (i == (numQueries - 1))
+    {
+      results = query.getQueryResults(i, m_schema, q.qtQuery);
+    }
+  }
+
+  if (numQueries > 1)
+  {
+    QSqlDatabase::database().commit();
+  }
+
+  return results;
 }
 
 void Database::loadDatabaseFile(const QString& filename)
@@ -281,12 +315,17 @@ void Database::createOrMigrateTables(int currentVersion)
   {
     if (version == 1)
     {
+      QuerySequence sequence;
       for (const auto& table : m_schema.getTables())
       {
-        execQuery(CreateTable(table.second));
+        sequence.addQuery(std::make_unique<CreateTable>(table.second));
       }
 
-      execQuery(InsertInto(s_versionTableid).value(s_versionColId, targetVersion));
+      auto query = std::make_unique<InsertInto>(s_versionTableid);
+      query->value(s_versionColId, targetVersion);
+
+      sequence.addQuery(std::move(query));
+      execQuery(sequence);
     }
   }
 }
@@ -305,7 +344,7 @@ bool Database::isVersionTableExisting() const
   table.columns[s_sqliteMasterTypeColId].name = "type";
   table.columns[s_sqliteMasterNameColId].name = "name";
 
-  const auto results = execQuery(sqliteMasterSchema,
+  const auto results = execQueryForSchema(sqliteMasterSchema,
     FromTable(s_sqliteMasterTableId)
       .select(s_sqliteMasterNameColId)
       .where(Expr()

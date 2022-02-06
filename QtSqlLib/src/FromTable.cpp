@@ -43,7 +43,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-QSqlQuery FromTable::getSqlQuery(Schema& schema)
+QueryDefines::SqlQuery FromTable::getSqlQuery(Schema& schema)
 {
   if (schema.getTables().count(m_tableId) == 0)
   {
@@ -86,16 +86,16 @@ QSqlQuery FromTable::getSqlQuery(Schema& schema)
 
   queryStr.append(";");
 
-  return QSqlQuery(queryStr);
+  return { QSqlQuery(queryStr) };
 }
 
-IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
+QueryDefines::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
-  QueryResults results;
+  QueryDefines::QueryResults results;
 
   while (query.next())
   {
-    ColumnResultMap resultMap;
+    QueryDefines::ColumnResultMap resultMap;
 
     auto i = 0;
     for (const auto& col : m_columnIds)

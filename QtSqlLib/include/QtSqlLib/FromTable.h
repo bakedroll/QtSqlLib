@@ -30,8 +30,8 @@ public:
     return *this;
   }
 
-  QSqlQuery getSqlQuery(Schema& schema) override;
-  QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
+  QueryDefines::QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:
   Schema::Id m_tableId;

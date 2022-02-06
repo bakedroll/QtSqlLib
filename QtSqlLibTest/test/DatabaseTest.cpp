@@ -377,7 +377,7 @@ TEST_F(DatabaseTest, expressionThrowsTest)
   EXPECT_THROW(assembleExpr4(), DatabaseException);
 }
 
-TEST_F(DatabaseTest, oneToManyRelationshipTest)
+TEST_F(DatabaseTest, relationshipTest)
 {
   m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
   {
