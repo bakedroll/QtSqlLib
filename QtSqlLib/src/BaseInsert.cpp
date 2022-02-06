@@ -15,7 +15,30 @@ BaseInsert::BaseInsert(Schema::Id tableId)
 
 BaseInsert::~BaseInsert() = default;
 
-QString BaseInsert::getSqlQueryString(Schema& schema) const
+void BaseInsert::addColumnId(Schema::Id id)
+{
+  throwIfColumnIdAlreadyExisting(id);
+  m_columnIds.emplace_back(id);
+}
+
+void BaseInsert::throwIfColumnIdAlreadyExisting(Schema::Id id) const
+{
+  for (const auto& cid : m_columnIds)
+  {
+    if (cid == id)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidId,
+        QString("More than one column with id %1 specified.").arg(id));
+    }
+  }
+}
+
+Schema::Id BaseInsert::getTableId() const
+{
+  return m_tableId;
+}
+
+QSqlQuery BaseInsert::getQSqlQuery(Schema& schema) const
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 
@@ -38,30 +61,12 @@ QString BaseInsert::getSqlQueryString(Schema& schema) const
   const auto queryString = QString("INSERT INTO '%1' (%2) VALUES (%3);").arg(table.name).arg(columnsString).arg(valuesString);
   UTILS_LOG_DEBUG(queryString.toStdString().c_str());
 
-  return queryString;
-}
+  QSqlQuery query;
+  query.prepare(queryString);
 
-void BaseInsert::addColumnId(Schema::Id id)
-{
-  throwIfColumnIdAlreadyExisting(id);
-  m_columnIds.emplace_back(id);
-}
+  bindQueryValues(query);
 
-void BaseInsert::throwIfColumnIdAlreadyExisting(Schema::Id id) const
-{
-  for (const auto& cid : m_columnIds)
-  {
-    if (cid == id)
-    {
-      throw DatabaseException(DatabaseException::Type::InvalidId,
-        QString("More than one column with id %1 specified.").arg(id));
-    }
-  }
-}
-
-Schema::Id BaseInsert::getTableId() const
-{
-  return m_tableId;
+  return query;
 }
 
 }

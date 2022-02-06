@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/IQuery.h>
-#include <QtSqlLib/IQuerySequence.hpp>
+#include <QtSqlLib/IQuerySequence.h>
 
 #include <memory>
 #include <vector>
@@ -18,8 +18,6 @@ public:
   QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const  override;
 
   void addQuery(std::unique_ptr<IQuery> query);
-  void insertQuery(int pos, std::unique_ptr<IQuery> query);
-
   IQuery& getQuery(int index);
 
 private:

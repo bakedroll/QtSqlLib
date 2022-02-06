@@ -2,7 +2,7 @@
 
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
-#include <QtSqlLib/InsertInto.h>
+#include <QtSqlLib/InsertIntoExt.h>
 #include <QtSqlLib/BatchInsertInto.h>
 #include <QtSqlLib/FromTable.h>
 #include <QtSqlLib/Expr.h>
@@ -128,7 +128,7 @@ TEST_F(DatabaseTest, createTablesInsertAndQueryValues)
 
   m_db->initialize(s_dbFilename);
 
-  m_db->execQuery(InsertInto(underlying(TIds::Table1))
+  m_db->execQuery(InsertIntoExt(underlying(TIds::Table1))
     .value(underlying(T1Cols::Text), "test")
     .value(underlying(T1Cols::Mandatory), 0.5));
 
@@ -402,34 +402,34 @@ TEST_F(DatabaseTest, relationshipTest)
 
   m_db->initialize(s_dbFilename);
 
-  const auto studentJohn = m_db->execQuery(InsertInto(underlying(TIds::Students))
+  const auto studentJohn = m_db->execQuery(InsertIntoExt(underlying(TIds::Students))
     .value(underlying(StudentsCols::Name), "John")
     .returnIds());
 
-  const auto studentMary = m_db->execQuery(InsertInto(underlying(TIds::Students))
+  const auto studentMary = m_db->execQuery(InsertIntoExt(underlying(TIds::Students))
     .value(underlying(StudentsCols::Name), "Mary")
     .returnIds());
 
-  const auto projectGameProgramming = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+  const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Game Programming")
     .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
     .returnIds());
 
-  const auto projectComputerVision = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+  const auto projectComputerVision = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Computer Vision")
     .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
     .returnIds());
 
-  const auto projectMachineLearning = m_db->execQuery(InsertInto(underlying(TIds::Projects))
+  const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Machine Learning")
     .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentMary[0])
     .returnIds());
 
-  const auto lectureMath = m_db->execQuery(InsertInto(underlying(TIds::Lectures))
+  const auto lectureMath = m_db->execQuery(InsertIntoExt(underlying(TIds::Lectures))
     .value(underlying(LecturesCols::Topic), "Math")
     .returnIds());
 
-  const auto lectureProgramming = m_db->execQuery(InsertInto(underlying(TIds::Lectures))
+  const auto lectureProgramming = m_db->execQuery(InsertIntoExt(underlying(TIds::Lectures))
     .value(underlying(LecturesCols::Topic), "Programming")
     .returnIds());
 }
@@ -446,7 +446,7 @@ TEST_F(DatabaseTest, multiplePrimaryKeysTable)
 
   m_db->initialize(s_dbFilename);
 
-  const auto results = m_db->execQuery(InsertInto(underlying(TIds::Table1))
+  const auto results = m_db->execQuery(InsertIntoExt(underlying(TIds::Table1))
     .value(underlying(T1Cols::Id), 1)
     .value(underlying(T1Cols::Text), "text")
     .returnIds());

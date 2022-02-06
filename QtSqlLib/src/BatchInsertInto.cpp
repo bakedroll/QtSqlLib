@@ -1,7 +1,5 @@
 #include "QtSqlLib/BatchInsertInto.h"
 
-#include "QtSqlLib/DatabaseException.h"
-
 namespace QtSqlLib
 {
 BatchInsertInto::BatchInsertInto(Schema::Id tableId)
@@ -20,17 +18,15 @@ BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList
 
 QueryDefines::SqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
 {
-  QSqlQuery query;
-  const auto queryString = getSqlQueryString(schema);
+  return { getQSqlQuery(schema), QueryDefines::QueryMode::Batch };
+}
 
-  query.prepare(queryString);
-
+void BatchInsertInto::bindQueryValues(QSqlQuery& query) const
+{
   for (const auto& value : m_values)
   {
     query.addBindValue(value);
   }
-
-  return { query, QueryDefines::QueryMode::Batch };
 }
 
 }

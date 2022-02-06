@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/Schema.h>
-#include <QtSqlLib/QueryDefines.hpp>
+#include <QtSqlLib/QueryDefines.h>
 
 #include <QSqlQuery>
 
@@ -19,6 +19,7 @@ public:
 
   virtual int getNumQueries() const = 0;
 
+  virtual void prepare(Schema& schema) {}
   virtual QueryDefines::SqlQuery getSqlQuery(int num, Schema& schema) = 0;
   virtual QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const { return {}; }
 

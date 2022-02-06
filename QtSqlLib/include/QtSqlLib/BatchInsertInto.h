@@ -19,6 +19,9 @@ public:
 
   QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
 
+protected:
+  void bindQueryValues(QSqlQuery& query) const override;
+
 private:
   std::vector<QVariantList> m_values;
 

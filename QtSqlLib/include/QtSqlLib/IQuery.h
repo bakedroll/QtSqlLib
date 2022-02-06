@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/Schema.h>
-#include <QtSqlLib/QueryDefines.hpp>
+#include <QtSqlLib/QueryDefines.h>
 
 #include <QSqlQuery>
 

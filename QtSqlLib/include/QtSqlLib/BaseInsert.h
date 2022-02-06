@@ -19,7 +19,8 @@ public:
   Schema::Id getTableId() const;
 
 protected:
-  QString getSqlQueryString(Schema& schema) const;
+  QSqlQuery getQSqlQuery(Schema& schema) const;
+  virtual void bindQueryValues(QSqlQuery& query) const = 0;
 
 private:
   void throwIfColumnIdAlreadyExisting(Schema::Id id) const;

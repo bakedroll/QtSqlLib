@@ -3,7 +3,7 @@
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/FromTable.h"
 #include "QtSqlLib/InsertInto.h"
-#include "QtSqlLib/QuerySequence.hpp"
+#include "QtSqlLib/QuerySequence.h"
 
 #include <utilsLib/Utils.h>
 
@@ -236,6 +236,8 @@ QueryDefines::QueryResults Database::execQuery(IQuerySequence& query)
   QueryDefines::QueryResults results;
   const auto numQueries = query.getNumQueries();
 
+  query.prepare(m_schema);
+
   if (numQueries > 1)
   {
     QSqlDatabase::database().transaction();
@@ -315,15 +317,18 @@ void Database::createOrMigrateTables(int currentVersion)
   {
     if (version == 1)
     {
-      InsertInto query(s_versionTableid);
-      query.value(s_versionColId, targetVersion);
-
+      QuerySequence sequence;
       for (const auto& table : m_schema.getTables())
       {
-        query.insertQuery(0, std::make_unique<CreateTable>(table.second));
+        sequence.addQuery(std::make_unique<CreateTable>(table.second));
       }
 
-      execQuery(query);
+      auto query = std::make_unique<InsertInto>(s_versionTableid);
+      query->value(s_versionColId, targetVersion);
+
+      sequence.addQuery(std::move(query));
+
+      execQuery(sequence);
     }
   }
 }

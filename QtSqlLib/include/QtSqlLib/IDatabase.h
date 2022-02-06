@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/IQuery.h>
-#include <QtSqlLib/IQuerySequence.hpp>
+#include <QtSqlLib/IQuerySequence.h>
 
 #include <vector>
 

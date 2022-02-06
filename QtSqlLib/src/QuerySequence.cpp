@@ -1,4 +1,4 @@
-#include "QtSqlLib/QuerySequence.hpp"
+#include "QtSqlLib/QuerySequence.h"
 
 namespace QtSqlLib
 {
@@ -21,11 +21,6 @@ QueryDefines::QueryResults QuerySequence::getQueryResults(int num, Schema& schem
 void QuerySequence::addQuery(std::unique_ptr<IQuery> query)
 {
   m_queries.emplace_back(std::move(query));
-}
-
-void QuerySequence::insertQuery(int pos, std::unique_ptr<IQuery> query)
-{
-  m_queries.insert(m_queries.begin() + pos, std::move(query));
 }
 
 IQuery& QuerySequence::getQuery(int index)
