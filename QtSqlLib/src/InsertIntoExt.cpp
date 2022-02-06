@@ -21,15 +21,15 @@ InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::relatedEntity(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& entryIdsMap)
+InsertIntoExt& InsertIntoExt::linkTuple(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& tupleIdsMap)
 {
-  if (m_relatedEntities.count(relationshipId) > 0)
+  if (m_linkedTuple.count(relationshipId) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("More than one related entity of same relationship with id %1 specified.").arg(relationshipId));
+      QString("More than one linked tuple of same relationship with id %1 specified.").arg(relationshipId));
   }
-
-  m_relatedEntities[relationshipId] = entryIdsMap;
+  
+  m_linkedTuple[relationshipId] = tupleIdsMap;
   return *this;
 }
 
@@ -59,39 +59,39 @@ void InsertIntoExt::prepare(Schema& schema)
   std::vector<QVariant> foreignKeyValues;
 
   const auto& relationships = schema.getRelationships();
-  for (const auto& relatedEntity : m_relatedEntities)
+  for (const auto& linkedTuple : m_linkedTuple)
   {
-    if (relationships.count(relatedEntity.first) == 0)
+    if (relationships.count(linkedTuple.first) == 0)
     {
       throw DatabaseException(DatabaseException::Type::QueryError, 
-        QString("No relationship found with with id %1.").arg(relatedEntity.first));
+        QString("No relationship found with with id %1.").arg(linkedTuple.first));
     }
 
-    const auto& relationship = relationships.at(relatedEntity.first);
+    const auto& relationship = relationships.at(linkedTuple.first);
 
     if ((relationship.type == Schema::RelationshipType::ManyToMany) ||
       ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == tableId)) ||
       ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == tableId)))
     {
       throw DatabaseException(DatabaseException::Type::QueryError, 
-        QString("Direct related entity insertion not alowed for relation with id %1 to table with id %2.")
-        .arg(relatedEntity.first).arg(tableId));
+        QString("Direct linking to related tuple not allowed for relationship with id %1 to table with id %2.")
+        .arg(linkedTuple.first).arg(tableId));
     }
 
     const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
     const auto& parentTable = schema.getTables().at(parentTableId);
 
-    const auto& foreignKeyReferences = table.mapRelationshioToForeignKeyReferences.at(relatedEntity.first);
+    const auto& foreignKeyReferences = table.mapRelationshioToForeignKeyReferences.at(linkedTuple.first);
     for (const auto& parentKeyCol : parentTable.primaryKeys)
     {
-      if (relatedEntity.second.count({ parentTableId, parentKeyCol }) == 0)
+      if (linkedTuple.second.count({ parentTableId, parentKeyCol }) == 0)
       {
         throw DatabaseException(DatabaseException::Type::QueryError,
-          QString("Missing related entity key %1.").arg(parentKeyCol));
+          QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
       }
 
       queryInsert.addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at(parentKeyCol));
-      foreignKeyValues.emplace_back(relatedEntity.second.at({ parentTableId, parentKeyCol }));
+      foreignKeyValues.emplace_back(linkedTuple.second.at({ parentTableId, parentKeyCol }));
     }
   }
 

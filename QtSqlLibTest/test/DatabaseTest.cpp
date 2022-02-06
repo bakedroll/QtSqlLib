@@ -441,17 +441,17 @@ TEST_F(DatabaseTest, relationshipTest)
 
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Game Programming")
-    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
+    .linkTuple(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
     .returnIds());
 
   const auto projectComputerVision = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Computer Vision")
-    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
+    .linkTuple(underlying(Rs::RelationshipStudentsProjects), studentJohn[0])
     .returnIds());
 
   const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(underlying(TIds::Projects))
     .value(underlying(ProjectsCols::Title), "Machine Learning")
-    .relatedEntity(underlying(Rs::RelationshipStudentsProjects), studentMary[0])
+    .linkTuple(underlying(Rs::RelationshipStudentsProjects), studentMary[0])
     .returnIds());
 
   const auto lectureMath = m_db->execQuery(InsertIntoExt(underlying(TIds::Lectures))
