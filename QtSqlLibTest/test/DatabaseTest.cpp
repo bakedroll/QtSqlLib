@@ -6,6 +6,7 @@
 #include <QtSqlLib/BatchInsertInto.h>
 #include <QtSqlLib/FromTable.h>
 #include <QtSqlLib/Expr.h>
+#include <QtSqlLib/UpdateTable.h>
 
 #include <utilsLib/Utils.h>
 
@@ -375,6 +376,34 @@ TEST_F(DatabaseTest, expressionThrowsTest)
   EXPECT_THROW(assembleExpr2(), DatabaseException);
   EXPECT_THROW(assembleExpr3(), DatabaseException);
   EXPECT_THROW(assembleExpr4(), DatabaseException);
+}
+
+TEST_F(DatabaseTest, updateTableTest)
+{
+  m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+  {
+    configurator.configureTable(underlying(TIds::Table1), "table1")
+      .column(underlying(T1Cols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+      .column(underlying(T1Cols::Text), "text", DataType::Varchar, 128)
+      .column(underlying(T1Cols::Mandatory), "mandatory", DataType::Integer);
+  });
+
+  m_db->initialize(s_dbFilename);
+
+  m_db->execQuery(BatchInsertInto(underlying(TIds::Table1))
+    .values(underlying(T1Cols::Text), QVariantList() << "unchanged" << "unchanged" << "unchanged")
+    .values(underlying(T1Cols::Mandatory), QVariantList() << 1 << 2 << 3));
+
+  m_db->execQuery(UpdateTable(underlying(TIds::Table1))
+    .set(underlying(T1Cols::Text), "updated")
+    .where(Expr().equal(underlying(T1Cols::Mandatory), QVariant(2))));
+
+  const auto results = m_db->execQuery(FromTable(underlying(TIds::Table1))
+    .select(underlying(T1Cols::Text), underlying(T1Cols::Mandatory)));
+
+  EXPECT_EQ(results[0].at({ underlying(TIds::Table1), underlying(T1Cols::Text) }).toString(), "unchanged");
+  EXPECT_EQ(results[1].at({ underlying(TIds::Table1), underlying(T1Cols::Text) }).toString(), "updated");
+  EXPECT_EQ(results[2].at({ underlying(TIds::Table1), underlying(T1Cols::Text) }).toString(), "unchanged");
 }
 
 TEST_F(DatabaseTest, relationshipTest)
