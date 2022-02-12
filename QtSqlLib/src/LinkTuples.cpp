@@ -2,6 +2,7 @@
 
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/UpdateTable.h"
+#include "QtSqlLib/BatchInsertInto.h"
 
 namespace QtSqlLib
 {
@@ -108,7 +109,7 @@ void LinkTuples::prepare(Schema& schema)
       for (const auto& primaryKeyId : idsToInsert)
       {
         const auto parentRefColId = primaryKeyId.first.second;
-        const auto childColId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at(parentRefColId);
+        const auto childColId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at({ parentTableId, parentRefColId });
 
         updateQuery->set(childColId, primaryKeyId.second);
       }
@@ -130,8 +131,36 @@ void LinkTuples::prepare(Schema& schema)
   else
   {
     const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
+    const auto& linkTable = schema.getTables().at(linkTableId);
+    const auto& foreignKeyRefs = linkTable.mapRelationshioToForeignKeyReferences.at(m_relationshipId);
 
+    std::map<Schema::Id, QVariantList> columnValuesMap;
+
+    const auto appendValues = [&columnValuesMap, &foreignKeyRefs](const Schema::TableColumnValuesMap& values)
+    {
+      for (const auto& refColId : values)
+      {
+        const auto& colId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at(refColId.first);
+        columnValuesMap[colId].append(refColId.second);
+      }
+    };
+
+    for (const auto& toRowIds : m_toRowIdsList)
+    {
+      appendValues(m_fromRowIds);
+      appendValues(toRowIds);
+    }
+
+    auto batchInsertQuery = std::make_unique<BatchInsertInto>(linkTableId);
+    for (const auto& values : columnValuesMap)
+    {
+      batchInsertQuery->values(values.first, values.second);
+    }
+
+    addQuery(std::move(batchInsertQuery));
   }
+
+  QuerySequence::prepare(schema);
 }
 
 LinkTuples::LinkedTableIds LinkTuples::validateAndGetLinkedTableIds(Schema& schema)

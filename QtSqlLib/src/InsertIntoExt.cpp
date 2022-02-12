@@ -85,12 +85,14 @@ void InsertIntoExt::prepare(Schema& schema)
           QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
       }
 
-      queryInsert.addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at(parentKeyCol));
+      queryInsert.addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at({ parentTableId, parentKeyCol }));
       foreignKeyValues.emplace_back(linkedTuple.second.at({ parentTableId, parentKeyCol }));
     }
   }
 
   queryInsert.setForeignKeyValues(foreignKeyValues);
+
+  QuerySequence::prepare(schema);
 }
 
 InsertIntoExt::InsertIntoReferences::InsertIntoReferences(Schema::Id tableId)

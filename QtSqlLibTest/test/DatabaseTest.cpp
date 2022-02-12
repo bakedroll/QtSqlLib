@@ -477,9 +477,11 @@ TEST_F(DatabaseTest, relationshipTest)
   //  .fromOne(studentJohn[0])
   //  .toOne(lectureMath[0]));
 
-  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-    .fromOne(studentJohn[0])
-    .toMany({ lectureMath[0], lectureProgramming[0] }));
+
+
+  //m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+  //  .fromOne(studentJohn[0])
+  //  .toMany({ lectureMath[0], lectureProgramming[0] }));
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
@@ -510,5 +512,54 @@ TEST_F(DatabaseTest, multiplePrimaryKeysTable)
   EXPECT_EQ(resultId.toLongLong(), 1);
   EXPECT_EQ(resultText.toString(), "text");
 }
+
+TEST_F(DatabaseTest, nestedQuerySequence)
+{
+  static auto currentQuery = 0;
+
+  class DummyQuery : public IQuery
+  {
+  public:
+    DummyQuery(int num) : m_num(num)
+    {
+    }
+
+    QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
+    {
+      EXPECT_EQ(currentQuery, m_num);
+      currentQuery++;
+      return { QSqlQuery(), QueryDefines::QueryMode::Single };
+    }
+
+  private:
+    int m_num;
+  };
+
+  auto nestedSeq2 = std::make_unique<QuerySequence>();
+  nestedSeq2->addQuery(std::make_unique<DummyQuery>(3));
+  nestedSeq2->addQuery(std::make_unique<DummyQuery>(4));
+
+  auto nestedSeq1 = std::make_unique<QuerySequence>();
+  nestedSeq1->addQuery(std::make_unique<DummyQuery>(1));
+  nestedSeq1->addQuery(std::make_unique<DummyQuery>(2));
+  nestedSeq1->addQuery(std::move(nestedSeq2));
+  nestedSeq1->addQuery(std::make_unique<DummyQuery>(5));
+
+  QuerySequence seq;
+  seq.addQuery(std::make_unique<DummyQuery>(0));
+  seq.addQuery(std::move(nestedSeq1));
+
+  seq.addQuery(std::make_unique<DummyQuery>(6));
+
+  Schema s;
+  seq.prepare(s);
+
+  const auto num = seq.getNumQueries();
+  for (auto i=0; i<num; i++)
+  {
+    seq.getSqlQuery(i, s);
+  }
+}
+
 
 // TODO: foreignKeys() test

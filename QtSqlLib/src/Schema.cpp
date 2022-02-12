@@ -85,7 +85,7 @@ void Schema::configureRelationships()
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-        foreignKeyReference.mapReferenceParentColIdToChildColId[parentKeyColId] = nextAvailableChildTableColid;
+        foreignKeyReference.mapReferenceParentColIdToChildColId[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
       }
 
       childTable.mapRelationshioToForeignKeyReferences[relationship.first] = foreignKeyReference;
@@ -111,7 +111,7 @@ void Schema::configureRelationships()
           col.name = QString("%1_%2").arg(refTable.name).arg(refCol.name);
           col.type = refCol.type;
 
-          foreignKeyReference.mapReferenceParentColIdToChildColId[refColId] = currentColId;
+          foreignKeyReference.mapReferenceParentColIdToChildColId[{ refTableId, refColId }] = currentColId;
           linkTable.columns[currentColId] = col;
           linkTable.primaryKeys.insert(currentColId);
 

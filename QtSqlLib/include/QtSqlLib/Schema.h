@@ -47,7 +47,7 @@ public:
     Id referenceTableId = 0;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
-    std::map<Id, Id> mapReferenceParentColIdToChildColId;
+    std::map<TableCol, Id> mapReferenceParentColIdToChildColId;
   };
 
   struct Table
