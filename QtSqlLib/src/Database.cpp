@@ -234,9 +234,9 @@ QueryDefines::QueryResults Database::execQuery(IQuery& query)
 QueryDefines::QueryResults Database::execQuery(IQuerySequence& query)
 {
   QueryDefines::QueryResults results;
-  const auto numQueries = query.getNumQueries();
 
   query.prepare(m_schema);
+  const auto numQueries = query.getNumQueries();
 
   if (numQueries > 1)
   {

@@ -21,7 +21,7 @@ InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkTuple(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& tupleIdsMap)
+InsertIntoExt& InsertIntoExt::linkTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap)
 {
   if (m_linkedTuple.count(relationshipId) > 0)
   {
@@ -61,12 +61,7 @@ void InsertIntoExt::prepare(Schema& schema)
   const auto& relationships = schema.getRelationships();
   for (const auto& linkedTuple : m_linkedTuple)
   {
-    if (relationships.count(linkedTuple.first) == 0)
-    {
-      throw DatabaseException(DatabaseException::Type::QueryError, 
-        QString("No relationship found with with id %1.").arg(linkedTuple.first));
-    }
-
+    schema.throwIfRelationshipIdNotExisting(linkedTuple.first);
     const auto& relationship = relationships.at(linkedTuple.first);
 
     if ((relationship.type == Schema::RelationshipType::ManyToMany) ||
@@ -154,7 +149,7 @@ QueryDefines::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Sche
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  QueryDefines::ColumnResultMap resultsMap;
+  Schema::TableColumnValuesMap resultsMap;
 
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)

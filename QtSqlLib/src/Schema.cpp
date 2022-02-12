@@ -2,6 +2,8 @@
 
 #include "QtSqlLib/DatabaseException.h"
 
+#include <set>
+
 namespace QtSqlLib
 {
 
@@ -17,6 +19,12 @@ std::map<Schema::Id, Schema::Table>& Schema::getTables()
 std::map<Schema::Id, Schema::Relationship>& Schema::getRelationships()
 {
   return m_relationships;
+}
+
+Schema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
+{
+  throwIfRelationshipIdNotExisting(relationshipId);
+  return m_mapManyToManyRelationshipToLinkTableId.at(relationshipId);
 }
 
 void Schema::configureRelationships()
@@ -137,6 +145,15 @@ void Schema::throwIfTableIdNotExisting(Id tableId) const
   }
 }
 
+void Schema::throwIfRelationshipIdNotExisting(Id relationshipId) const
+{
+  if (m_relationships.count(relationshipId) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Unknown relationship id: %1.").arg(relationshipId));
+  }
+}
+
 void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
 {
   if (table.columns.count(colId) == 0)
@@ -144,6 +161,55 @@ void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
     throw DatabaseException(DatabaseException::Type::InvalidId,
       QString("Unknown column id %1 in table '%2'.").arg(colId).arg(table.name));
   }
+}
+
+Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const
+{
+  if (columnValues.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "Expected at least one column.");
+  }
+
+  auto firstTableIdSet = false;
+  Id tableId = 0;
+  std::set<Id> colIds;
+
+  for (const auto& colValue : columnValues)
+  {
+    if (!firstTableIdSet)
+    {
+      tableId = colValue.first.first;
+      firstTableIdSet = true;
+    }
+    else if (tableId != colValue.first.first)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        "Inconsistent table ids detected. Columns should reference only a single table.");
+    }
+
+    colIds.insert(colValue.first.second);
+  }
+
+  throwIfTableIdNotExisting(tableId);
+  const auto& table = m_tables.at(tableId);
+
+  for (const auto& primaryKey : table.primaryKeys)
+  {
+    if (colIds.count(primaryKey) == 0)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        "Column id expected to be a primary key.");
+    }
+  }
+
+  if (table.primaryKeys.size() != colIds.size())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "Wrong number of primary keys given.");
+  }
+
+  return tableId;
 }
 
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QString>
+#include <QVariant>
 
 #include <map>
 #include <set>
@@ -12,6 +12,8 @@ class Schema
 {
 public:
   using Id = unsigned int;
+  using TableCol = std::pair<Schema::Id, Schema::Id>;
+  using TableColumnValuesMap = std::map<TableCol, QVariant>;
 
   enum class ForeignKeyAction
   {
@@ -78,10 +80,15 @@ public:
   std::map<Id, Table>& getTables();
   std::map<Id, Relationship>& getRelationships();
 
+  Id getManyToManyLinkTableId(Id relationshipId) const;
+
   void configureRelationships();
 
   void throwIfTableIdNotExisting(Id tableId) const;
+  void throwIfRelationshipIdNotExisting(Id relationshipId) const;
   void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
+
+  Id validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const;
 
 private:
   std::map<Id, Table> m_tables;

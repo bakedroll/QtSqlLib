@@ -17,7 +17,7 @@ public:
   ~InsertIntoExt() override;
 
   InsertIntoExt& value(Schema::Id columnId, const QVariant& value);
-  InsertIntoExt& linkTuple(Schema::Id relationshipId, const QueryDefines::ColumnResultMap& tupleIdsMap);
+  InsertIntoExt& linkTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap);
 
   InsertIntoExt& returnIds();
 
@@ -54,7 +54,7 @@ private:
 
   };
 
-  std::map<Schema::Id, QueryDefines::ColumnResultMap> m_linkedTuple;
+  std::map<Schema::Id, Schema::TableColumnValuesMap> m_linkedTuple;
 };
 
 }

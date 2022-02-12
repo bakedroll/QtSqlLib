@@ -87,7 +87,7 @@ QueryDefines::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery&
 
   while (query.next())
   {
-    QueryDefines::ColumnResultMap resultMap;
+    Schema::TableColumnValuesMap resultMap;
 
     auto i = 0;
     for (const auto& col : m_columnIds)

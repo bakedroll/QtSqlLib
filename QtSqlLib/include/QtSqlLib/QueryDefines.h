@@ -2,7 +2,6 @@
 
 #include "Schema.h"
 
-#include <QVariant>
 #include <QSqlQuery>
 
 #include <vector>
@@ -15,8 +14,7 @@ class QueryDefines
 public:
   QueryDefines() = delete;
 
-  using ColumnResultMap = std::map<std::pair<Schema::Id, Schema::Id>, QVariant>;
-  using QueryResults = std::vector<ColumnResultMap>;
+  using QueryResults = std::vector<Schema::TableColumnValuesMap>;
 
   enum class QueryMode
   {
