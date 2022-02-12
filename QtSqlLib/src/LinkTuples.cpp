@@ -100,7 +100,7 @@ void LinkTuples::prepare(Schema& schema)
       : m_toRowIdsList);
 
     const auto& childTable = schema.getTables().at(childTableId);
-    const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at(m_relationshipId);
+    const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at(m_relationshipId).at(0);
 
     for (const auto& affectedChildRowId : affectedChildRowIds)
     {
@@ -140,8 +140,15 @@ void LinkTuples::prepare(Schema& schema)
     {
       for (const auto& refColId : values)
       {
-        const auto& colId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at(refColId.first);
-        columnValuesMap[colId].append(refColId.second);
+        for (const auto& foreignKeyRef : foreignKeyRefs)
+        {
+          if (foreignKeyRef.mapReferenceParentColIdToChildColId.count(refColId.first) > 0)
+          {
+            const auto& colId = foreignKeyRef.mapReferenceParentColIdToChildColId.at(refColId.first);
+            columnValuesMap[colId].append(refColId.second);
+            break;
+          }
+        }
       }
     };
 

@@ -472,16 +472,13 @@ TEST_F(DatabaseTest, relationshipTest)
     .fromOne(projectMachineLearning[0])
     .toOne(studentMary[0]));
 
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(studentMary[0])
+    .toOne(lectureMath[0]));
 
-  //m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-  //  .fromOne(studentJohn[0])
-  //  .toOne(lectureMath[0]));
-
-
-
-  //m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-  //  .fromOne(studentJohn[0])
-  //  .toMany({ lectureMath[0], lectureProgramming[0] }));
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(studentJohn[0])
+    .toMany({ lectureMath[0], lectureProgramming[0] }));
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
