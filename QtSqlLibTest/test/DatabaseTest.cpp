@@ -450,12 +450,12 @@ TEST_F(DatabaseTest, relationshipTest)
 
   const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Computer Vision")
-    //.linkTuple(ul(Rs::RelationshipStudentsProjects), studentJohn[0])
+    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentJohn[0])
     .returnIds());
 
   const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Machine Learning")
-    //.linkTuple(ul(Rs::RelationshipStudentsProjects), studentMary[0])
+    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentMary[0])
     .returnIds());
 
   const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
@@ -465,7 +465,7 @@ TEST_F(DatabaseTest, relationshipTest)
   const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Programming")
     .returnIds());
-
+  /*
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
     .fromOne(studentJohn[0])
     .toMany({ projectGameProgramming[0], projectComputerVision[0] }));
@@ -480,7 +480,7 @@ TEST_F(DatabaseTest, relationshipTest)
 
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
     .fromOne(studentJohn[0])
-    .toMany({ lectureMath[0], lectureProgramming[0] }));
+    .toMany({ lectureMath[0], lectureProgramming[0] }));*/
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)

@@ -90,11 +90,31 @@ public:
   void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
 
   Id validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const;
+  Id validatePrimaryKeysListAndGetTableId(const std::vector<TableColumnValuesMap>& columnValues) const;
+
+  std::pair<Id, Id> validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
+    Schema::Id relationshipId,
+    const TableColumnValuesMap& fromTableColumnValues,
+    const TableColumnValuesMap& toTableColumnValues) const;
+
+  std::pair<Id, Id> validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
+    Schema::Id relationshipId,
+    const TableColumnValuesMap& fromTableColumnValues,
+    const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const;
 
 private:
   std::map<Id, Table> m_tables;
   std::map<Id, Relationship> m_relationships;
   std::map<Id, Id> m_mapManyToManyRelationshipToLinkTableId;
+
+  std::pair<Id, Id> validateRelationshipPrimaryKeysAndGetTableIds(
+    bool bIsOneToMany,
+    Schema::Id relationshipId,
+    const TableColumnValuesMap& fromTableColumnValues,
+    const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const;
+
+  static bool isTableIdsMatching(const Schema::Relationship& relationship, Schema::Id tableFromId,
+                                 Schema::Id tableToId, bool bIgnoreFromKeys);
 
 };
 

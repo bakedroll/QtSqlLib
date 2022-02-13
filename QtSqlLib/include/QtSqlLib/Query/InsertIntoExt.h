@@ -17,7 +17,8 @@ public:
   ~InsertIntoExt() override;
 
   InsertIntoExt& value(Schema::Id columnId, const QVariant& value);
-  InsertIntoExt& linkTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap);
+  InsertIntoExt& linkToOneTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap);
+  InsertIntoExt& linkToManyTuples(Schema::Id relationshipId, const std::vector<Schema::TableColumnValuesMap>& tupleIdsMapList);
 
   InsertIntoExt& returnIds();
 
@@ -30,7 +31,7 @@ private:
     InsertIntoReferences(Schema::Id tableId);
     ~InsertIntoReferences() override;
 
-    void setForeignKeyValues(const std::vector<QVariant>& values);
+    void addForeignKeyValue(const QVariant& value);
 
   protected:
     void bindQueryValues(QSqlQuery& query) const override;
@@ -54,13 +55,33 @@ private:
 
   };
 
+  void throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const;
+
   std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();
+  bool isSeparateLinkTuplesQueryNeeded(const Schema::Relationship& relationship) const;
 
   std::unique_ptr<InsertIntoReferences> m_insertQuery;
 
+  enum class LinkType
+  {
+    ToOne,
+    ToMany
+  };
+
+  struct LinkedTuples
+  {
+    LinkType linkType;
+    std::vector<Schema::TableColumnValuesMap> linkedPrimaryKeys;
+  };
+
   Schema::Id m_tableId;
   bool m_bIsReturningInsertedIds;
-  std::map<Schema::Id, Schema::TableColumnValuesMap> m_linkedTuple;
+  std::map<Schema::Id, LinkedTuples> m_linkedTuplesMap;
+
+  void addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, Schema::Id relationshipId,
+                                                   const Schema::Relationship& relationship,
+                                                   const Schema::Table& childTable,
+                                                   const LinkedTuples& linkedTuples) const;
 
 };
 

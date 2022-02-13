@@ -212,4 +212,105 @@ Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& 
   return tableId;
 }
 
+Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TableColumnValuesMap>& columnValues) const
+{
+  if (columnValues.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "Primary key column values must not be empty.");
+  }
+
+  auto firstTableIdSet = false;
+  Schema::Id tableId = 0;
+  for (const auto& rowIds : columnValues)
+  {
+    if (!firstTableIdSet)
+    {
+      tableId = validatePrimaryKeysAndGetTableId(rowIds);
+      firstTableIdSet = true;
+      continue;
+    }
+
+    if (tableId != validatePrimaryKeysAndGetTableId(rowIds))
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        "Primary keys should belong to a single table.");
+    }
+  }
+
+  throwIfTableIdNotExisting(tableId);
+
+  return tableId;
+}
+
+std::pair<Schema::Id, Schema::Id> Schema::validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
+  Schema::Id relationshipId,
+  const TableColumnValuesMap& fromTableColumnValues,
+  const TableColumnValuesMap& toTableColumnValues) const
+{
+  return validateRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTableColumnValues, { toTableColumnValues });
+}
+
+std::pair<Schema::Id, Schema::Id> Schema::validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
+  Schema::Id relationshipId,
+  const TableColumnValuesMap& fromTableColumnValues,
+  const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const
+{
+  return validateRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTableColumnValues, toTableColumnValuesList);
+}
+
+std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetTableIds(
+  bool bIsOneToMany,
+  Schema::Id relationshipId,
+  const TableColumnValuesMap& fromTableColumnValues,
+  const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const
+{
+  throwIfRelationshipIdNotExisting(relationshipId);
+  const auto& relationship = m_relationships.at(relationshipId);
+
+  const auto bIgnoreFromKeys = fromTableColumnValues.empty();
+
+  const auto tableFromId = (!bIgnoreFromKeys
+    ? validatePrimaryKeysAndGetTableId(fromTableColumnValues)
+    : 0);
+  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTableColumnValuesList);
+
+  const auto isOneToMany = (relationship.type == Schema::RelationshipType::OneToMany);
+  const auto isManyToOne = (relationship.type == Schema::RelationshipType::ManyToOne);
+
+  if (bIsOneToMany)
+  {
+    if ((relationship.type != Schema::RelationshipType::ManyToMany) &&
+      ((isManyToOne && (relationship.tableFromId == tableFromId)) || 
+        (isOneToMany && (relationship.tableFromId != tableFromId))))
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        "toMany() not compatible with relationship.");
+    }
+  }
+
+  if (!isTableIdsMatching(relationship, tableFromId, tableToId, bIgnoreFromKeys))
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "Given entity keys not are not matching relationship table ids.");
+  }
+
+  return { tableFromId, tableToId };
+}
+
+bool Schema::isTableIdsMatching(
+  const Schema::Relationship& relationship,
+  Schema::Id tableFromId,
+  Schema::Id tableToId,
+  bool bIgnoreFromKeys)
+{
+  if (bIgnoreFromKeys)
+  {
+    return (tableToId == relationship.tableToId) || (tableToId == relationship.tableFromId);
+  }
+
+  return (((tableToId == relationship.tableToId) && (tableFromId == relationship.tableFromId)) ||
+    ((tableToId == relationship.tableFromId) && (tableFromId == relationship.tableToId)));
+}
+
 }

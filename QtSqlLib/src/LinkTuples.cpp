@@ -60,157 +60,111 @@ LinkTuples& LinkTuples::toMany(const std::vector<Schema::TableColumnValuesMap>& 
 
 void LinkTuples::prepare(Schema& schema)
 {
-  schema.throwIfRelationshipIdNotExisting(m_relationshipId);
-  const auto& relationship = schema.getRelationships().at(m_relationshipId);
-
-  const auto linkedTableIds = validateAndGetLinkedTableIds(schema);
-
-  const auto isOneToMany = (relationship.type == Schema::RelationshipType::OneToMany);
-  const auto isManyToOne = (relationship.type == Schema::RelationshipType::ManyToOne);
-
-  if (m_type == RelationshipType::ToMany)
-  {
-    if ((relationship.type != Schema::RelationshipType::ManyToMany) &&
-      ((isManyToOne && (relationship.tableFromId == linkedTableIds.tableFromId)) || 
-        (isOneToMany && (relationship.tableFromId != linkedTableIds.tableFromId))))
-    {
-      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-        "toMany() not compatible with relationship.");
-    }
-  }
-
-  if (!isTableIdsMatching(relationship, linkedTableIds))
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "Given entity keys not are not matching relationship table ids.");
-  }
-
-  if (isOneToMany || isManyToOne)
-  {
-    auto parentTableId = relationship.tableFromId;
-    auto childTableId = relationship.tableToId;
-    if (isManyToOne)
-    {
-      std::swap(parentTableId, childTableId);
-    }
-
-    const auto idsToInsert = (parentTableId == linkedTableIds.tableFromId ? m_fromRowIds : m_toRowIdsList[0]);
-    const auto affectedChildRowIds = (childTableId == linkedTableIds.tableFromId
-      ? std::vector<Schema::TableColumnValuesMap>{ m_fromRowIds }
-      : m_toRowIdsList);
-
-    const auto& childTable = schema.getTables().at(childTableId);
-    const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, parentTableId });
-
-    for (const auto& affectedChildRowId : affectedChildRowIds)
-    {
-      auto updateQuery = std::make_unique<UpdateTable>(childTableId);
-
-      for (const auto& primaryKeyId : idsToInsert)
-      {
-        const auto parentRefColId = primaryKeyId.first.second;
-        const auto childColId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at({ parentTableId, parentRefColId });
-
-        updateQuery->set(childColId, primaryKeyId.second);
-      }
-
-      Expr whereExpr;
-      for (const auto& childCol : affectedChildRowId)
-      {
-        if (childCol.first != affectedChildRowId.begin()->first)
-        {
-          whereExpr.and();
-        }
-        whereExpr.equal(childCol.first.second, childCol.second);
-      }
-
-      updateQuery->where(whereExpr);
-      addQuery(std::move(updateQuery));
-    }
-  }
-  else
-  {
-    const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
-    const auto& linkTable = schema.getTables().at(linkTableId);
-    const auto& foreignKeyRefsFrom = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, linkedTableIds.tableFromId });
-    const auto& foreignKeyRefsTo = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, linkedTableIds.tableToId });
-
-    std::map<Schema::Id, QVariantList> columnValuesMap;
-
-    const auto appendValues = [&columnValuesMap](const Schema::TableColumnValuesMap& values,
-                                                 const Schema::ForeignKeyReference& foreignKeyRef)
-    {
-      for (const auto& refColId : values)
-      {
-        if (foreignKeyRef.mapReferenceParentColIdToChildColId.count(refColId.first) > 0)
-        {
-          const auto& colId = foreignKeyRef.mapReferenceParentColIdToChildColId.at(refColId.first);
-          columnValuesMap[colId].append(refColId.second);
-          break;
-        }
-      }
-    };
-
-    for (const auto& toRowIds : m_toRowIdsList)
-    {
-      appendValues(m_fromRowIds, foreignKeyRefsFrom);
-      appendValues(toRowIds, foreignKeyRefsTo);
-    }
-
-    auto batchInsertQuery = std::make_unique<BatchInsertInto>(linkTableId);
-    for (const auto& values : columnValuesMap)
-    {
-      batchInsertQuery->values(values.first, values.second);
-    }
-
-    addQuery(std::move(batchInsertQuery));
-  }
-}
-
-LinkTuples::LinkedTableIds LinkTuples::validateAndGetLinkedTableIds(Schema& schema)
-{
   if (m_expectedCall != ExpectedCall::Complete)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "LinkTuples query incomplete.");
   }
 
-  const auto fromTableId = schema.validatePrimaryKeysAndGetTableId(m_fromRowIds);
+  schema.throwIfRelationshipIdNotExisting(m_relationshipId);
+  const auto& relationship = schema.getRelationships().at(m_relationshipId);
 
-  if (m_toRowIdsList.empty())
+  const auto tableIds = (m_type == RelationshipType::ToOne
+    ? schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromRowIds, m_toRowIdsList[0])
+    : schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromRowIds, m_toRowIdsList));
+
+  if (relationship.type == Schema::RelationshipType::ManyToMany)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "LinkTuples query missing rows ids.");
+    prepareManyToManyLinkQuery(schema, relationship, tableIds.first, tableIds.second);
   }
-
-  auto firstTableIdSet = false;
-  Schema::Id toTableId = 0;
-  for (const auto& toRowIds : m_toRowIdsList)
+  else
   {
-    if (!firstTableIdSet)
-    {
-      toTableId = schema.validatePrimaryKeysAndGetTableId(toRowIds);
-      firstTableIdSet = true;
-      continue;
-    }
-
-    if (toTableId != schema.validatePrimaryKeysAndGetTableId(toRowIds))
-    {
-      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-        "Linked row ids should belong to a single table.");
-    }
+    prepareOneToManyLinkQuery(schema, relationship, tableIds.first, tableIds.second);
   }
-
-  schema.throwIfTableIdNotExisting(fromTableId);
-  schema.throwIfTableIdNotExisting(toTableId);
-
-  return { fromTableId, toTableId };
 }
 
-bool LinkTuples::isTableIdsMatching(const Schema::Relationship& relationship, const LinkedTableIds& linkedTableIds)
+void LinkTuples::prepareOneToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
+                                           Schema::Id fromTableId, Schema::Id toTableId)
 {
-  return (((linkedTableIds.tableToId == relationship.tableToId) && (linkedTableIds.tableFromId == relationship.tableFromId)) ||
-    ((linkedTableIds.tableToId == relationship.tableFromId) && (linkedTableIds.tableFromId == relationship.tableToId)));
+  auto parentTableId = relationship.tableFromId;
+  auto childTableId = relationship.tableToId;
+  if (relationship.type == Schema::RelationshipType::ManyToOne)
+  {
+    std::swap(parentTableId, childTableId);
+  }
+
+  const auto idsToInsert = (parentTableId == fromTableId ? m_fromRowIds : m_toRowIdsList[0]);
+  const auto affectedChildRowIds = (childTableId == fromTableId
+    ? std::vector<Schema::TableColumnValuesMap>{ m_fromRowIds }
+  : m_toRowIdsList);
+
+  const auto& childTable = schema.getTables().at(childTableId);
+  const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, parentTableId });
+
+  for (const auto& affectedChildRowId : affectedChildRowIds)
+  {
+    auto updateQuery = std::make_unique<UpdateTable>(childTableId);
+
+    for (const auto& primaryKeyId : idsToInsert)
+    {
+      const auto parentRefColId = primaryKeyId.first.second;
+      const auto childColId = foreignKeyRefs.mapReferenceParentColIdToChildColId.at({ parentTableId, parentRefColId });
+
+      updateQuery->set(childColId, primaryKeyId.second);
+    }
+
+    Expr whereExpr;
+    for (const auto& childCol : affectedChildRowId)
+    {
+      if (childCol.first != affectedChildRowId.begin()->first)
+      {
+        whereExpr.and();
+      }
+      whereExpr.equal(childCol.first.second, childCol.second);
+    }
+
+    updateQuery->where(whereExpr);
+    addQuery(std::move(updateQuery));
+  }
+}
+
+void LinkTuples::prepareManyToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
+                                            Schema::Id fromTableId, Schema::Id toTableId)
+{
+  const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
+  const auto& linkTable = schema.getTables().at(linkTableId);
+  const auto& foreignKeyRefsFrom = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, fromTableId });
+  const auto& foreignKeyRefsTo = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, toTableId });
+
+  std::map<Schema::Id, QVariantList> columnValuesMap;
+
+  const auto appendValues = [&columnValuesMap](const Schema::TableColumnValuesMap& values,
+    const Schema::ForeignKeyReference& foreignKeyRef)
+  {
+    for (const auto& refColId : values)
+    {
+      if (foreignKeyRef.mapReferenceParentColIdToChildColId.count(refColId.first) > 0)
+      {
+        const auto& colId = foreignKeyRef.mapReferenceParentColIdToChildColId.at(refColId.first);
+        columnValuesMap[colId].append(refColId.second);
+        break;
+      }
+    }
+  };
+
+  for (const auto& toRowIds : m_toRowIdsList)
+  {
+    appendValues(m_fromRowIds, foreignKeyRefsFrom);
+    appendValues(toRowIds, foreignKeyRefsTo);
+  }
+
+  auto batchInsertQuery = std::make_unique<BatchInsertInto>(linkTableId);
+  for (const auto& values : columnValuesMap)
+  {
+    batchInsertQuery->values(values.first, values.second);
+  }
+
+  addQuery(std::move(batchInsertQuery));
 }
 
 }

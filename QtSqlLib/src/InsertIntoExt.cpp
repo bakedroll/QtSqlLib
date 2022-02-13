@@ -2,6 +2,7 @@
 
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Query/InsertInto.h"
+#include "QtSqlLib/Query/LinkTuples.h"
 
 namespace QtSqlLib::Query
 {
@@ -21,15 +22,20 @@ InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap)
+InsertIntoExt& InsertIntoExt::linkToOneTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap)
 {
-  if (m_linkedTuple.count(relationshipId) > 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("More than one linked tuple of same relationship with id %1 specified.").arg(relationshipId));
-  }
+  throwIdLinkedTupleAlreadyExisting(relationshipId);
   
-  m_linkedTuple[relationshipId] = tupleIdsMap;
+  m_linkedTuplesMap[relationshipId] = { LinkType::ToOne, { tupleIdsMap } };
+  return *this;
+}
+
+InsertIntoExt& InsertIntoExt::linkToManyTuples(Schema::Id relationshipId,
+                                               const std::vector<Schema::TableColumnValuesMap>& tupleIdsMapList)
+{
+  throwIdLinkedTupleAlreadyExisting(relationshipId);
+
+  m_linkedTuplesMap[relationshipId] = { LinkType::ToMany, tupleIdsMapList };
   return *this;
 }
 
@@ -53,47 +59,48 @@ void InsertIntoExt::prepare(Schema& schema)
 
   const auto& table = schema.getTables().at(m_tableId);
 
-  std::vector<QVariant> foreignKeyValues;
+  std::set<Schema::Id> specialInsertionRelationshipIds;
 
   const auto& relationships = schema.getRelationships();
-  for (const auto& linkedTuple : m_linkedTuple)
+  for (const auto& linkedTuples : m_linkedTuplesMap)
   {
-    schema.throwIfRelationshipIdNotExisting(linkedTuple.first);
-    const auto& relationship = relationships.at(linkedTuple.first);
+    const auto relationshipId = linkedTuples.first;
 
-    if ((relationship.type == Schema::RelationshipType::ManyToMany) ||
-      ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
-      ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)))
+    schema.throwIfRelationshipIdNotExisting(relationshipId);
+    const auto& relationship = relationships.at(relationshipId);
+
+    if (linkedTuples.second.linkType == LinkType::ToOne)
     {
-      throw DatabaseException(DatabaseException::Type::QueryError, 
-        QString("Direct linking to related tuple not allowed for relationship with id %1 to table with id %2.")
-        .arg(linkedTuple.first).arg(m_tableId));
+      schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));
+    }
+    else
+    {
+      schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys);
     }
 
-    const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
-    const auto& parentTable = schema.getTables().at(parentTableId);
-
-    const auto& foreignKeyReferences = table.mapRelationshioToForeignKeyReferences.at({ linkedTuple.first, parentTableId });
-    for (const auto& parentKeyCol : parentTable.primaryKeys)
+    if ((linkedTuples.second.linkType == LinkType::ToMany) ||
+      isSeparateLinkTuplesQueryNeeded(relationship))
     {
-      if (linkedTuple.second.count({ parentTableId, parentKeyCol }) == 0)
-      {
-        throw DatabaseException(DatabaseException::Type::QueryError,
-          QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
-      }
-
-      m_insertQuery->addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at({ parentTableId, parentKeyCol }));
-      foreignKeyValues.emplace_back(linkedTuple.second.at({ parentTableId, parentKeyCol }));
+      specialInsertionRelationshipIds.insert(relationshipId);
+      continue;
     }
+
+    addUpdateForeignKeyColumnsToInsertIntoQuery(schema, relationshipId, relationship, table, linkedTuples.second);
   }
-
-  m_insertQuery->setForeignKeyValues(foreignKeyValues);
 
   addQuery(std::move(m_insertQuery));
 
   if (m_bIsReturningInsertedIds)
   {
     addQuery(std::make_unique<QueryInsertedIds>(m_tableId));
+  }
+
+  for (const auto& relationshipId : specialInsertionRelationshipIds)
+  {
+    auto linkTupleQuery = std::make_unique<LinkTuples>(relationshipId);
+    linkTupleQuery->fromOne({});
+
+
   }
 }
 
@@ -104,9 +111,9 @@ InsertIntoExt::InsertIntoReferences::InsertIntoReferences(Schema::Id tableId)
 
 InsertIntoExt::InsertIntoReferences::~InsertIntoReferences() = default;
 
-void InsertIntoExt::InsertIntoReferences::setForeignKeyValues(const std::vector<QVariant>& values)
+void InsertIntoExt::InsertIntoReferences::addForeignKeyValue(const QVariant& value)
 {
-  m_foreignKeyValues = values;
+  m_foreignKeyValues.emplace_back(value);
 }
 
 void InsertIntoExt::InsertIntoReferences::bindQueryValues(QSqlQuery& query) const
@@ -165,6 +172,15 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schem
   return { resultsMap };
 }
 
+void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const
+{
+  if (m_linkedTuplesMap.count(relationshipId) > 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("More than one linked tuple of same relationship with id %1 specified.").arg(relationshipId));
+  }
+}
+
 std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreateInsertQuery()
 {
   if (!m_insertQuery)
@@ -172,6 +188,36 @@ std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreate
     m_insertQuery = std::make_unique<InsertIntoReferences>(m_tableId);
   }
   return m_insertQuery;
+}
+
+bool InsertIntoExt::isSeparateLinkTuplesQueryNeeded(const Schema::Relationship& relationship) const
+{
+  return ((relationship.type == Schema::RelationshipType::ManyToMany) ||
+    ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
+    ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)));
+}
+
+void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, Schema::Id relationshipId,
+                                                                const Schema::Relationship& relationship,
+                                                                const Schema::Table& childTable,
+                                                                const LinkedTuples& linkedTuples) const
+{
+  const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
+  const auto& parentTable = schema.getTables().at(parentTableId);
+  const auto& linkedPrimaryKeys = linkedTuples.linkedPrimaryKeys.at(0);
+
+  const auto& foreignKeyReferences = childTable.mapRelationshioToForeignKeyReferences.at({ relationshipId, parentTableId });
+  for (const auto& parentKeyCol : parentTable.primaryKeys)
+  {
+    if (linkedPrimaryKeys.count({ parentTableId, parentKeyCol }) == 0)
+    {
+      throw DatabaseException(DatabaseException::Type::QueryError,
+        QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
+    }
+
+    m_insertQuery->addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at({ parentTableId, parentKeyCol }));
+    m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.at({ parentTableId, parentKeyCol }));
+  }
 }
 
 }

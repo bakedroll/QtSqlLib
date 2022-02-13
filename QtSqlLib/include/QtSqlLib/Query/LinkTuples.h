@@ -33,12 +33,6 @@ private:
     ToMany
   };
 
-  struct LinkedTableIds
-  {
-    Schema::Id tableFromId;
-    Schema::Id tableToId;
-  };
-
   Schema::Id m_relationshipId;
   ExpectedCall m_expectedCall;
 
@@ -46,8 +40,10 @@ private:
   Schema::TableColumnValuesMap m_fromRowIds;
   std::vector<Schema::TableColumnValuesMap> m_toRowIdsList;
 
-  LinkedTableIds validateAndGetLinkedTableIds(Schema& schema);
-  static bool isTableIdsMatching(const Schema::Relationship& relationship, const LinkedTableIds& linkedTableIds);
+  void prepareOneToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
+                                 Schema::Id fromTableId, Schema::Id toTableId);
+  void prepareManyToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
+                                  Schema::Id fromTableId, Schema::Id toTableId);
 
 };
 
