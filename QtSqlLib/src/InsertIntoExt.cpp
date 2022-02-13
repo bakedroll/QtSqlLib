@@ -73,7 +73,7 @@ void InsertIntoExt::prepare(Schema& schema)
     const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
     const auto& parentTable = schema.getTables().at(parentTableId);
 
-    const auto& foreignKeyReferences = table.mapRelationshioToForeignKeyReferences.at(linkedTuple.first).at(0);
+    const auto& foreignKeyReferences = table.mapRelationshioToForeignKeyReferences.at({ linkedTuple.first, parentTableId });
     for (const auto& parentKeyCol : parentTable.primaryKeys)
     {
       if (linkedTuple.second.count({ parentTableId, parentKeyCol }) == 0)

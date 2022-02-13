@@ -100,7 +100,7 @@ void LinkTuples::prepare(Schema& schema)
       : m_toRowIdsList);
 
     const auto& childTable = schema.getTables().at(childTableId);
-    const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at(m_relationshipId).at(0);
+    const auto& foreignKeyRefs = childTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, parentTableId });
 
     for (const auto& affectedChildRowId : affectedChildRowIds)
     {
@@ -132,30 +132,29 @@ void LinkTuples::prepare(Schema& schema)
   {
     const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
     const auto& linkTable = schema.getTables().at(linkTableId);
-    const auto& foreignKeyRefs = linkTable.mapRelationshioToForeignKeyReferences.at(m_relationshipId);
+    const auto& foreignKeyRefsFrom = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, linkedTableIds.tableFromId });
+    const auto& foreignKeyRefsTo = linkTable.mapRelationshioToForeignKeyReferences.at({ m_relationshipId, linkedTableIds.tableToId });
 
     std::map<Schema::Id, QVariantList> columnValuesMap;
 
-    const auto appendValues = [&columnValuesMap, &foreignKeyRefs](const Schema::TableColumnValuesMap& values)
+    const auto appendValues = [&columnValuesMap](const Schema::TableColumnValuesMap& values,
+                                                 const Schema::ForeignKeyReference& foreignKeyRef)
     {
       for (const auto& refColId : values)
       {
-        for (const auto& foreignKeyRef : foreignKeyRefs)
+        if (foreignKeyRef.mapReferenceParentColIdToChildColId.count(refColId.first) > 0)
         {
-          if (foreignKeyRef.mapReferenceParentColIdToChildColId.count(refColId.first) > 0)
-          {
-            const auto& colId = foreignKeyRef.mapReferenceParentColIdToChildColId.at(refColId.first);
-            columnValuesMap[colId].append(refColId.second);
-            break;
-          }
+          const auto& colId = foreignKeyRef.mapReferenceParentColIdToChildColId.at(refColId.first);
+          columnValuesMap[colId].append(refColId.second);
+          break;
         }
       }
     };
 
     for (const auto& toRowIds : m_toRowIdsList)
     {
-      appendValues(m_fromRowIds);
-      appendValues(toRowIds);
+      appendValues(m_fromRowIds, foreignKeyRefsFrom);
+      appendValues(toRowIds, foreignKeyRefsTo);
     }
 
     auto batchInsertQuery = std::make_unique<BatchInsertInto>(linkTableId);
