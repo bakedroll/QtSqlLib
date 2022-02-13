@@ -8,16 +8,16 @@ namespace QtSqlLib::Query
 
 InsertIntoExt::InsertIntoExt(Schema::Id tableId)
   : QuerySequence()
+  , m_tableId(tableId)
+  , m_bIsReturningInsertedIds(false)
 {
-  addQuery(std::make_unique<InsertIntoReferences>(tableId));
 }
 
 InsertIntoExt::~InsertIntoExt() = default;
 
 InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
 {
-  auto& queryInsert = dynamic_cast<InsertIntoReferences&>(getQuery(0));
-  queryInsert.value(columnId, value);
+  getOrCreateInsertQuery()->value(columnId, value);
   return *this;
 }
 
@@ -35,26 +35,23 @@ InsertIntoExt& InsertIntoExt::linkTuple(Schema::Id relationshipId, const Schema:
 
 InsertIntoExt& InsertIntoExt::returnIds()
 {
-  if (getNumQueries() > 1)
+  if (m_bIsReturningInsertedIds)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, 
       "returnId() can only be called once per query.");
   }
 
-  auto& queryInsert = dynamic_cast<InsertIntoReferences&>(getQuery(0));
-
-  addQuery(std::make_unique<QueryInsertedIds>(queryInsert.getTableId()));
+  m_bIsReturningInsertedIds = true;
   return *this;
 }
 
 void InsertIntoExt::prepare(Schema& schema)
 {
-  auto& queryInsert = dynamic_cast<InsertIntoReferences&>(getQuery(0));
-  const auto tableId = queryInsert.getTableId();
+  getOrCreateInsertQuery();
 
-  schema.throwIfTableIdNotExisting(tableId);
+  schema.throwIfTableIdNotExisting(m_tableId);
 
-  const auto& table = schema.getTables().at(tableId);
+  const auto& table = schema.getTables().at(m_tableId);
 
   std::vector<QVariant> foreignKeyValues;
 
@@ -65,12 +62,12 @@ void InsertIntoExt::prepare(Schema& schema)
     const auto& relationship = relationships.at(linkedTuple.first);
 
     if ((relationship.type == Schema::RelationshipType::ManyToMany) ||
-      ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == tableId)) ||
-      ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == tableId)))
+      ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
+      ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)))
     {
       throw DatabaseException(DatabaseException::Type::QueryError, 
         QString("Direct linking to related tuple not allowed for relationship with id %1 to table with id %2.")
-        .arg(linkedTuple.first).arg(tableId));
+        .arg(linkedTuple.first).arg(m_tableId));
     }
 
     const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
@@ -85,14 +82,19 @@ void InsertIntoExt::prepare(Schema& schema)
           QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
       }
 
-      queryInsert.addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at({ parentTableId, parentKeyCol }));
+      m_insertQuery->addColumnId(foreignKeyReferences.mapReferenceParentColIdToChildColId.at({ parentTableId, parentKeyCol }));
       foreignKeyValues.emplace_back(linkedTuple.second.at({ parentTableId, parentKeyCol }));
     }
   }
 
-  queryInsert.setForeignKeyValues(foreignKeyValues);
+  m_insertQuery->setForeignKeyValues(foreignKeyValues);
 
-  QuerySequence::prepare(schema);
+  addQuery(std::move(m_insertQuery));
+
+  if (m_bIsReturningInsertedIds)
+  {
+    addQuery(std::make_unique<QueryInsertedIds>(m_tableId));
+  }
 }
 
 InsertIntoExt::InsertIntoReferences::InsertIntoReferences(Schema::Id tableId)
@@ -118,14 +120,14 @@ void InsertIntoExt::InsertIntoReferences::bindQueryValues(QSqlQuery& query) cons
 }
 
 InsertIntoExt::QueryInsertedIds::QueryInsertedIds(Schema::Id tableId)
-  : IQuery()
+  : Query()
   , m_tableId(tableId)
 {
 }
 
 InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
 
-QueryDefines::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(Schema& schema)
+API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(Schema& schema)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -141,7 +143,7 @@ QueryDefines::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(Schema& sche
     .arg(keyColumns).arg(table.name)) };
 }
 
-QueryDefines::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schema& schema, QSqlQuery& query) const
+API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -161,6 +163,15 @@ QueryDefines::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Sche
   }
 
   return { resultsMap };
+}
+
+std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreateInsertQuery()
+{
+  if (!m_insertQuery)
+  {
+    m_insertQuery = std::make_unique<InsertIntoReferences>(m_tableId);
+  }
+  return m_insertQuery;
 }
 
 }

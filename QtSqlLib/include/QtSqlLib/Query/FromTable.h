@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/API/IQuery.h>
+#include <QtSqlLib/Query/Query.h>
 #include <QtSqlLib/Expr.h>
 
 #include <vector>
@@ -8,7 +8,7 @@
 namespace QtSqlLib::Query
 {
 
-class FromTable : public API::IQuery
+class FromTable : public Query
 {
 public:
   FromTable(Schema::Id tableId);
@@ -30,8 +30,8 @@ public:
     return *this;
   }
 
-  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
-  QueryDefines::QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+  SqlQuery getSqlQuery(Schema& schema) override;
+  QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:
   Schema::Id m_tableId;

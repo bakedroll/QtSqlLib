@@ -18,8 +18,7 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
-  Query::QueryDefines::QueryResults execQuery(API::IQuery& query) override;
-  Query::QueryDefines::QueryResults execQuery(API::IQuerySequence& query) override;
+  API::IQuery::QueryResults execQuery(API::IQueryElement& query) override;
 
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;

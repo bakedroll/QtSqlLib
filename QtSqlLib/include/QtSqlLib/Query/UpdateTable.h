@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/API/IQuery.h>
+#include <QtSqlLib/Query/Query.h>
 
 #include <QtSqlLib/Expr.h>
 
 namespace QtSqlLib::Query
 {
 
-class UpdateTable : public API::IQuery
+class UpdateTable : public Query
 {
 public:
   UpdateTable(Schema::Id tableId);
@@ -16,7 +16,7 @@ public:
   UpdateTable& set(Schema::Id columnId, const QVariant& newValue);
   UpdateTable& where(Expr& expr);
 
-  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
+  SqlQuery getSqlQuery(Schema& schema) override;
 
 private:
   Schema::Id m_tableId;

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Query/InsertIntoExt.h>
@@ -511,26 +512,52 @@ TEST_F(DatabaseTest, multiplePrimaryKeysTable)
   EXPECT_EQ(resultText.toString(), "text");
 }
 
-TEST_F(DatabaseTest, nestedQuerySequence)
+TEST_F(DatabaseTest, querySequenceVisitor)
 {
-  static auto currentQuery = 0;
-
-  class DummyQuery : public API::IQuery
+  class DummyQuery : public Query
   {
   public:
-    DummyQuery(int num) : m_num(num)
+    DummyQuery(int num)
+      : Query()
+      , m_num(num)
     {
     }
 
-    QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
+    int getNum() const
     {
-      EXPECT_EQ(currentQuery, m_num);
-      currentQuery++;
-      return { QSqlQuery(), QueryDefines::QueryMode::Single };
+      return m_num;
+    }
+
+    SqlQuery getSqlQuery(Schema& schema) override
+    {
+      return { QSqlQuery(), QueryMode::Single };
     }
 
   private:
     int m_num;
+  };
+
+  class TestVisitor : public API::IQueryVisitor
+  {
+  public:
+    TestVisitor() : API::IQueryVisitor(), m_currentNum(0)
+    {}
+
+    ~TestVisitor() override = default;
+
+    void visit(API::IQuery& query) override
+    {
+      EXPECT_EQ(m_currentNum, static_cast<DummyQuery&>(query).getNum());
+      m_currentNum++;
+    }
+
+    void visit(API::IQuerySequence& query) override
+    {
+    }
+
+  private:
+    int m_currentNum;
+
   };
 
   auto nestedSeq2 = std::make_unique<QuerySequence>();
@@ -549,14 +576,8 @@ TEST_F(DatabaseTest, nestedQuerySequence)
 
   seq.addQuery(std::make_unique<DummyQuery>(6));
 
-  Schema s;
-  seq.prepare(s);
-
-  const auto num = seq.getNumQueries();
-  for (auto i=0; i<num; i++)
-  {
-    seq.getSqlQuery(i, s);
-  }
+  TestVisitor visitor;
+  seq.accept(visitor);
 }
 
 

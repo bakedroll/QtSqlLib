@@ -1,12 +1,11 @@
 #pragma once
 
 #include <QtSqlLib/API/IQuery.h>
-#include <QtSqlLib/API/IQuerySequence.h>
-
-#include <vector>
 
 namespace QtSqlLib::API
 {
+
+class IQueryElement;
 
 class IDatabase
 {
@@ -17,8 +16,7 @@ public:
   virtual void initialize(const QString& filename) = 0;
   virtual void close() = 0;
 
-  virtual Query::QueryDefines::QueryResults execQuery(IQuery& query) = 0;
-  virtual Query::QueryDefines::QueryResults execQuery(IQuerySequence& query) = 0;
+  virtual IQuery::QueryResults execQuery(IQueryElement& query) = 0;
 
 };
 

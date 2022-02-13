@@ -35,7 +35,7 @@ UpdateTable& UpdateTable::where(Expr& expr)
   return *this;
 }
 
-QueryDefines::SqlQuery UpdateTable::getSqlQuery(Schema& schema)
+API::IQuery::SqlQuery UpdateTable::getSqlQuery(Schema& schema)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 

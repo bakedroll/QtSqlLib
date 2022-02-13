@@ -40,21 +40,28 @@ private:
 
   };
 
-  class QueryInsertedIds : public API::IQuery
+  class QueryInsertedIds : public Query
   {
   public:
     QueryInsertedIds(Schema::Id tableId);
     ~QueryInsertedIds() override;
 
-    QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
-    QueryDefines::QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+    SqlQuery getSqlQuery(Schema& schema) override;
+    QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
   private:
     Schema::Id m_tableId;
 
   };
 
+  std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();
+
+  std::unique_ptr<InsertIntoReferences> m_insertQuery;
+
+  Schema::Id m_tableId;
+  bool m_bIsReturningInsertedIds;
   std::map<Schema::Id, Schema::TableColumnValuesMap> m_linkedTuple;
+
 };
 
 }

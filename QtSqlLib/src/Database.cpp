@@ -1,13 +1,15 @@
 #include "QtSqlLib/Database.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/QueryPrepareVisitor.h"
+#include "QtSqlLib/QueryExecuteVisitor.h"
 #include "QtSqlLib/Query/FromTable.h"
 #include "QtSqlLib/Query/InsertInto.h"
+#include "QtSqlLib/Query/Query.h"
 #include "QtSqlLib/Query/QuerySequence.h"
 
 #include <utilsLib/Utils.h>
 
-#include <QSqlError>
 #include <QSqlQuery>
 #include <QVariant>
 
@@ -62,36 +64,31 @@ static QString getActionString(Schema::ForeignKeyAction action)
   return "";
 }
 
-static void execSqlQueryForSchema(Schema& schema, Query::QueryDefines::SqlQuery& query) 
+static API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryElement& query)
 {
-  const auto isBatch = (query.mode == Query::QueryDefines::QueryMode::Batch);
+  QueryPrepareVisitor prepateVisitor(schema);
+  query.accept(prepateVisitor);
 
-  if ((!isBatch && !query.qtQuery.exec()) || (isBatch && !query.qtQuery.execBatch()))
-  {
-    throw DatabaseException(DatabaseException::Type::QueryError,
-      QString("Could not execute query: %1").arg(query.qtQuery.lastError().text()));
-  }
+  QueryExecuteVisitor executeVisitor(schema);
+
+  QSqlDatabase::database().transaction();
+  query.accept(executeVisitor);
+  QSqlDatabase::database().commit();
+
+  return executeVisitor.getLastQueryResults();
 }
 
-static Query::QueryDefines::QueryResults execQueryForSchema(Schema& schema, API::IQuery& query)
-{
-  auto q = query.getSqlQuery(schema);
-  execSqlQueryForSchema(schema, q);
-
-  return query.getQueryResults(schema, q.qtQuery);
-}
-
-class CreateTable : public API::IQuery
+class CreateTable : public Query::Query
 {
 public:
   CreateTable(const Schema::Table& table)
-    : IQuery()
+    : Query()
     , m_table(table)
   {}
 
   ~CreateTable() override = default;
 
-  Query::QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
+  API::IQuery::SqlQuery getSqlQuery(Schema& schema) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -230,40 +227,9 @@ void Database::close()
   m_db.close();
 }
 
-Query::QueryDefines::QueryResults Database::execQuery(API::IQuery& query)
+API::IQuery::QueryResults Database::execQuery(API::IQueryElement& query)
 {
   return execQueryForSchema(m_schema, query);
-}
-
-Query::QueryDefines::QueryResults Database::execQuery(API::IQuerySequence& query)
-{
-  Query::QueryDefines::QueryResults results;
-
-  query.prepare(m_schema);
-  const auto numQueries = query.getNumQueries();
-
-  if (numQueries > 1)
-  {
-    QSqlDatabase::database().transaction();
-  }
-
-  for (auto i=0; i<numQueries; i++)
-  {
-    auto q = query.getSqlQuery(i, m_schema);
-    execSqlQueryForSchema(m_schema, q);
-  
-    if (i == (numQueries - 1))
-    {
-      results = query.getQueryResults(i, m_schema, q.qtQuery);
-    }
-  }
-
-  if (numQueries > 1)
-  {
-    QSqlDatabase::database().commit();
-  }
-
-  return results;
 }
 
 void Database::loadDatabaseFile(const QString& filename)

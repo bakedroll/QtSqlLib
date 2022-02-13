@@ -8,7 +8,7 @@ namespace QtSqlLib::Query
 {
 
 BaseInsert::BaseInsert(Schema::Id tableId)
-  : IQuery()
+  : Query()
   , m_tableId(tableId)
 {
 }
@@ -31,11 +31,6 @@ void BaseInsert::throwIfColumnIdAlreadyExisting(Schema::Id id) const
         QString("More than one column with id %1 specified.").arg(id));
     }
   }
-}
-
-Schema::Id BaseInsert::getTableId() const
-{
-  return m_tableId;
 }
 
 QSqlQuery BaseInsert::getQSqlQuery(Schema& schema) const

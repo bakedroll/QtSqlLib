@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtSqlLib/Query/QuerySequence.h>
 #include <QtSqlLib/Query/BaseInsert.h>
 
 #include <QVariant>
@@ -18,7 +17,7 @@ public:
 
   InsertInto& value(Schema::Id columnId, const QVariant& value);
 
-  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override;
+  SqlQuery getSqlQuery(Schema& schema) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

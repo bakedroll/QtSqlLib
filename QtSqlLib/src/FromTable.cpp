@@ -43,7 +43,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-QueryDefines::SqlQuery FromTable::getSqlQuery(Schema& schema)
+API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 
@@ -81,9 +81,9 @@ QueryDefines::SqlQuery FromTable::getSqlQuery(Schema& schema)
   return { QSqlQuery(queryStr) };
 }
 
-QueryDefines::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
+API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
-  QueryDefines::QueryResults results;
+  QueryResults results;
 
   while (query.next())
   {

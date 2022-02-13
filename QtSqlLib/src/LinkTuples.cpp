@@ -166,8 +166,6 @@ void LinkTuples::prepare(Schema& schema)
 
     addQuery(std::move(batchInsertQuery));
   }
-
-  QuerySequence::prepare(schema);
 }
 
 LinkTuples::LinkedTableIds LinkTuples::validateAndGetLinkedTableIds(Schema& schema)

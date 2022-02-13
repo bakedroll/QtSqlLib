@@ -1,12 +1,12 @@
 #pragma once
 
 #include <QtSqlLib/Schema.h>
-#include <QtSqlLib/Query/QueryDefines.h>
-
-#include <QSqlQuery>
 
 namespace QtSqlLib::API
 {
+
+class IQueryElement;
+class IQueryVisitor;
 
 class IQuerySequence
 {
@@ -17,12 +17,12 @@ public:
   IQuerySequence(const IQuerySequence& other) = delete;
   IQuerySequence& operator= (const IQuerySequence& other) = delete;
 
-  virtual int getNumQueries() const = 0;
+  virtual void addQuery(std::unique_ptr<IQueryElement> sequence) = 0;
 
   virtual void prepare(Schema& schema) = 0;
-  virtual Query::QueryDefines::SqlQuery getSqlQuery(int num, Schema& schema) = 0;
-  virtual Query::QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const { return {}; }
+  virtual void traverse(IQueryVisitor& visitor) = 0;
 
 };
 
 }
+
