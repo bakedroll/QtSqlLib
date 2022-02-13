@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/IDatabase.h>
+#include <QtSqlLib/API/IDatabase.h>
 #include <QtSqlLib/Schema.h>
 #include <QtSqlLib/SchemaConfigurator.h>
 
@@ -9,7 +9,7 @@
 namespace QtSqlLib
 {
 
-class Database : public IDatabase
+class Database : public API::IDatabase
 {
 public:
   Database();
@@ -18,8 +18,8 @@ public:
   void initialize(const QString& filename) override;
   void close() override;
 
-  QueryDefines::QueryResults execQuery(IQuery& query) override;
-  QueryDefines::QueryResults execQuery(IQuerySequence& query) override;
+  Query::QueryDefines::QueryResults execQuery(API::IQuery& query) override;
+  Query::QueryDefines::QueryResults execQuery(API::IQuerySequence& query) override;
 
 protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;

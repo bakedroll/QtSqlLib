@@ -1,6 +1,6 @@
-#include "QtSqlLib/BatchInsertInto.h"
+#include "QtSqlLib/Query/BatchInsertInto.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 BatchInsertInto::BatchInsertInto(Schema::Id tableId)
   : BaseInsert(tableId)

@@ -2,12 +2,12 @@
 
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
-#include <QtSqlLib/InsertIntoExt.h>
-#include <QtSqlLib/BatchInsertInto.h>
-#include <QtSqlLib/FromTable.h>
+#include <QtSqlLib/Query/InsertIntoExt.h>
+#include <QtSqlLib/Query/BatchInsertInto.h>
+#include <QtSqlLib/Query/FromTable.h>
 #include <QtSqlLib/Expr.h>
-#include <QtSqlLib/UpdateTable.h>
-#include <QtSqlLib/LinkTuples.h>
+#include <QtSqlLib/Query/UpdateTable.h>
+#include <QtSqlLib/Query/LinkTuples.h>
 
 #include <utilsLib/Utils.h>
 
@@ -16,6 +16,7 @@
 #define ul utilsLib::underlying
 
 using namespace QtSqlLib;
+using namespace QtSqlLib::Query;
 
 using DataType = Schema::DataType;
 
@@ -514,7 +515,7 @@ TEST_F(DatabaseTest, nestedQuerySequence)
 {
   static auto currentQuery = 0;
 
-  class DummyQuery : public IQuery
+  class DummyQuery : public API::IQuery
   {
   public:
     DummyQuery(int num) : m_num(num)

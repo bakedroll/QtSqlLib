@@ -1,11 +1,11 @@
 #pragma once
 
 #include <QtSqlLib/Schema.h>
-#include <QtSqlLib/QueryDefines.h>
+#include <QtSqlLib/Query/QueryDefines.h>
 
 #include <QSqlQuery>
 
-namespace QtSqlLib
+namespace QtSqlLib::API
 {
 
 class IQuerySequence
@@ -20,8 +20,8 @@ public:
   virtual int getNumQueries() const = 0;
 
   virtual void prepare(Schema& schema) = 0;
-  virtual QueryDefines::SqlQuery getSqlQuery(int num, Schema& schema) = 0;
-  virtual QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const { return {}; }
+  virtual Query::QueryDefines::SqlQuery getSqlQuery(int num, Schema& schema) = 0;
+  virtual Query::QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const { return {}; }
 
 };
 

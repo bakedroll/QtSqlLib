@@ -1,8 +1,8 @@
-#include "QtSqlLib/UpdateTable.h"
+#include "QtSqlLib/Query/UpdateTable.h"
 
 #include "QtSqlLib/DatabaseException.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 UpdateTable::UpdateTable(Schema::Id tableId)
   : m_tableId(tableId)

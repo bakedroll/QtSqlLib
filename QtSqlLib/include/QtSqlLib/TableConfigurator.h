@@ -2,9 +2,6 @@
 
 #include <QtSqlLib/Schema.h>
 
-#include <QString>
-
-#include <map>
 #include <optional>
 
 namespace QtSqlLib

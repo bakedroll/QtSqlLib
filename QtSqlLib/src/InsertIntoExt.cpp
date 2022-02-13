@@ -1,9 +1,9 @@
-#include "QtSqlLib/InsertIntoExt.h"
+#include "QtSqlLib/Query/InsertIntoExt.h"
 
 #include "QtSqlLib/DatabaseException.h"
-#include "QtSqlLib/InsertInto.h"
+#include "QtSqlLib/Query/InsertInto.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 InsertIntoExt::InsertIntoExt(Schema::Id tableId)

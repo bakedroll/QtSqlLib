@@ -1,8 +1,8 @@
-#include "QtSqlLib/FromTable.h"
+#include "QtSqlLib/Query/FromTable.h"
 
 #include "QtSqlLib/DatabaseException.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 FromTable::FromTable(Schema::Id tableId)

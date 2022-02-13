@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/QuerySequence.h>
-#include <QtSqlLib/BaseInsert.h>
+#include <QtSqlLib/Query/QuerySequence.h>
+#include <QtSqlLib/Query/BaseInsert.h>
 
 #include <QVariant>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 class InsertInto : public BaseInsert

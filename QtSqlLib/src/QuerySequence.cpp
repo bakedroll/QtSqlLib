@@ -1,6 +1,6 @@
-#include "QtSqlLib/QuerySequence.h"
+#include "QtSqlLib/Query/QuerySequence.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 int QuerySequence::getNumQueries() const
@@ -66,7 +66,7 @@ QueryDefines::QueryResults QuerySequence::getQueryResults(int num, Schema& schem
   return m_querySequencesMap.at(idNumPair.first)->getQueryResults(idNumPair.second, schema, query);
 }
 
-void QuerySequence::addQuery(std::unique_ptr<IQuery> query)
+void QuerySequence::addQuery(std::unique_ptr<API::IQuery> query)
 {
   m_queries.emplace_back(QueryType::SingleQuery);
   m_singleQueriesMap[static_cast<int>(m_queries.size()) - 1] = std::move(query);
@@ -78,7 +78,7 @@ void QuerySequence::addQuery(std::unique_ptr<IQuerySequence> sequence)
   m_querySequencesMap[static_cast<int>(m_queries.size()) - 1] = std::move(sequence);
 }
 
-IQuery& QuerySequence::getQuery(int index)
+API::IQuery& QuerySequence::getQuery(int index)
 {
   return *m_singleQueriesMap.at(index);
 }

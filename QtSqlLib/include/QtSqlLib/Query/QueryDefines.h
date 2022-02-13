@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Schema.h"
+#include <QtSqlLib/Schema.h>
 
 #include <QSqlQuery>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 class QueryDefines

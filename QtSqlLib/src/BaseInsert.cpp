@@ -1,10 +1,10 @@
-#include "QtSqlLib/BaseInsert.h"
+#include "QtSqlLib/Query/BaseInsert.h"
 
 #include "QtSqlLib/DatabaseException.h"
 
 #include <utilsLib/Utils.h>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 BaseInsert::BaseInsert(Schema::Id tableId)

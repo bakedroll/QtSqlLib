@@ -1,15 +1,15 @@
 #pragma once
 
-#include <QtSqlLib/IQuery.h>
-#include <QtSqlLib/IQuerySequence.h>
+#include <QtSqlLib/API/IQuery.h>
+#include <QtSqlLib/API/IQuerySequence.h>
 
 #include <memory>
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
-class QuerySequence : public IQuerySequence
+class QuerySequence : public API::IQuerySequence
 {
 public:
   int getNumQueries() const final;
@@ -18,10 +18,10 @@ public:
   QueryDefines::SqlQuery getSqlQuery(int num, Schema& schema) override;
   QueryDefines::QueryResults getQueryResults(int num, Schema& schema, QSqlQuery& query) const  override;
 
-  void addQuery(std::unique_ptr<IQuery> query);
+  void addQuery(std::unique_ptr<API::IQuery> query);
   void addQuery(std::unique_ptr<IQuerySequence> sequence);
 
-  IQuery& getQuery(int index);
+  API::IQuery& getQuery(int index);
 
 private:
   enum class QueryType
@@ -34,7 +34,7 @@ private:
   std::map<int, int> m_queryNumSingleQueryMap;
   std::map<int, std::pair<int, int>> m_queryNumQuerySequenceMap;
 
-  std::map<int, std::unique_ptr<IQuery>> m_singleQueriesMap;
+  std::map<int, std::unique_ptr<API::IQuery>> m_singleQueriesMap;
   std::map<int, std::unique_ptr<IQuerySequence>> m_querySequencesMap;
 
 };

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QtSqlLib/QuerySequence.h>
+#include <QtSqlLib/Query/QuerySequence.h>
 
 #include <QtSqlLib/Schema.h>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 class LinkTuples : public QuerySequence

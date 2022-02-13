@@ -1,14 +1,14 @@
 #pragma once
 
-#include <QtSqlLib/IQuery.h>
+#include <QtSqlLib/API/IQuery.h>
 #include <QtSqlLib/Expr.h>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
-class FromTable : public IQuery
+class FromTable : public API::IQuery
 {
 public:
   FromTable(Schema::Id tableId);

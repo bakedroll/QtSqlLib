@@ -4,8 +4,6 @@
 #include <QtSqlLib/Schema.h>
 #include <QtSqlLib/TableConfigurator.h>
 
-#include <QString>
-
 #include <map>
 #include <memory>
 

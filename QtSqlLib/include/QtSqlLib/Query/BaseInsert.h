@@ -1,15 +1,15 @@
 #pragma once
 #pragma once
 
-#include <QtSqlLib/IQuery.h>
+#include <QtSqlLib/API/IQuery.h>
 #include <QtSqlLib/Schema.h>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
-class BaseInsert : public IQuery
+class BaseInsert : public API::IQuery
 {
 public:
   BaseInsert(Schema::Id tableId);

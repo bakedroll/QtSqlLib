@@ -1,9 +1,9 @@
 #include "QtSqlLib/Database.h"
 
 #include "QtSqlLib/DatabaseException.h"
-#include "QtSqlLib/FromTable.h"
-#include "QtSqlLib/InsertInto.h"
-#include "QtSqlLib/QuerySequence.h"
+#include "QtSqlLib/Query/FromTable.h"
+#include "QtSqlLib/Query/InsertInto.h"
+#include "QtSqlLib/Query/QuerySequence.h"
 
 #include <utilsLib/Utils.h>
 
@@ -62,9 +62,9 @@ static QString getActionString(Schema::ForeignKeyAction action)
   return "";
 }
 
-static void execSqlQueryForSchema(Schema& schema, QueryDefines::SqlQuery& query) 
+static void execSqlQueryForSchema(Schema& schema, Query::QueryDefines::SqlQuery& query) 
 {
-  const auto isBatch = (query.mode == QueryDefines::QueryMode::Batch);
+  const auto isBatch = (query.mode == Query::QueryDefines::QueryMode::Batch);
 
   if ((!isBatch && !query.qtQuery.exec()) || (isBatch && !query.qtQuery.execBatch()))
   {
@@ -73,7 +73,7 @@ static void execSqlQueryForSchema(Schema& schema, QueryDefines::SqlQuery& query)
   }
 }
 
-static QueryDefines::QueryResults execQueryForSchema(Schema& schema, IQuery& query)
+static Query::QueryDefines::QueryResults execQueryForSchema(Schema& schema, API::IQuery& query)
 {
   auto q = query.getSqlQuery(schema);
   execSqlQueryForSchema(schema, q);
@@ -81,7 +81,7 @@ static QueryDefines::QueryResults execQueryForSchema(Schema& schema, IQuery& que
   return query.getQueryResults(schema, q.qtQuery);
 }
 
-class CreateTable : public IQuery
+class CreateTable : public API::IQuery
 {
 public:
   CreateTable(const Schema::Table& table)
@@ -91,7 +91,7 @@ public:
 
   ~CreateTable() override = default;
 
-  QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
+  Query::QueryDefines::SqlQuery getSqlQuery(Schema& schema) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -230,14 +230,14 @@ void Database::close()
   m_db.close();
 }
 
-QueryDefines::QueryResults Database::execQuery(IQuery& query)
+Query::QueryDefines::QueryResults Database::execQuery(API::IQuery& query)
 {
   return execQueryForSchema(m_schema, query);
 }
 
-QueryDefines::QueryResults Database::execQuery(IQuerySequence& query)
+Query::QueryDefines::QueryResults Database::execQuery(API::IQuerySequence& query)
 {
-  QueryDefines::QueryResults results;
+  Query::QueryDefines::QueryResults results;
 
   query.prepare(m_schema);
   const auto numQueries = query.getNumQueries();
@@ -305,7 +305,7 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  const auto results = execQuery(FromTable(s_versionTableid).select(s_versionColId));
+  const auto results = execQuery(Query::FromTable(s_versionTableid).select(s_versionColId));
   if (results.empty())
   {
     return -1;
@@ -321,13 +321,13 @@ void Database::createOrMigrateTables(int currentVersion)
   {
     if (version == 1)
     {
-      QuerySequence sequence;
+      Query::QuerySequence sequence;
       for (const auto& table : m_schema.getTables())
       {
         sequence.addQuery(std::make_unique<CreateTable>(table.second));
       }
 
-      auto query = std::make_unique<InsertInto>(s_versionTableid);
+      auto query = std::make_unique<Query::InsertInto>(s_versionTableid);
       query->value(s_versionColId, targetVersion);
 
       sequence.addQuery(std::move(query));
@@ -352,7 +352,7 @@ bool Database::isVersionTableExisting() const
   table.columns[s_sqliteMasterNameColId].name = "name";
 
   const auto results = execQueryForSchema(sqliteMasterSchema,
-    FromTable(s_sqliteMasterTableId)
+    Query::FromTable(s_sqliteMasterTableId)
       .select(s_sqliteMasterNameColId)
       .where(Expr()
         .equal(s_sqliteMasterTypeColId, "table")

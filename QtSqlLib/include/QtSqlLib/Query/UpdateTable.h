@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/IQuery.h>
+#include <QtSqlLib/API/IQuery.h>
 
 #include <QtSqlLib/Expr.h>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
-class UpdateTable : public IQuery
+class UpdateTable : public API::IQuery
 {
 public:
   UpdateTable(Schema::Id tableId);

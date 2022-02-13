@@ -11,8 +11,9 @@ endif()
 require_library(Qt${QT_VERSION} MODULES Core Sql)
 
 require_project(utilsLib PATH utilsLib)
-require_project(QtUtilsLib PATH QtUtilsLib)
 
+add_source_directory(include/API)
+add_source_directory(include/Query)
 add_source_directory(include)
 add_source_directory(src)
 

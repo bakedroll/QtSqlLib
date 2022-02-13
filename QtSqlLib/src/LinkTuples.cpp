@@ -1,10 +1,10 @@
-#include "QtSqlLib/LinkTuples.h"
+#include "QtSqlLib/Query/LinkTuples.h"
 
 #include "QtSqlLib/DatabaseException.h"
-#include "QtSqlLib/UpdateTable.h"
-#include "QtSqlLib/BatchInsertInto.h"
+#include "QtSqlLib/Query/UpdateTable.h"
+#include "QtSqlLib/Query/BatchInsertInto.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 LinkTuples::LinkTuples(Schema::Id relationshipId)

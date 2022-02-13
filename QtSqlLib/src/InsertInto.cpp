@@ -1,6 +1,6 @@
-#include "QtSqlLib/InsertInto.h"
+#include "QtSqlLib/Query/InsertInto.h"
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 InsertInto::InsertInto(Schema::Id tableId)

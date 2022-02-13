@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/QuerySequence.h>
-#include "QtSqlLib/InsertInto.h"
+#include <QtSqlLib/Query/QuerySequence.h>
+#include "QtSqlLib/Query/InsertInto.h"
 
 #include <QVariant>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 class InsertIntoExt : public QuerySequence
@@ -40,7 +40,7 @@ private:
 
   };
 
-  class QueryInsertedIds : public IQuery
+  class QueryInsertedIds : public API::IQuery
   {
   public:
     QueryInsertedIds(Schema::Id tableId);

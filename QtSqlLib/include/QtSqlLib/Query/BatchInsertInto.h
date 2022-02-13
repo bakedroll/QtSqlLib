@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QtSqlLib/BaseInsert.h>
+#include <QtSqlLib/Query/BaseInsert.h>
 
 #include <QVariant>
 
 #include <vector>
 
-namespace QtSqlLib
+namespace QtSqlLib::Query
 {
 
 class BatchInsertInto : public BaseInsert
