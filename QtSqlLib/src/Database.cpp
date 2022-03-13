@@ -72,7 +72,17 @@ static API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryE
   QueryExecuteVisitor executeVisitor(schema);
 
   QSqlDatabase::database().transaction();
-  query.accept(executeVisitor);
+
+  try
+  {
+    query.accept(executeVisitor);
+  }
+  catch (DatabaseException& e)
+  {
+    QSqlDatabase::database().rollback();
+    throw e;
+  }
+
   QSqlDatabase::database().commit();
 
   return executeVisitor.getLastQueryResults();

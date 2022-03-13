@@ -95,14 +95,6 @@ void LinkTuples::prepare(Schema& schema)
   const auto tableFromId = tableIds.first;
   const auto tableToId = tableIds.second;
 
-  /*if (m_bRemainingFromKeys &&
-    (((relationship.type == Schema::RelationshipType::OneToMany) && (tableToId != relationship.tableToId)) ||
-    (relationship.type == Schema::RelationshipType::ManyToMany && (tableToId != relationship.tableFromId))))
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "Is is not allowed to have no from tuple key for this relationship type.");
-  }*/
-
   if (relationship.type == Schema::RelationshipType::ManyToMany)
   {
     prepareToManyLinkQuery(schema, relationship, tableFromId, tableToId);

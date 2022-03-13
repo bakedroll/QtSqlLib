@@ -9,10 +9,6 @@ DatabaseException::DatabaseException(Type type, const QString& message)
   : std::exception(message.toStdString().c_str())
   , m_type(type)
 {
-  if (m_type == Type::QueryError)
-  {
-    QSqlDatabase::database().rollback();
-  }
 }
 
 DatabaseException::~DatabaseException() = default;

@@ -527,12 +527,45 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
     .returnIds()).values[0];
 }
 
+/**
+ * @test:
+ *      Students
+ *        1  N
+ *       /    \
+ *      /      \
+ *     N        M
+ * Projects   Lectures
+ *
+ * (1) Link Student to ONE Lecture
+ * (2) Link Student to MANY Lectures
+ * (3) Link Lecture to ONE Student
+ * (4) Link Lecture to MANY Students
+ * (5) Link Student to ONE Project
+ * (6) Link Student to MANY Projects
+ * (7) Link Project to ONE Student
+ *
+ * @expected:
+ * Relations Students-Lectures:
+ * John    <-->    Math
+ *            >    Database Systems
+ * Mary    <-->    Programming
+ *            >    Database Systems
+ * Paul    <-->    Math
+ *            >    Programming
+ *
+ * Relations Students-Projects:
+ * John    <-->    Computer Vision
+ * Mary    <-->    Game Programming
+ * Paul    <-->    Game Programming
+ *            >    Machine Learning
+ */
 TEST_F(DatabaseTest, linkTuplesQueryTest)
 {
   setupReplationshipTestsSchema();
 
   m_db->initialize(s_dbFilename);
 
+  // Insert tuples
   const auto studentJohn = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "John")
     .returnIds()).values[0];
@@ -541,12 +574,20 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
     .value(ul(StudentsCols::Name), "Mary")
     .returnIds()).values[0];
 
+  const auto studentPaul = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Paul")
+    .returnIds()).values[0];
+
   const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Math")
     .returnIds()).values[0];
 
   const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Programming")
+    .returnIds()).values[0];
+
+  const auto lectureDbSystems = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
+    .value(ul(LecturesCols::Topic), "Database Systems")
     .returnIds()).values[0];
 
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
@@ -561,21 +602,40 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
     .value(ul(ProjectsCols::Title), "Computer Vision")
     .returnIds()).values[0];
 
-  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
-    .fromOne(studentJohn)
-    .toMany({ projectGameProgramming, projectComputerVision }));
-
-  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
-    .fromOne(projectMachineLearning)
-    .toOne(studentMary));
-
+  // (1)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
     .fromOne(studentMary)
-    .toOne(lectureMath));
+    .toOne(lectureProgramming));
 
+  // (2)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-    .fromOne(studentJohn)
+    .fromOne(studentPaul)
     .toMany({ lectureMath, lectureProgramming }));
+
+  // (3)
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(lectureProgramming)
+    .toOne(studentJohn));
+
+  // (4)
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(lectureDbSystems)
+    .toMany({ studentJohn, studentMary }));
+
+  // (5)
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
+    .fromOne(studentMary)
+    .toOne(projectGameProgramming));
+
+  // (6)
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
+    .fromOne(studentPaul)
+    .toMany({ projectGameProgramming, projectMachineLearning }));
+
+  // (7)
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
+    .fromOne(projectComputerVision)
+    .toOne(studentJohn));
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
