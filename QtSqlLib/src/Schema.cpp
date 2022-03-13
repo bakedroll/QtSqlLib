@@ -23,7 +23,7 @@ std::map<Schema::Id, Schema::Relationship>& Schema::getRelationships()
 
 Schema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
 {
-  throwIfRelationshipIdNotExisting(relationshipId);
+  throwIfRelationshipIsNotExisting(relationshipId);
   return m_mapManyToManyRelationshipToLinkTableId.at(relationshipId);
 }
 
@@ -145,7 +145,7 @@ void Schema::throwIfTableIdNotExisting(Id tableId) const
   }
 }
 
-void Schema::throwIfRelationshipIdNotExisting(Id relationshipId) const
+void Schema::throwIfRelationshipIsNotExisting(Id relationshipId) const
 {
   if (m_relationships.count(relationshipId) == 0)
   {
@@ -265,7 +265,7 @@ std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetT
   const TableColumnValuesMap& fromTableColumnValues,
   const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const
 {
-  throwIfRelationshipIdNotExisting(relationshipId);
+  throwIfRelationshipIsNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
   const auto bIgnoreFromKeys = fromTableColumnValues.empty();
 

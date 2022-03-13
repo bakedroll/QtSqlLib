@@ -544,6 +544,15 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
  * (6) Link Student to MANY Projects
  * (7) Link Project to ONE Student
  *
+ * Exception handling tests:
+ * (8) Link Project to MANY Students
+ * (9) Use invalid relationship ID
+ * (10) Use InsertIntoExt::linkToOneTuple() with invalid tuple Key
+ * (11) Use InsertIntoExt::linkToManyTuple() with invalid tuple Key
+ * (12) Use LinkTuples::fromOne() with invalid tuple key
+ * (13) Use LinkTuples::toOne() with invalid tuple key
+ * (14) Use LinkTuples::fromOne() with invalid tuple key
+ *
  * @expected:
  * Relations Students-Lectures:
  * John    <-->    Math
@@ -636,6 +645,53 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
     .fromOne(projectComputerVision)
     .toOne(studentJohn));
+
+  // (8)
+  EXPECT_THROW(m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
+    .fromOne(projectComputerVision)
+    .toMany({ studentJohn, studentMary }))
+    , DatabaseException);
+
+  EXPECT_THROW(m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Dummy")
+    .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { studentJohn, studentMary }))
+    , DatabaseException);
+
+  // (9)
+  EXPECT_THROW(m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Dummy")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), studentJohn))
+    , DatabaseException);
+
+  // (10)
+  EXPECT_THROW(m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Dummy")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), projectMachineLearning))
+    , DatabaseException);
+
+  // (11)
+  EXPECT_THROW(m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Dummy")
+    .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { projectMachineLearning, lectureDbSystems }))
+    , DatabaseException);
+
+  // (12)
+  EXPECT_THROW(m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(projectComputerVision)
+    .toOne(lectureProgramming))
+    , DatabaseException);
+
+  // (13)
+  EXPECT_THROW(m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(studentMary)
+    .toOne(projectComputerVision))
+    , DatabaseException);
+
+  // (14)
+  EXPECT_THROW(m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
+    .fromOne(studentMary)
+    .toMany({ projectComputerVision, lectureProgramming }))
+    , DatabaseException);
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
@@ -734,6 +790,3 @@ TEST_F(DatabaseTest, querySequenceVisitor)
   TestVisitor visitor;
   seq.accept(visitor);
 }
-
-
-// TODO: foreignKeys() test

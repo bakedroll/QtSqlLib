@@ -66,8 +66,14 @@ void InsertIntoExt::prepare(Schema& schema)
   {
     const auto relationshipId = linkedTuples.first;
 
-    schema.throwIfRelationshipIdNotExisting(relationshipId);
+    schema.throwIfRelationshipIsNotExisting(relationshipId);
     const auto& relationship = relationships.at(relationshipId);
+
+    if ((relationship.tableFromId != m_tableId) && (relationship.tableToId != m_tableId))
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidId,
+        "Invalid relationship ID.");
+    }
 
     if (linkedTuples.second.linkType == LinkType::ToOne)
     {

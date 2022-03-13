@@ -85,7 +85,7 @@ void LinkTuples::prepare(Schema& schema)
       "From key must not be empty.");
   }
 
-  schema.throwIfRelationshipIdNotExisting(m_relationshipId);
+  schema.throwIfRelationshipIsNotExisting(m_relationshipId);
   const auto& relationship = schema.getRelationships().at(m_relationshipId);
 
   const auto tableIds = (m_type == RelationshipType::ToOne

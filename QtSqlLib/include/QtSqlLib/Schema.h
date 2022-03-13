@@ -87,7 +87,7 @@ public:
   void configureRelationships();
 
   void throwIfTableIdNotExisting(Id tableId) const;
-  void throwIfRelationshipIdNotExisting(Id relationshipId) const;
+  void throwIfRelationshipIsNotExisting(Id relationshipId) const;
   void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
 
   Id validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const;
