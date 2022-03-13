@@ -19,7 +19,7 @@ QueryExecuteVisitor::~QueryExecuteVisitor() = default;
 
 void QueryExecuteVisitor::visit(API::IQuery& query)
 {
-  auto q = query.getSqlQuery(m_schema);
+  auto q = query.getSqlQuery(m_schema, m_lastResults);
   const auto isBatch = (q.mode == API::IQuery::QueryMode::Batch);
 
   if ((!isBatch && !q.qtQuery.exec()) || (isBatch && !q.qtQuery.execBatch()))
@@ -28,7 +28,11 @@ void QueryExecuteVisitor::visit(API::IQuery& query)
       QString("Could not execute query: %1").arg(q.qtQuery.lastError().text()));
   }
 
-  m_lastResults = query.getQueryResults(m_schema, q.qtQuery);
+  const auto results = query.getQueryResults(m_schema, q.qtQuery);
+  if (results.validity == API::IQuery::QueryResults::Validity::Valid)
+  {
+    m_lastResults = results;
+  }
 }
 
 void QueryExecuteVisitor::visit(API::IQuerySequence& query)

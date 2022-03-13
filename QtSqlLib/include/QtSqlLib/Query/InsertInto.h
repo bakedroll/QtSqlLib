@@ -17,7 +17,7 @@ public:
 
   InsertInto& value(Schema::Id columnId, const QVariant& value);
 
-  SqlQuery getSqlQuery(Schema& schema) override;
+  SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

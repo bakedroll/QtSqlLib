@@ -16,7 +16,7 @@ BatchInsertInto& BatchInsertInto::values(Schema::Id columnId, const QVariantList
   return *this;
 }
 
-API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(Schema& schema)
+API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
 {
   return { getQSqlQuery(schema), QueryMode::Batch };
 }

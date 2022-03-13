@@ -15,6 +15,7 @@ public:
   using TableColId = std::pair<Schema::Id, Schema::Id>;
   using RelationshipParentTableId = std::pair<Schema::Id, Schema::Id>;
   using TableColumnValuesMap = std::map<TableColId, QVariant>;
+  using PrimaryForeignKeyColIdMap = std::map<TableColId, Id>;
 
   enum class ForeignKeyAction
   {
@@ -48,14 +49,14 @@ public:
     Id referenceTableId = 0;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
-    std::map<TableColId, Id> mapReferenceParentColIdToChildColId;
+    PrimaryForeignKeyColIdMap primaryForeignKeyColIdMap;
   };
 
   struct Table
   {
     QString name;
     std::map<Id, Column> columns;
-    std::map<RelationshipParentTableId, ForeignKeyReference> mapRelationshioToForeignKeyReferences;
+    std::map<RelationshipParentTableId, ForeignKeyReference> mapRelationshipToForeignKeyReferences;
     std::set<Id> primaryKeys;
   };
 

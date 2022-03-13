@@ -88,7 +88,7 @@ public:
 
   ~CreateTable() override = default;
 
-  API::IQuery::SqlQuery getSqlQuery(Schema& schema) override
+  API::IQuery::SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -130,16 +130,16 @@ public:
       columns += QString("PRIMARY KEY(%1), ").arg(primaryKeyNames);
     }
 
-    if (!m_table.mapRelationshioToForeignKeyReferences.empty())
+    if (!m_table.mapRelationshipToForeignKeyReferences.empty())
     {
-      for (const auto& foreignKeyReferences : m_table.mapRelationshioToForeignKeyReferences)
+      for (const auto& foreignKeyReferences : m_table.mapRelationshipToForeignKeyReferences)
       {
         QString foreignKeyColNames;
         QString parentKeyColNames;
 
         const auto& parentTable = schema.getTables().at(foreignKeyReferences.second.referenceTableId);
 
-        for (const auto& refKeyColumn : foreignKeyReferences.second.mapReferenceParentColIdToChildColId)
+        for (const auto& refKeyColumn : foreignKeyReferences.second.primaryForeignKeyColIdMap)
         {
           foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
           parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.second).name);
@@ -268,12 +268,12 @@ void Database::loadDatabaseFile(const QString& filename)
 int Database::queryDatabaseVersion()
 {
   const auto results = execQuery(Query::FromTable(s_versionTableid).select(s_versionColId));
-  if (results.empty())
+  if (results.values.empty())
   {
     return -1;
   }
 
-  return results[0].at({ s_versionTableid, s_versionColId }).toInt();
+  return results.values[0].at({ s_versionTableid, s_versionColId }).toInt();
 }
 
 void Database::createOrMigrateTables(int currentVersion)
@@ -321,7 +321,7 @@ bool Database::isVersionTableExisting() const
         .and()
         .equal(s_sqliteMasterNameColId, s_versionTableName)));
 
-  return !results.empty();
+  return !results.values.empty();
 }
 
 }

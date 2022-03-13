@@ -25,7 +25,7 @@ void InsertInto::bindQueryValues(QSqlQuery& query) const
   }
 }
 
-API::IQuery::SqlQuery InsertInto::getSqlQuery(Schema& schema)
+API::IQuery::SqlQuery InsertInto::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
 {
   return { getQSqlQuery(schema), QueryMode::Single };
 }

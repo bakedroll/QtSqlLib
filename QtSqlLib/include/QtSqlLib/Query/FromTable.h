@@ -30,7 +30,7 @@ public:
     return *this;
   }
 
-  SqlQuery getSqlQuery(Schema& schema) override;
+  SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
   QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:

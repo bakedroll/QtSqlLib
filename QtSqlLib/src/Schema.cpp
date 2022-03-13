@@ -85,10 +85,10 @@ void Schema::configureRelationships()
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-        foreignKeyReference.mapReferenceParentColIdToChildColId[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
+        foreignKeyReference.primaryForeignKeyColIdMap[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
       }
 
-      childTable.mapRelationshioToForeignKeyReferences[{ relationship.first, parentTableId }] = foreignKeyReference;
+      childTable.mapRelationshipToForeignKeyReferences[{ relationship.first, parentTableId }] = foreignKeyReference;
     }
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {
@@ -111,14 +111,14 @@ void Schema::configureRelationships()
           col.name = QString("%1_%2").arg(refTable.name).arg(refCol.name);
           col.type = refCol.type;
 
-          foreignKeyReference.mapReferenceParentColIdToChildColId[{ refTableId, refColId }] = currentColId;
+          foreignKeyReference.primaryForeignKeyColIdMap[{ refTableId, refColId }] = currentColId;
           linkTable.columns[currentColId] = col;
           linkTable.primaryKeys.insert(currentColId);
 
           currentColId++;
         }
 
-        linkTable.mapRelationshioToForeignKeyReferences[{ relationship.first, refTableId }] = foreignKeyReference;
+        linkTable.mapRelationshipToForeignKeyReferences[{ relationship.first, refTableId }] = foreignKeyReference;
       };
 
       addRefTableColumns(parentTableId, parentTable);
@@ -267,13 +267,16 @@ std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetT
 {
   throwIfRelationshipIdNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
-
   const auto bIgnoreFromKeys = fromTableColumnValues.empty();
+
+  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTableColumnValuesList);
+  const auto expectedTableFromId = (tableToId == relationship.tableToId
+    ? relationship.tableFromId
+    : relationship.tableToId);
 
   const auto tableFromId = (!bIgnoreFromKeys
     ? validatePrimaryKeysAndGetTableId(fromTableColumnValues)
-    : 0);
-  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTableColumnValuesList);
+    : expectedTableFromId);
 
   const auto isOneToMany = (relationship.type == Schema::RelationshipType::OneToMany);
   const auto isManyToOne = (relationship.type == Schema::RelationshipType::ManyToOne);
@@ -281,11 +284,11 @@ std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetT
   if (bIsOneToMany)
   {
     if ((relationship.type != Schema::RelationshipType::ManyToMany) &&
-      ((isManyToOne && (relationship.tableFromId == tableFromId)) || 
-        (isOneToMany && (relationship.tableFromId != tableFromId))))
+      ((isManyToOne && (relationship.tableToId == tableToId)) || 
+        (isOneToMany && (relationship.tableToId != tableToId))))
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-        "toMany() not compatible with relationship.");
+        "Not possible to assign multiple tuple keys for this relationship type.");
     }
   }
 

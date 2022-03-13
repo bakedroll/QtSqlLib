@@ -10,7 +10,19 @@ namespace QtSqlLib::API
 class IQuery
 {
 public:
-  using QueryResults = std::vector<Schema::TableColumnValuesMap>;
+  struct QueryResults
+  {
+    using Values = std::vector<Schema::TableColumnValuesMap>;
+
+    enum class Validity
+    {
+      Valid,
+      Invalid
+    };
+
+    Validity validity = Validity::Invalid;
+    Values values;
+  };
 
   enum class QueryMode
   {
@@ -30,7 +42,7 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual SqlQuery getSqlQuery(Schema& schema) = 0;
+  virtual SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) = 0;
   virtual QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const { return {}; }
 
 };

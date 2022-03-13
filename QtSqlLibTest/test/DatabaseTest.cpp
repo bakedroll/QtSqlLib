@@ -118,6 +118,30 @@ public:
     QFile::remove(s_dbFilename);
   }
 
+  void setupReplationshipTestsSchema() const
+  {
+    m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    {
+      configurator.configureTable(ul(TIds::Students), "students")
+        .column(ul(StudentsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+        .column(ul(StudentsCols::Name), "name", DataType::Varchar, 128);
+
+      configurator.configureTable(ul(TIds::Projects), "projects")
+        .column(ul(ProjectsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+        .column(ul(ProjectsCols::Title), "title", DataType::Varchar, 128);
+
+      configurator.configureTable(ul(TIds::Lectures), "lectures")
+        .column(ul(LecturesCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+        .column(ul(LecturesCols::Topic), "topic", DataType::Varchar, 128);
+
+      configurator.configureRelationship(ul(Rs::RelationshipStudentsProjects), ul(TIds::Students), ul(TIds::Projects),
+        Schema::RelationshipType::OneToMany).onDelete(Schema::ForeignKeyAction::Cascade);
+
+      configurator.configureRelationship(ul(Rs::RelationshipStudentsLectures), ul(TIds::Students), ul(TIds::Lectures),
+        Schema::RelationshipType::ManyToMany);
+    });
+  }
+
   std::unique_ptr<TestDb> m_db;
 };
 
@@ -145,10 +169,10 @@ TEST_F(DatabaseTest, createTablesInsertAndQueryValues)
     .select(ul(T1Cols::Text), ul(T1Cols::Mandatory))
     .where(Expr().equal(ul(T1Cols::Text), "test1")));
 
-  EXPECT_EQ(results1.size(), 1);
+  EXPECT_EQ(results1.values.size(), 1);
 
-  const auto result1ColText = results1[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
-  const auto result1ColMand = results1[0].at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
+  const auto result1ColText = results1.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
+  const auto result1ColMand = results1.values[0].at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
 
   EXPECT_EQ(result1ColText.userType(), QMetaType::QString);
   EXPECT_EQ(result1ColMand.userType(), QMetaType::Double);
@@ -160,9 +184,9 @@ TEST_F(DatabaseTest, createTablesInsertAndQueryValues)
     .select(ul(T1Cols::Id), ul(T1Cols::Text), ul(T1Cols::Mandatory))
     .where(Expr().less(ul(T1Cols::Mandatory), QVariant(0.75))));
 
-  EXPECT_EQ(results2.size(), 3);
+  EXPECT_EQ(results2.values.size(), 3);
 
-  for (const auto& result : results2)
+  for (const auto& result : results2.values)
   {
     const auto result2ColId = result.at({ ul(TIds::Table1), ul(T1Cols::Id) });
     const auto result2ColText = result.at({ ul(TIds::Table1), ul(T1Cols::Text) });
@@ -405,82 +429,153 @@ TEST_F(DatabaseTest, updateTableTest)
   const auto results = m_db->execQuery(FromTable(ul(TIds::Table1))
     .select(ul(T1Cols::Text), ul(T1Cols::Mandatory)));
 
-  EXPECT_EQ(results[0].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
-  EXPECT_EQ(results[1].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "updated");
-  EXPECT_EQ(results[2].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
+  EXPECT_EQ(results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
+  EXPECT_EQ(results.values[1].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "updated");
+  EXPECT_EQ(results.values[2].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
 }
 
-TEST_F(DatabaseTest, relationshipTest)
+/**
+ * @test:
+ *      Students
+ *        1  N
+ *       /    \
+ *      /      \
+ *     N        M
+ * Projects   Lectures
+ *
+ * (1) Insert Student and link directly to ONE Lecture
+ * (2) Insert Student and link directly to MANY Lectures
+ * (3) Insert Lecture and link directly to ONE Student
+ * (4) Insert Lecture and link directly to MANY Students
+ * (5) Insert Student and link directly to ONE Project
+ * (6) Insert Student and link directly to MANY Projects
+ * (7) Insert Project and link directly to ONE Student
+ *
+ * @expected:
+ * Relations Students-Lectures:
+ * John    <-->    Math
+ *            >    Database Systems
+ * Mary    <-->    Programming
+ *            >    Database Systems
+ * Paul    <-->    Math
+ *            >    Programming
+ *
+ * Relations Students-Projects:
+ * John    <-->    Computer Vision
+ * Mary    <-->    Game Programming
+ * Paul    <-->    Game Programming
+ *            >    Machine Learning
+ */
+TEST_F(DatabaseTest, linkTuplesOnInsertTest)
 {
-  m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(ul(TIds::Students), "students")
-      .column(ul(StudentsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(ul(StudentsCols::Name), "name", DataType::Varchar, 128);
+  setupReplationshipTestsSchema();
 
-    configurator.configureTable(ul(TIds::Projects), "projects")
-      .column(ul(ProjectsCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(ul(ProjectsCols::Title), "title", DataType::Varchar, 128);
+  m_db->initialize(s_dbFilename);
 
-    configurator.configureTable(ul(TIds::Lectures), "lectures")
-      .column(ul(LecturesCols::Id), "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(ul(LecturesCols::Topic), "topic", DataType::Varchar, 128);
+  // Insert Lecture "Math"
+  const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
+    .value(ul(LecturesCols::Topic), "Math")
+    .returnIds()).values[0];
 
-    configurator.configureRelationship(ul(Rs::RelationshipStudentsProjects), ul(TIds::Students), ul(TIds::Projects),
-      Schema::RelationshipType::OneToMany).onDelete(Schema::ForeignKeyAction::Cascade);
+  // Insert Project "Game Programming"
+  const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Game Programming")
+    .returnIds()).values[0];
 
-    configurator.configureRelationship(ul(Rs::RelationshipStudentsLectures), ul(TIds::Students), ul(TIds::Lectures),
-      Schema::RelationshipType::ManyToMany);
-  });
+  // Insert Project "Machine Learning"
+  const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Machine Learning")
+    .returnIds()).values[0];
+  
+  // (1) Insert Student "John" and link directly to Lecture "Math"
+  const auto studentJohn = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "John")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), lectureMath)
+    .returnIds()).values[0];
+
+  // (7) Insert Project "Computer vision" and link direktly to Student "John"
+  const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Computer Vision")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentJohn)
+    .returnIds()).values[0];
+
+  // (3) Insert Lecture "Programming" and link directly to Student "John"
+  const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
+    .value(ul(LecturesCols::Topic), "Programming")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), studentJohn)
+    .returnIds()).values[0];
+
+  // (1) (5) Insert Student Mary and link directly to Lecture "Programming" and to Project "Game Programming"
+  const auto studentMary = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Mary")
+    .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), lectureProgramming)
+    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), projectGameProgramming)
+    .returnIds()).values[0];
+  
+  // (4) Insert Lecture "Database Systems" and link directly to Students "John" and "Mary"
+  const auto lectureDbSystems = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
+    .value(ul(LecturesCols::Topic), "Database Systems")
+    .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { studentJohn, studentMary })
+    .returnIds()).values[0];
+  
+  // (2) (6) Insert Student Paul and link directly to Lectures "Math" and "Programming"
+  //         AND to Projects "Game Programming" AND "Machine Learning"
+  const auto studentPaul = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Paul")
+    .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { lectureMath, lectureProgramming })
+    .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectGameProgramming, projectMachineLearning })
+    .returnIds()).values[0];
+}
+
+TEST_F(DatabaseTest, linkTuplesQueryTest)
+{
+  setupReplationshipTestsSchema();
 
   m_db->initialize(s_dbFilename);
 
   const auto studentJohn = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "John")
-    .returnIds());
+    .returnIds()).values[0];
 
   const auto studentMary = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "Mary")
-    .returnIds());
-
-  const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
-    .value(ul(ProjectsCols::Title), "Game Programming")
-    //.linkTuple(ul(Rs::RelationshipStudentsProjects), studentJohn[0])
-    .returnIds());
-
-  const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
-    .value(ul(ProjectsCols::Title), "Computer Vision")
-    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentJohn[0])
-    .returnIds());
-
-  const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
-    .value(ul(ProjectsCols::Title), "Machine Learning")
-    .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentMary[0])
-    .returnIds());
+    .returnIds()).values[0];
 
   const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Math")
-    .returnIds());
+    .returnIds()).values[0];
 
   const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Programming")
-    .returnIds());
-  /*
-  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
-    .fromOne(studentJohn[0])
-    .toMany({ projectGameProgramming[0], projectComputerVision[0] }));
+    .returnIds()).values[0];
+
+  const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Game Programming")
+    .returnIds()).values[0];
+
+  const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Machine Learning")
+    .returnIds()).values[0];
+
+  const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Computer Vision")
+    .returnIds()).values[0];
 
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
-    .fromOne(projectMachineLearning[0])
-    .toOne(studentMary[0]));
+    .fromOne(studentJohn)
+    .toMany({ projectGameProgramming, projectComputerVision }));
+
+  m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
+    .fromOne(projectMachineLearning)
+    .toOne(studentMary));
 
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-    .fromOne(studentMary[0])
-    .toOne(lectureMath[0]));
+    .fromOne(studentMary)
+    .toOne(lectureMath));
 
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-    .fromOne(studentJohn[0])
-    .toMany({ lectureMath[0], lectureProgramming[0] }));*/
+    .fromOne(studentJohn)
+    .toMany({ lectureMath, lectureProgramming }));
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
@@ -500,10 +595,10 @@ TEST_F(DatabaseTest, multiplePrimaryKeysTable)
     .value(ul(T1Cols::Text), "text")
     .returnIds());
 
-  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(results.values.size(), 1);
 
-  const auto resultId = results[0].at({ ul(TIds::Table1), ul(T1Cols::Id) });
-  const auto resultText = results[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
+  const auto resultId = results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Id) });
+  const auto resultText = results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
 
   EXPECT_EQ(resultId.userType(), QMetaType::LongLong);
   EXPECT_EQ(resultText.userType(), QMetaType::QString);
@@ -528,7 +623,7 @@ TEST_F(DatabaseTest, querySequenceVisitor)
       return m_num;
     }
 
-    SqlQuery getSqlQuery(Schema& schema) override
+    SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override
     {
       return { QSqlQuery(), QueryMode::Single };
     }

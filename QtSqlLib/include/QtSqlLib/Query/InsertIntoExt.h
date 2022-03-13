@@ -47,7 +47,7 @@ private:
     QueryInsertedIds(Schema::Id tableId);
     ~QueryInsertedIds() override;
 
-    SqlQuery getSqlQuery(Schema& schema) override;
+    SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
     QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
   private:
@@ -82,6 +82,8 @@ private:
                                                    const Schema::Relationship& relationship,
                                                    const Schema::Table& childTable,
                                                    const LinkedTuples& linkedTuples) const;
+
+  void addLinkTuplesQueriesForRelationshipIds(const std::set<Schema::Id>& relationshipIds);
 
 };
 
