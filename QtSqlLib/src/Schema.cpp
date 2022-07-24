@@ -7,6 +7,20 @@
 namespace QtSqlLib
 {
 
+bool Schema::TableColumnId::operator<(const TableColumnId& rhs) const
+{
+  if (tableId == rhs.tableId)
+  {
+    return columnId < rhs.columnId;
+  }
+  return tableId < rhs.tableId;
+}
+
+bool Schema::TableColumnId::operator!=(const TableColumnId& rhs) const
+{
+  return (tableId != rhs.tableId) || (columnId != rhs.columnId);
+}
+
 Schema::Schema() = default;
 
 Schema::~Schema() = default;
@@ -163,9 +177,9 @@ void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
   }
 }
 
-Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const
+Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
 {
-  if (columnValues.empty())
+  if (tupleKeyValues.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "Expected at least one column.");
@@ -175,20 +189,20 @@ Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& 
   Id tableId = 0;
   std::set<Id> colIds;
 
-  for (const auto& colValue : columnValues)
+  for (const auto& value : tupleKeyValues)
   {
     if (!firstTableIdSet)
     {
-      tableId = colValue.first.first;
+      tableId = value.first.tableId;
       firstTableIdSet = true;
     }
-    else if (tableId != colValue.first.first)
+    else if (tableId != value.first.tableId)
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Inconsistent table ids detected. Columns should reference only a single table.");
     }
 
-    colIds.insert(colValue.first.second);
+    colIds.insert(value.first.columnId);
   }
 
   throwIfTableIdNotExisting(tableId);
@@ -212,9 +226,9 @@ Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& 
   return tableId;
 }
 
-Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TableColumnValuesMap>& columnValues) const
+Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
 {
-  if (columnValues.empty())
+  if (tupleKeyValuesList.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "Primary key column values must not be empty.");
@@ -222,16 +236,16 @@ Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TableC
 
   auto firstTableIdSet = false;
   Schema::Id tableId = 0;
-  for (const auto& rowIds : columnValues)
+  for (const auto& tupleKeyValues : tupleKeyValuesList)
   {
     if (!firstTableIdSet)
     {
-      tableId = validatePrimaryKeysAndGetTableId(rowIds);
+      tableId = validatePrimaryKeysAndGetTableId(tupleKeyValues);
       firstTableIdSet = true;
       continue;
     }
 
-    if (tableId != validatePrimaryKeysAndGetTableId(rowIds))
+    if (tableId != validatePrimaryKeysAndGetTableId(tupleKeyValues))
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Primary keys should belong to a single table.");
@@ -245,37 +259,37 @@ Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TableC
 
 std::pair<Schema::Id, Schema::Id> Schema::validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
   Schema::Id relationshipId,
-  const TableColumnValuesMap& fromTableColumnValues,
-  const TableColumnValuesMap& toTableColumnValues) const
+  const TupleValues& fromTupleKeyValues,
+  const TupleValues& toTupleKeyValues) const
 {
-  return validateRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTableColumnValues, { toTableColumnValues });
+  return validateRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
 std::pair<Schema::Id, Schema::Id> Schema::validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
   Schema::Id relationshipId,
-  const TableColumnValuesMap& fromTableColumnValues,
-  const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const
+  const TupleValues& fromTupleKeyValues,
+  const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
-  return validateRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTableColumnValues, toTableColumnValuesList);
+  return validateRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
 
 std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
   Schema::Id relationshipId,
-  const TableColumnValuesMap& fromTableColumnValues,
-  const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const
+  const TupleValues& fromTupleKeyValues,
+  const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
   throwIfRelationshipIsNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
-  const auto bIgnoreFromKeys = fromTableColumnValues.empty();
+  const auto bIgnoreFromKeys = fromTupleKeyValues.empty();
 
-  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTableColumnValuesList);
+  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTupleKeyValuesList);
   const auto expectedTableFromId = (tableToId == relationship.tableToId
     ? relationship.tableFromId
     : relationship.tableToId);
 
   const auto tableFromId = (!bIgnoreFromKeys
-    ? validatePrimaryKeysAndGetTableId(fromTableColumnValues)
+    ? validatePrimaryKeysAndGetTableId(fromTupleKeyValues)
     : expectedTableFromId);
 
   const auto isOneToMany = (relationship.type == Schema::RelationshipType::OneToMany);

@@ -14,11 +14,11 @@ public:
   LinkTuples(Schema::Id relationshipId);
   ~LinkTuples() override;
 
-  LinkTuples& fromOne(const Schema::TableColumnValuesMap& rowIds);
+  LinkTuples& fromOne(const Schema::TupleValues& tupleKeyValues);
   LinkTuples& fromRemainingKey();
 
-  LinkTuples& toOne(const Schema::TableColumnValuesMap& rowIds);
-  LinkTuples& toMany(const std::vector<Schema::TableColumnValuesMap>& rowIdsList);
+  LinkTuples& toOne(const Schema::TupleValues& tupleKeyValues);
+  LinkTuples& toMany(const std::vector<Schema::TupleValues>& tupleKeyValuesList);
 
   void prepare(Schema& schema) override;
 
@@ -35,18 +35,18 @@ private:
 
     UpdateTableForeignKeys(
       Schema::Id tableId,
-      const Schema::PrimaryForeignKeyColIdMap& primaryForeignKeyColIdMap);
+      const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
     void setMode(Mode mode);
-    void setForeignKeyValues(const Schema::TableColumnValuesMap& parentKeyValues);
-    void makeAndAddWhereExpr(const Schema::TableColumnValuesMap& affectedChildKeyValues);
+    void setForeignKeyValues(const Schema::TupleValues& parentKeyValues);
+    void makeAndAddWhereExpr(const Schema::TupleValues& affectedChildKeyValues);
 
     SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
 
   private:
     Mode m_mode;
-    const Schema::PrimaryForeignKeyColIdMap& m_primaryForeignKeyColIdMap;
+    const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 
@@ -69,8 +69,8 @@ private:
   RelationshipType m_type;
 
   bool m_bRemainingFromKeys;
-  Schema::TableColumnValuesMap m_fromRowIds;
-  std::vector<Schema::TableColumnValuesMap> m_toRowIdsList;
+  Schema::TupleValues m_fromTupleKeyValues;
+  std::vector<Schema::TupleValues> m_toTupleKeyValuesList;
 
   void prepareToOneLinkQuery(Schema& schema, const Schema::Relationship& relationship,
                                  Schema::Id fromTableId, Schema::Id toTableId);

@@ -152,7 +152,7 @@ public:
         for (const auto& refKeyColumn : foreignKeyReferences.second.primaryForeignKeyColIdMap)
         {
           foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
-          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.second).name);
+          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.columnId).name);
         }
         cutTailingComma(foreignKeyColNames);
         cutTailingComma(parentKeyColNames);

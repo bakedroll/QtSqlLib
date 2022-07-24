@@ -12,10 +12,19 @@ class Schema
 {
 public:
   using Id = unsigned int;
-  using TableColId = std::pair<Schema::Id, Schema::Id>;
+
+  struct TableColumnId
+  {
+    Schema::Id tableId = 0U;
+    Schema::Id columnId = 0U;
+
+    bool operator<(const TableColumnId& rhs) const;
+    bool operator!=(const TableColumnId& rhs) const;
+  };
+
   using RelationshipParentTableId = std::pair<Schema::Id, Schema::Id>;
-  using TableColumnValuesMap = std::map<TableColId, QVariant>;
-  using PrimaryForeignKeyColIdMap = std::map<TableColId, Id>;
+  using TupleValues = std::map<TableColumnId, QVariant>;
+  using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, Id>;
 
   enum class ForeignKeyAction
   {
@@ -49,7 +58,7 @@ public:
     Id referenceTableId = 0;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
-    PrimaryForeignKeyColIdMap primaryForeignKeyColIdMap;
+    PrimaryForeignKeyColumnIdMap primaryForeignKeyColIdMap;
   };
 
   struct Table
@@ -90,18 +99,18 @@ public:
   void throwIfRelationshipIsNotExisting(Id relationshipId) const;
   void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
 
-  Id validatePrimaryKeysAndGetTableId(const TableColumnValuesMap& columnValues) const;
-  Id validatePrimaryKeysListAndGetTableId(const std::vector<TableColumnValuesMap>& columnValues) const;
+  Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const;
+  Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const;
 
   std::pair<Id, Id> validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
     Schema::Id relationshipId,
-    const TableColumnValuesMap& fromTableColumnValues,
-    const TableColumnValuesMap& toTableColumnValues) const;
+    const TupleValues& fromTupleKeyValues,
+    const TupleValues& toTupleKeyValues) const;
 
   std::pair<Id, Id> validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
     Schema::Id relationshipId,
-    const TableColumnValuesMap& fromTableColumnValues,
-    const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const;
+    const TupleValues& fromTupleKeyValues,
+    const std::vector<TupleValues>& toTupleKeyValuesList) const;
 
 private:
   std::map<Id, Table> m_tables;
@@ -111,8 +120,8 @@ private:
   std::pair<Id, Id> validateRelationshipPrimaryKeysAndGetTableIds(
     bool bIsOneToMany,
     Schema::Id relationshipId,
-    const TableColumnValuesMap& fromTableColumnValues,
-    const std::vector<TableColumnValuesMap>& toTableColumnValuesList) const;
+    const TupleValues& fromTupleKeyValues,
+    const std::vector<TupleValues>& toTupleKeyValuesList) const;
 
   static bool isTableIdsMatching(const Schema::Relationship& relationship, Schema::Id tableFromId,
                                  Schema::Id tableToId, bool bIgnoreFromKeys);

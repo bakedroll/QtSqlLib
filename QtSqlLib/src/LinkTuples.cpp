@@ -17,7 +17,7 @@ LinkTuples::LinkTuples(Schema::Id relationshipId)
 
 LinkTuples::~LinkTuples() = default;
 
-LinkTuples& LinkTuples::fromOne(const Schema::TableColumnValuesMap& rowIds)
+LinkTuples& LinkTuples::fromOne(const Schema::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::From)
   {
@@ -25,7 +25,7 @@ LinkTuples& LinkTuples::fromOne(const Schema::TableColumnValuesMap& rowIds)
       "fromOne() call not expected.");
   }
 
-  m_fromRowIds = rowIds;
+  m_fromTupleKeyValues = tupleKeyValues;
   m_expectedCall = ExpectedCall::To;
   return *this;
 }
@@ -43,7 +43,7 @@ LinkTuples& LinkTuples::fromRemainingKey()
   return *this;
 }
 
-LinkTuples& LinkTuples::toOne(const Schema::TableColumnValuesMap& rowIds)
+LinkTuples& LinkTuples::toOne(const Schema::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -52,12 +52,12 @@ LinkTuples& LinkTuples::toOne(const Schema::TableColumnValuesMap& rowIds)
   }
 
   m_type = RelationshipType::ToOne;
-  m_toRowIdsList.emplace_back(rowIds);
+  m_toTupleKeyValuesList.emplace_back(tupleKeyValues);
   m_expectedCall = ExpectedCall::Complete;
   return *this;
 }
 
-LinkTuples& LinkTuples::toMany(const std::vector<Schema::TableColumnValuesMap>& rowIdsList)
+LinkTuples& LinkTuples::toMany(const std::vector<Schema::TupleValues>& tupleKeyValuesList)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -66,7 +66,7 @@ LinkTuples& LinkTuples::toMany(const std::vector<Schema::TableColumnValuesMap>& 
   }
 
   m_type = RelationshipType::ToMany;
-  m_toRowIdsList = rowIdsList;
+  m_toTupleKeyValuesList = tupleKeyValuesList;
   m_expectedCall = ExpectedCall::Complete;
   return *this;
 }
@@ -79,7 +79,7 @@ void LinkTuples::prepare(Schema& schema)
       "LinkTuples query incomplete.");
   }
 
-  if (!m_bRemainingFromKeys && m_fromRowIds.empty())
+  if (!m_bRemainingFromKeys && m_fromTupleKeyValues.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "From key must not be empty.");
@@ -89,8 +89,8 @@ void LinkTuples::prepare(Schema& schema)
   const auto& relationship = schema.getRelationships().at(m_relationshipId);
 
   const auto tableIds = (m_type == RelationshipType::ToOne
-    ? schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromRowIds, m_toRowIdsList[0])
-    : schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromRowIds, m_toRowIdsList));
+    ? schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromTupleKeyValues, m_toTupleKeyValuesList[0])
+    : schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromTupleKeyValues, m_toTupleKeyValuesList));
 
   const auto tableFromId = tableIds.first;
   const auto tableToId = tableIds.second;
@@ -107,7 +107,7 @@ void LinkTuples::prepare(Schema& schema)
 
 LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
   Schema::Id tableId,
-  const Schema::PrimaryForeignKeyColIdMap& primaryForeignKeyColIdMap)
+  const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : UpdateTable(tableId)
   , m_mode(Mode::Default)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
@@ -121,7 +121,7 @@ void LinkTuples::UpdateTableForeignKeys::setMode(Mode mode)
   m_mode = mode;
 }
 
-void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const Schema::TableColumnValuesMap& parentKeyValues)
+void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const Schema::TupleValues& parentKeyValues)
 {
   for (const auto& parentKeyValue : parentKeyValues)
   {
@@ -130,7 +130,7 @@ void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const Schema::Table
   }
 }
 
-void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::TableColumnValuesMap& affectedChildKeyValues)
+void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::TupleValues& affectedChildKeyValues)
 {
   Expr whereExpr;
   for (const auto& childKeyValue : affectedChildKeyValues)
@@ -139,7 +139,7 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::Table
     {
       whereExpr.and();
     }
-    whereExpr.equal(childKeyValue.first.second, childKeyValue.second);
+    whereExpr.equal(childKeyValue.first.columnId, childKeyValue.second);
   }
 
   where(whereExpr);
@@ -181,10 +181,10 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
     std::swap(parentTableId, childTableId);
   }
 
-  const auto idsToInsert = (parentTableId == fromTableId ? m_fromRowIds : m_toRowIdsList[0]);
-  const auto affectedChildRowIds = (childTableId == fromTableId
-    ? std::vector<Schema::TableColumnValuesMap>{ m_fromRowIds }
-    : m_toRowIdsList);
+  const auto keyValuesToInsert = (parentTableId == fromTableId ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
+  const auto affectedChildTupleKeys = (childTableId == fromTableId
+    ? std::vector<Schema::TupleValues>{ m_fromTupleKeyValues }
+    : m_toTupleKeyValuesList);
 
   const auto& childTable = schema.getTables().at(childTableId);
   const auto& foreignKeyRefs = childTable.mapRelationshipToForeignKeyReferences.at({ m_relationshipId, parentTableId });
@@ -192,7 +192,7 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
   const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && (parentTableId == fromTableId));
   const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && (childTableId == fromTableId));
 
-  for (const auto& affectedChildRowId : affectedChildRowIds)
+  for (const auto& affectedChildRowId : affectedChildTupleKeys)
   {
     auto updateQuery = std::make_unique<UpdateTableForeignKeys>(childTableId, foreignKeyRefs.primaryForeignKeyColIdMap);
 
@@ -202,7 +202,7 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
     }
     else
     {
-      updateQuery->setForeignKeyValues(idsToInsert);
+      updateQuery->setForeignKeyValues(keyValuesToInsert);
     }
 
     if (isRemainingAffectedChildKeyValues)
@@ -229,7 +229,7 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
   std::map<Schema::Id, QVariantList> columnValuesMap;
 
   const auto appendValues = [&columnValuesMap](
-    const Schema::TableColumnValuesMap& values,
+    const Schema::TupleValues& values,
     const Schema::ForeignKeyReference& foreignKeyRef)
   {
     for (const auto& refColId : values)
@@ -243,9 +243,9 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
     }
   };
 
-  for (const auto& toRowIds : m_toRowIdsList)
+  for (const auto& toRowIds : m_toTupleKeyValuesList)
   {
-    appendValues(m_fromRowIds, foreignKeyRefsFrom);
+    appendValues(m_fromTupleKeyValues, foreignKeyRefsFrom);
     appendValues(toRowIds, foreignKeyRefsTo);
   }
 
