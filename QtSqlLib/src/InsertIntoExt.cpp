@@ -77,11 +77,11 @@ void InsertIntoExt::prepare(Schema& schema)
 
     if (linkedTuples.second.linkType == LinkType::ToOne)
     {
-      schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));
+      schema.verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));
     }
     else
     {
-      schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys);
+      schema.verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys);
     }
 
     if ((linkedTuples.second.linkType == LinkType::ToMany) ||
@@ -206,7 +206,7 @@ void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, 
   const auto& parentTable = schema.getTables().at(parentTableId);
   const auto& linkedPrimaryKeys = linkedTuples.linkedPrimaryKeys.at(0);
 
-  const auto& foreignKeyReferences = childTable.mapRelationshipToForeignKeyReferences.at({ relationshipId, parentTableId });
+  const auto& foreignKeyReferences = childTable.relationshipToForeignKeyReferencesMap.at({ relationshipId, parentTableId });
   for (const auto& parentKeyCol : parentTable.primaryKeys)
   {
     if (linkedPrimaryKeys.count({ parentTableId, parentKeyCol }) == 0)

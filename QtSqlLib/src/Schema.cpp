@@ -21,6 +21,15 @@ bool Schema::TableColumnId::operator!=(const TableColumnId& rhs) const
   return (tableId != rhs.tableId) || (columnId != rhs.columnId);
 }
 
+bool Schema::RelationshipTableId::operator<(const RelationshipTableId& rhs) const
+{
+  if (relationshipId == rhs.relationshipId)
+  {
+    return tableId < rhs.tableId;
+  }
+  return relationshipId < rhs.relationshipId;
+}
+
 Schema::Schema() = default;
 
 Schema::~Schema() = default;
@@ -102,7 +111,7 @@ void Schema::configureRelationships()
         foreignKeyReference.primaryForeignKeyColIdMap[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
       }
 
-      childTable.mapRelationshipToForeignKeyReferences[{ relationship.first, parentTableId }] = foreignKeyReference;
+      childTable.relationshipToForeignKeyReferencesMap[{ relationship.first, parentTableId }] = foreignKeyReference;
     }
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {
@@ -132,7 +141,7 @@ void Schema::configureRelationships()
           currentColId++;
         }
 
-        linkTable.mapRelationshipToForeignKeyReferences[{ relationship.first, refTableId }] = foreignKeyReference;
+        linkTable.relationshipToForeignKeyReferencesMap[{ relationship.first, refTableId }] = foreignKeyReference;
       };
 
       addRefTableColumns(parentTableId, parentTable);
@@ -257,23 +266,23 @@ Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleV
   return tableId;
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
+std::pair<Schema::Id, Schema::Id> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
   Schema::Id relationshipId,
   const TupleValues& fromTupleKeyValues,
   const TupleValues& toTupleKeyValues) const
 {
-  return validateRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
+  return verifyRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
+std::pair<Schema::Id, Schema::Id> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
   Schema::Id relationshipId,
   const TupleValues& fromTupleKeyValues,
   const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
-  return validateRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
+  return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::validateRelationshipPrimaryKeysAndGetTableIds(
+std::pair<Schema::Id, Schema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
   Schema::Id relationshipId,
   const TupleValues& fromTupleKeyValues,

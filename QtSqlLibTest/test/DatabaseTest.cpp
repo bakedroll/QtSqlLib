@@ -26,7 +26,7 @@ static const QString s_dbFilename = "test.db";
 class TestDb : public Database
 {
 public:
-  enum class TableIds
+  enum class TableIds : unsigned int
   {
     Table1,
     Table2,
@@ -35,39 +35,39 @@ public:
     Lectures
   };
 
-  enum class Table1Cols
+  enum class Table1Cols : unsigned int
   {
     Id,
     Text,
     Mandatory
   };
 
-  enum class Table2Cols
+  enum class Table2Cols : unsigned int
   {
     Id = 0,
     Text = 1,
     Mandatory = 2
   };
 
-  enum class StudentsCols
+  enum class StudentsCols : unsigned int
   {
     Id = 3,
     Name = 4
   };
 
-  enum class ProjectsCols
+  enum class ProjectsCols : unsigned int
   {
     Id = 5,
     Title = 6
   };
 
-  enum class LecturesCols
+  enum class LecturesCols : unsigned int
   {
     Id = 7,
     Topic = 8
   };
 
-  enum class Relationships
+  enum class Relationships : unsigned int
   {
     RelationshipStudentsProjects,
     RelationshipStudentsLectures
@@ -344,7 +344,7 @@ TEST_F(DatabaseTest, expressionStringsCorrectTest)
     .and()
     .equal(ul(T1Cols::Text), "test1");
 
-  EXPECT_EQ(expr1.toQString(schema, ul(TIds::Table1)), "'test'.id < 2 AND 'test'.test == 'test1'");
+  EXPECT_EQ(expr1.toQString(schema, ul(TIds::Table1)), "'test'.'id' < 2 AND 'test'.'test' == 'test1'");
 
   Expr expr2;
   expr2
@@ -352,7 +352,7 @@ TEST_F(DatabaseTest, expressionStringsCorrectTest)
     .or()
     .braces(Expr().greater(ul(T1Cols::Id), QVariant(3)));
 
-  EXPECT_EQ(expr2.toQString(schema, ul(TIds::Table1)), "('test'.id != 2 AND 'test'.test != 'test1') OR ('test'.id > 3)");
+  EXPECT_EQ(expr2.toQString(schema, ul(TIds::Table1)), "('test'.'id' != 2 AND 'test'.'test' != 'test1') OR ('test'.'id' > 3)");
 }
 
 TEST_F(DatabaseTest, expressionThrowsTest)
@@ -434,6 +434,39 @@ TEST_F(DatabaseTest, updateTableTest)
   EXPECT_EQ(results.values[2].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
 }
 
+TEST_F(DatabaseTest, fromTableThrows)
+{
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students)).select(ul(StudentsCols::Name)).select(ul(StudentsCols::Id)),
+    DatabaseException);
+
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students)).select(ul(StudentsCols::Name)).selectAll(),
+    DatabaseException);
+
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students)).selectAll().selectAll(),
+    DatabaseException);
+
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students))
+      .joinColumns(ul(Rs::RelationshipStudentsProjects), ul(StudentsCols::Name))
+      .joinColumns(ul(Rs::RelationshipStudentsProjects), ul(StudentsCols::Id)),
+    DatabaseException);
+
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students))
+      .joinColumns(ul(Rs::RelationshipStudentsProjects), ul(StudentsCols::Name))
+      .joinAll(ul(Rs::RelationshipStudentsProjects)),
+    DatabaseException);
+
+  EXPECT_THROW(
+    FromTable(ul(TIds::Students))
+      .joinAll(ul(Rs::RelationshipStudentsProjects))
+      .joinAll(ul(Rs::RelationshipStudentsProjects)),
+    DatabaseException);
+}
+
 /**
  * @test:
  *      Students
@@ -463,7 +496,7 @@ TEST_F(DatabaseTest, updateTableTest)
  * Relations Students-Projects:
  * John    <-->    Computer Vision
  * Mary    <-->    Game Programming
- * Paul    <-->    Game Programming
+ * Paul    <-->    Modeling
  *            >    Machine Learning
  */
 TEST_F(DatabaseTest, linkTuplesOnInsertTest)
@@ -480,6 +513,11 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
   // Insert Project "Game Programming"
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Game Programming")
+    .returnIds()).values[0];
+
+  // Insert Project "Modeling"
+  const auto projectModeling = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Modeling")
     .returnIds()).values[0];
 
   // Insert Project "Machine Learning"
@@ -523,8 +561,12 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
   const auto studentPaul = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "Paul")
     .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { lectureMath, lectureProgramming })
-    .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectGameProgramming, projectMachineLearning })
+    .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectModeling, projectMachineLearning })
     .returnIds()).values[0];
+
+  const auto results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .select(ul(StudentsCols::Name))
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
 }
 
 /**
@@ -565,7 +607,7 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
  * Relations Students-Projects:
  * John    <-->    Computer Vision
  * Mary    <-->    Game Programming
- * Paul    <-->    Game Programming
+ * Paul    <-->    Modeling
  *            >    Machine Learning
  */
 TEST_F(DatabaseTest, linkTuplesQueryTest)
@@ -601,6 +643,10 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
 
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Game Programming")
+    .returnIds()).values[0];
+
+  const auto projectModeling = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Modeling")
     .returnIds()).values[0];
 
   const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
@@ -639,7 +685,7 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
   // (6)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))
     .fromOne(studentPaul)
-    .toMany({ projectGameProgramming, projectMachineLearning }));
+    .toMany({ projectModeling, projectMachineLearning }));
 
   // (7)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsProjects))

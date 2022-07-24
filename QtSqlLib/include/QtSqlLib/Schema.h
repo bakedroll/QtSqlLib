@@ -22,7 +22,14 @@ public:
     bool operator!=(const TableColumnId& rhs) const;
   };
 
-  using RelationshipParentTableId = std::pair<Schema::Id, Schema::Id>;
+  struct RelationshipTableId
+  {
+    Schema::Id relationshipId = 0U;
+    Schema::Id tableId = 0U;
+
+    bool operator<(const RelationshipTableId& rhs) const;
+  };
+
   using TupleValues = std::map<TableColumnId, QVariant>;
   using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, Id>;
 
@@ -65,7 +72,7 @@ public:
   {
     QString name;
     std::map<Id, Column> columns;
-    std::map<RelationshipParentTableId, ForeignKeyReference> mapRelationshipToForeignKeyReferences;
+    std::map<RelationshipTableId, ForeignKeyReference> relationshipToForeignKeyReferencesMap;
     std::set<Id> primaryKeys;
   };
 
@@ -102,12 +109,12 @@ public:
   Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const;
   Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const;
 
-  std::pair<Id, Id> validateOneToOneRelationshipPrimaryKeysAndGetTableIds(
+  std::pair<Id, Id> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
     Schema::Id relationshipId,
     const TupleValues& fromTupleKeyValues,
     const TupleValues& toTupleKeyValues) const;
 
-  std::pair<Id, Id> validateOneToManyRelationshipPrimaryKeysAndGetTableIds(
+  std::pair<Id, Id> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
     Schema::Id relationshipId,
     const TupleValues& fromTupleKeyValues,
     const std::vector<TupleValues>& toTupleKeyValuesList) const;
@@ -117,7 +124,7 @@ private:
   std::map<Id, Relationship> m_relationships;
   std::map<Id, Id> m_mapManyToManyRelationshipToLinkTableId;
 
-  std::pair<Id, Id> validateRelationshipPrimaryKeysAndGetTableIds(
+  std::pair<Id, Id> verifyRelationshipPrimaryKeysAndGetTableIds(
     bool bIsOneToMany,
     Schema::Id relationshipId,
     const TupleValues& fromTupleKeyValues,
