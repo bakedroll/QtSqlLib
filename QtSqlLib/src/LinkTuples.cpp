@@ -187,7 +187,7 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
     : m_toTupleKeyValuesList);
 
   const auto& childTable = schema.getTables().at(childTableId);
-  const auto& foreignKeyRefs = childTable.mapRelationshipToForeignKeyReferences.at({ m_relationshipId, parentTableId });
+  const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
 
   const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && (parentTableId == fromTableId));
   const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && (childTableId == fromTableId));
@@ -223,8 +223,8 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);
-  const auto& foreignKeyRefsFrom = linkTable.mapRelationshipToForeignKeyReferences.at({ m_relationshipId, fromTableId });
-  const auto& foreignKeyRefsTo = linkTable.mapRelationshipToForeignKeyReferences.at({ m_relationshipId, toTableId });
+  const auto& foreignKeyRefsFrom = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, fromTableId });
+  const auto& foreignKeyRefsTo = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, toTableId });
 
   std::map<Schema::Id, QVariantList> columnValuesMap;
 

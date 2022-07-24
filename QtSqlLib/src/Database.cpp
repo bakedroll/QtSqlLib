@@ -140,9 +140,9 @@ public:
       columns += QString("PRIMARY KEY(%1), ").arg(primaryKeyNames);
     }
 
-    if (!m_table.mapRelationshipToForeignKeyReferences.empty())
+    if (!m_table.relationshipToForeignKeyReferencesMap.empty())
     {
-      for (const auto& foreignKeyReferences : m_table.mapRelationshipToForeignKeyReferences)
+      for (const auto& foreignKeyReferences : m_table.relationshipToForeignKeyReferencesMap)
       {
         QString foreignKeyColNames;
         QString parentKeyColNames;
