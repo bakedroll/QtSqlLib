@@ -35,7 +35,7 @@ private:
 
     UpdateTableForeignKeys(
       Schema::Id tableId,
-      const Schema::PrimaryForeignKeyColIdMap& primaryForeignKeyColIdMap);
+      const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
     void setMode(Mode mode);
@@ -46,7 +46,7 @@ private:
 
   private:
     Mode m_mode;
-    const Schema::PrimaryForeignKeyColIdMap& m_primaryForeignKeyColIdMap;
+    const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 

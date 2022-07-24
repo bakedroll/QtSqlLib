@@ -107,7 +107,7 @@ void LinkTuples::prepare(Schema& schema)
 
 LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
   Schema::Id tableId,
-  const Schema::PrimaryForeignKeyColIdMap& primaryForeignKeyColIdMap)
+  const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : UpdateTable(tableId)
   , m_mode(Mode::Default)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
