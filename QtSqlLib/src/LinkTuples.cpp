@@ -139,7 +139,7 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::Tuple
     {
       whereExpr.and();
     }
-    whereExpr.equal(childKeyValue.first.second, childKeyValue.second);
+    whereExpr.equal(childKeyValue.first.columnId, childKeyValue.second);
   }
 
   where(whereExpr);

@@ -13,18 +13,18 @@ class Schema
 public:
   using Id = unsigned int;
 
-  struct TableColumn
+  struct TableColumnId
   {
     Schema::Id tableId = 0U;
     Schema::Id columnId = 0U;
 
-    bool operator<(const TableColumn& rhs) const;
+    bool operator<(const TableColumnId& rhs) const;
+    bool operator!=(const TableColumnId& rhs) const;
   };
 
-  using TableColId = std::pair<Schema::Id, Schema::Id>;
   using RelationshipParentTableId = std::pair<Schema::Id, Schema::Id>;
-  using TupleValues = std::map<TableColId, QVariant>;
-  using PrimaryForeignKeyColIdMap = std::map<TableColId, Id>;
+  using TupleValues = std::map<TableColumnId, QVariant>;
+  using PrimaryForeignKeyColIdMap = std::map<TableColumnId, Id>;
 
   enum class ForeignKeyAction
   {

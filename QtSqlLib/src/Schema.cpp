@@ -7,13 +7,18 @@
 namespace QtSqlLib
 {
 
-bool Schema::TableColumn::operator<(const TableColumn& rhs) const
+bool Schema::TableColumnId::operator<(const TableColumnId& rhs) const
 {
   if (tableId == rhs.tableId)
   {
     return columnId < rhs.columnId;
   }
   return tableId < rhs.tableId;
+}
+
+bool Schema::TableColumnId::operator!=(const TableColumnId& rhs) const
+{
+  return (tableId != rhs.tableId) || (columnId != rhs.columnId);
 }
 
 Schema::Schema() = default;
@@ -188,16 +193,16 @@ Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyV
   {
     if (!firstTableIdSet)
     {
-      tableId = value.first.first;
+      tableId = value.first.tableId;
       firstTableIdSet = true;
     }
-    else if (tableId != value.first.first)
+    else if (tableId != value.first.tableId)
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Inconsistent table ids detected. Columns should reference only a single table.");
     }
 
-    colIds.insert(value.first.second);
+    colIds.insert(value.first.columnId);
   }
 
   throwIfTableIdNotExisting(tableId);
