@@ -89,8 +89,8 @@ void LinkTuples::prepare(Schema& schema)
   const auto& relationship = schema.getRelationships().at(m_relationshipId);
 
   const auto tableIds = (m_type == RelationshipType::ToOne
-    ? schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromTupleKeyValues, m_toTupleKeyValuesList[0])
-    : schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromTupleKeyValues, m_toTupleKeyValuesList));
+    ? schema.verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromTupleKeyValues, m_toTupleKeyValuesList[0])
+    : schema.verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromTupleKeyValues, m_toTupleKeyValuesList));
 
   const auto tableFromId = tableIds.first;
   const auto tableToId = tableIds.second;

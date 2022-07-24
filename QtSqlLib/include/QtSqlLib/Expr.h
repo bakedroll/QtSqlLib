@@ -1,6 +1,6 @@
 #pragma once
 
-#include "QtSqlLib/Schema.h"
+#include <QtSqlLib/Schema.h>
 
 #include <QVariant>
 

@@ -77,11 +77,11 @@ void InsertIntoExt::prepare(Schema& schema)
 
     if (linkedTuples.second.linkType == LinkType::ToOne)
     {
-      schema.validateOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));
+      schema.verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));
     }
     else
     {
-      schema.validateOneToManyRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys);
+      schema.verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys);
     }
 
     if ((linkedTuples.second.linkType == LinkType::ToMany) ||
