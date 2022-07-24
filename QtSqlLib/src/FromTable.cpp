@@ -87,16 +87,16 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
 
   while (query.next())
   {
-    Schema::TableColumnValuesMap resultMap;
+    Schema::TupleValues resultValues;
 
     auto i = 0;
     for (const auto& col : m_columnIds)
     {
-      resultMap[{ m_tableId, col }] = query.value(i);
+      resultValues[{ m_tableId, col }] = query.value(i);
       i++;
     }
 
-    values.emplace_back(resultMap);
+    values.emplace_back(resultValues);
   }
 
   return { QueryResults::Validity::Valid, values };

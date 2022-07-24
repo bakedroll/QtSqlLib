@@ -22,20 +22,20 @@ InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkToOneTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap)
+InsertIntoExt& InsertIntoExt::linkToOneTuple(Schema::Id relationshipId, const Schema::TupleValues& tupleKeyValues)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId);
   
-  m_linkedTuplesMap[relationshipId] = { LinkType::ToOne, { tupleIdsMap } };
+  m_linkedTuplesMap[relationshipId] = { LinkType::ToOne, { tupleKeyValues } };
   return *this;
 }
 
 InsertIntoExt& InsertIntoExt::linkToManyTuples(Schema::Id relationshipId,
-                                               const std::vector<Schema::TableColumnValuesMap>& tupleIdsMapList)
+                                               const std::vector<Schema::TupleValues>& tupleKeyValuesList)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId);
 
-  m_linkedTuplesMap[relationshipId] = { LinkType::ToMany, tupleIdsMapList };
+  m_linkedTuplesMap[relationshipId] = { LinkType::ToMany, tupleKeyValuesList };
   return *this;
 }
 
@@ -160,16 +160,16 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schem
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  Schema::TableColumnValuesMap resultsMap;
+  Schema::TupleValues resultValues;
 
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)
   {
-    resultsMap[{ m_tableId, primaryKey }] = query.value(currentValue);
+    resultValues[{ m_tableId, primaryKey }] = query.value(currentValue);
     currentValue++;
   }
 
-  return { QueryResults::Validity::Valid, { resultsMap } };
+  return { QueryResults::Validity::Valid, { resultValues } };
 }
 
 void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const

@@ -12,7 +12,7 @@ class IQuery
 public:
   struct QueryResults
   {
-    using Values = std::vector<Schema::TableColumnValuesMap>;
+    using Values = std::vector<Schema::TupleValues>;
 
     enum class Validity
     {

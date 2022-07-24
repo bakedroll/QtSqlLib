@@ -17,8 +17,8 @@ public:
   ~InsertIntoExt() override;
 
   InsertIntoExt& value(Schema::Id columnId, const QVariant& value);
-  InsertIntoExt& linkToOneTuple(Schema::Id relationshipId, const Schema::TableColumnValuesMap& tupleIdsMap);
-  InsertIntoExt& linkToManyTuples(Schema::Id relationshipId, const std::vector<Schema::TableColumnValuesMap>& tupleIdsMapList);
+  InsertIntoExt& linkToOneTuple(Schema::Id relationshipId, const Schema::TupleValues& tupleKeyValues);
+  InsertIntoExt& linkToManyTuples(Schema::Id relationshipId, const std::vector<Schema::TupleValues>& tupleKeyValuesList);
 
   InsertIntoExt& returnIds();
 
@@ -71,7 +71,7 @@ private:
   struct LinkedTuples
   {
     LinkType linkType;
-    std::vector<Schema::TableColumnValuesMap> linkedPrimaryKeys;
+    std::vector<Schema::TupleValues> linkedPrimaryKeys;
   };
 
   Schema::Id m_tableId;
