@@ -5,6 +5,46 @@
 namespace QtSqlLib::Query
 {
 
+class NTuple
+{
+public:
+  NTuple(const std::vector<QVariant>& values)
+    : m_values(values)
+  {
+  }
+
+  virtual ~NTuple() = default;
+
+  bool operator<(const NTuple& rhs) const
+  {
+    if (m_values.size() != rhs.m_values.size())
+    {
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Trying to compare incompatible types.");
+    }
+
+    auto i = 0;
+    auto cmp = 0;
+    for (; i<m_values.size(); ++i)
+    {
+      cmp = m_values[i].compare(rhs.m_values[i]);
+      if (cmp == 0)
+      {
+        continue;
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    return cmp < 0;
+  }
+
+private:
+  std::vector<QVariant> m_values;
+
+};
+
 static QString createSelectString(Schema& schema, const std::vector<Schema::TableColumnId>& tableColumnIds)
 {
   const auto& tables = schema.getTables();
@@ -26,8 +66,6 @@ static QString createSelectString(Schema& schema, const std::vector<Schema::Tabl
 
 FromTable::FromTable(Schema::Id tableId)
   : m_tableId(tableId)
-  , m_bColumnsSelected(false)
-  , m_bIsSelecting(false)
 {
 }
 
@@ -38,7 +76,7 @@ FromTable& FromTable::selectAll()
   throwIfMultipleSelects();
 
   // empty m_columnInfo implies all column ids
-  m_bColumnsSelected = true;
+  m_columnSelectionInfo.bColumnsSelected = true;
   return *this;
 }
 
@@ -46,11 +84,11 @@ FromTable& FromTable::select(Schema::Id columnId)
 {
   throwIfMultipleSelects();
 
-  m_columnInfo.emplace_back(SelectColumnInfo { columnId, -1 });
+  m_columnSelectionInfo.columnInfos.emplace_back(ColumnInfo { columnId, -1 });
 
-  if (!m_bIsSelecting)
+  if (!m_columnSelectionInfo.bIsSelecting)
   {
-    m_bColumnsSelected = true;
+    m_columnSelectionInfo.bColumnsSelected = true;
   }
   return *this;
 }
@@ -60,7 +98,7 @@ FromTable& FromTable::joinAll(Schema::Id relationshipId)
   throwIfMultipleJoins(relationshipId);
 
   // empty JoinData::m_columnInfo implies all column ids
-  m_joins[relationshipId].bJoined = true;
+  m_joins[relationshipId].bColumnsSelected = true;
 
   return *this;
 }
@@ -70,11 +108,11 @@ FromTable& FromTable::joinColumns(Schema::Id relationshipId, Schema::Id columnId
   throwIfMultipleJoins(relationshipId);
 
   auto& joinData = m_joins[relationshipId];
-  joinData.columnInfo.emplace_back(SelectColumnInfo{ columnId, -1 });
+  joinData.columnInfos.emplace_back(ColumnInfo{ columnId, -1 });
 
-  if (!joinData.bIsJoining)
+  if (!joinData.bIsSelecting)
   {
-    joinData.bJoined = true;
+    joinData.bColumnsSelected = true;
   }
   return *this;
 }
@@ -96,12 +134,12 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
 
-  if (m_columnInfo.empty())
+  if (m_columnSelectionInfo.columnInfos.empty())
   {
-    m_columnInfo = getAllTableColumnIds(table);
+    m_columnSelectionInfo.columnInfos = getAllTableColumnIds(table);
   }
 
-  addToSelectedColumns(schema, table, m_tableId, m_columnInfo);
+  addToSelectedColumns(schema, table, m_tableId, m_columnSelectionInfo);
   const auto joinStr = processJoinsAndCreateQuerySubstring(schema, table);
   const auto selectColsStr = createSelectString(schema, m_allSelectedColumns);
 
@@ -121,22 +159,38 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
 
 API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
+  std::set<NTuple> retrievedResultKeys;
+  std::map<Schema::Id, std::set<NTuple>> retrievedRelationResultKeys;
+
   QueryResults::Values values;
 
   while (query.next())
   {
-    Schema::TupleValues resultValues;
-
-
-
-    auto i = 0;
-    for (const auto& info : m_columnInfo)
+    std::vector<QVariant> keys(m_columnSelectionInfo.keyColumnIndicesInQuery.size());
+    for (auto i=0; i<m_columnSelectionInfo.keyColumnIndicesInQuery.size(); ++i)
     {
-      resultValues[{ m_tableId, info.columnId }] = query.value(info.indexInQuery);
-      i++;
+      keys[i] = query.value(m_columnSelectionInfo.keyColumnIndicesInQuery[i]);
     }
 
-    values.emplace_back(resultValues);
+    if (retrievedResultKeys.count(NTuple(keys)) == 0)
+    {
+      retrievedResultKeys.emplace(NTuple(keys));
+
+      Schema::TupleValues resultValues;
+
+      auto i = 0;
+      for (auto& info : m_columnSelectionInfo.columnInfos)
+      {
+        resultValues[{ m_tableId, info.columnId }] = query.value(info.indexInQuery);
+        i++;
+      }
+
+      values.emplace_back(resultValues);
+    }
+
+
+
+
   }
 
   if (!m_joins.empty())
@@ -149,7 +203,7 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
 
 void FromTable::throwIfMultipleSelects() const
 {
-  if (m_bColumnsSelected)
+  if (m_columnSelectionInfo.bColumnsSelected)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "select() or selectAll() should only be called once.");
@@ -158,7 +212,7 @@ void FromTable::throwIfMultipleSelects() const
 
 void FromTable::throwIfMultipleJoins(Schema::Id relationshipId) const
 {
-  if (m_joins.count(relationshipId) > 0 && m_joins.at(relationshipId).bJoined)
+  if (m_joins.count(relationshipId) > 0 && m_joins.at(relationshipId).bColumnsSelected)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "joinColumns() or joinAll() should only be called once.");
@@ -166,9 +220,9 @@ void FromTable::throwIfMultipleJoins(Schema::Id relationshipId) const
 }
 
 void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& table, Schema::Id tableId,
-                                     std::vector<SelectColumnInfo>& columnInfos)
+                                     ColumnSelectionInfo& columnSelectionInfo)
 {
-  for (auto& info : columnInfos)
+  for (auto& info : columnSelectionInfo.columnInfos)
   {
     schema.throwIfColumnIdNotExisting(table, info.columnId);
 
@@ -176,7 +230,7 @@ void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& 
     info.indexInQuery = indexInQuery;
     if (table.primaryKeys.count(info.columnId) > 0)
     {
-      m_keyColumnIndicesInQuery[{ tableId, info.columnId }] = indexInQuery;
+      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(indexInQuery);
     }
 
     m_allSelectedColumns.emplace_back(Schema::TableColumnId{ tableId, info.columnId });
@@ -184,12 +238,12 @@ void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& 
 
   for (const auto& keyColumnId : table.primaryKeys)
   {
-    if (std::count_if(columnInfos.begin(), columnInfos.end(),
-      [&keyColumnId](const SelectColumnInfo& info) { return info.columnId == keyColumnId; }) == 0)
+    if (std::count_if(columnSelectionInfo.columnInfos.begin(), columnSelectionInfo.columnInfos.end(),
+      [&keyColumnId](const ColumnInfo& info) { return info.columnId == keyColumnId; }) == 0)
     {
       Schema::TableColumnId keyId{ tableId, keyColumnId };
 
-      m_keyColumnIndicesInQuery[{ tableId, keyColumnId }] = static_cast<int>(m_allSelectedColumns.size());
+      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(static_cast<int>(m_allSelectedColumns.size()));
 
       m_allSelectedColumns.emplace_back(keyId);
       m_extraSelectedColumns.insert(keyId);
@@ -226,12 +280,12 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
     schema.throwIfTableIdNotExisting(joinTableId);
     const auto& joinTable = schema.getTables().at(joinTableId);
 
-    if (join.second.columnInfo.empty())
+    if (join.second.columnInfos.empty())
     {
-      join.second.columnInfo = getAllTableColumnIds(joinTable);
+      join.second.columnInfos = getAllTableColumnIds(joinTable);
     }
 
-    addToSelectedColumns(schema, joinTable, joinTableId, join.second.columnInfo);
+    addToSelectedColumns(schema, joinTable, joinTableId, join.second);
 
     if (relationship.type == Schema::RelationshipType::ManyToMany)
     {
@@ -276,12 +330,12 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
   return joinStr;
 }
 
-std::vector<FromTable::SelectColumnInfo> FromTable::getAllTableColumnIds(const Schema::Table& table)
+std::vector<FromTable::ColumnInfo> FromTable::getAllTableColumnIds(const Schema::Table& table)
 {
-  std::vector<SelectColumnInfo> columnInfos;
+  std::vector<ColumnInfo> columnInfos;
   for (const auto& column : table.columns)
   {
-    columnInfos.emplace_back(SelectColumnInfo{ column.first, -1 });
+    columnInfos.emplace_back(ColumnInfo{ column.first, -1 });
   }
   return columnInfos;
 }

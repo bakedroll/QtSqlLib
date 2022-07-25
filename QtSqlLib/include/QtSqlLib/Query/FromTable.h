@@ -20,13 +20,13 @@ public:
   template <typename... T>
   FromTable& select(Schema::Id columnId, T... args)
   {
-    m_bIsSelecting = true;
+    m_columnSelectionInfo.bIsSelecting = true;
 
     select(columnId);
     select(args...);
 
-    m_bIsSelecting = false;
-    m_bColumnsSelected = true;
+    m_columnSelectionInfo.bIsSelecting = false;
+    m_columnSelectionInfo.bColumnsSelected = true;
     return *this;
   }
 
@@ -36,13 +36,13 @@ public:
   template <typename... T>
   FromTable& joinColumns(Schema::Id relationshipId, Schema::Id columnId, T... args)
   {
-    m_joins[relationshipId].bIsJoining = true;
+    m_joins[relationshipId].bIsSelecting = true;
 
     joinColumns(relationshipId, columnId);
     joinColumns(relationshipId, args...);
 
-    m_joins[relationshipId].bIsJoining = false;
-    m_joins[relationshipId].bJoined = true;
+    m_joins[relationshipId].bIsSelecting = false;
+    m_joins[relationshipId].bColumnsSelected = true;
     return *this;
   }
 
@@ -52,31 +52,27 @@ public:
   QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
 
 private:
-  struct SelectColumnInfo
+  struct ColumnInfo
   {
     Schema::Id columnId = 0U;
     int indexInQuery = -1;
   };
 
-  Schema::Id m_tableId;
-  std::vector<SelectColumnInfo> m_columnInfo;
-
-  bool m_bColumnsSelected;
-  bool m_bIsSelecting;
-
-  struct JoinData
+  struct ColumnSelectionInfo
   {
-    bool bJoined = false;
-    bool bIsJoining = false;
-
-    std::vector<SelectColumnInfo> columnInfo;
+    std::vector<ColumnInfo> columnInfos;
+    bool bColumnsSelected = false;
+    bool bIsSelecting = false;
+    std::vector<int> keyColumnIndicesInQuery;
   };
 
-  std::map<Schema::Id, JoinData> m_joins;
+  Schema::Id m_tableId;
+
+  ColumnSelectionInfo m_columnSelectionInfo;
+  std::map<Schema::Id, ColumnSelectionInfo> m_joins;
+
   std::vector<Schema::TableColumnId> m_allSelectedColumns;
   std::set<Schema::TableColumnId> m_extraSelectedColumns;
-
-  std::map<Schema::TableColumnId, int> m_keyColumnIndicesInQuery;
 
   std::unique_ptr<Expr> m_whereExpr;
 
@@ -84,11 +80,11 @@ private:
   void throwIfMultipleJoins(Schema::Id relationshipId) const;
 
   void addToSelectedColumns(const Schema& schema, const Schema::Table& table, Schema::Id tableId,
-                            std::vector<SelectColumnInfo>& columnInfos);
+                            ColumnSelectionInfo& columnSelectionInfo);
 
   QString processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table);
 
-  static std::vector<SelectColumnInfo> getAllTableColumnIds(const Schema::Table& table);
+  static std::vector<ColumnInfo> getAllTableColumnIds(const Schema::Table& table);
 
 };
 
