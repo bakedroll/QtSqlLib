@@ -7,6 +7,39 @@
 namespace QtSqlLib
 {
 
+Expr::ColumnId::ColumnId()
+  : ColumnId({0U, 0U}, false)
+{
+}
+
+Expr::ColumnId::ColumnId(const Schema::TableColumnId& tableColumnId)
+  : ColumnId(tableColumnId, true)
+{
+}
+
+Expr::ColumnId::ColumnId(Schema::Id columnId)
+  : ColumnId({0U, columnId}, false)
+{
+}
+
+Expr::ColumnId::~ColumnId() = default;
+
+const Schema::TableColumnId& Expr::ColumnId::get() const
+{
+  return m_tableColumnId;
+}
+
+bool Expr::ColumnId::isTableIdValid() const
+{
+  return m_bIsTableIdValid;
+}
+
+Expr::ColumnId::ColumnId(const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+  m_tableColumnId(tableColumnId),
+  m_bIsTableIdValid(bIsTableIdValid)
+{
+}
+
 Expr::Expr()
   : m_nextExpectation(NextTermExpectation::ComparisonOrNestedExpr)
 {
@@ -16,62 +49,62 @@ Expr::Expr(Expr&& other) noexcept = default;
 
 Expr::~Expr() = default;
 
-Expr& Expr::equal(Schema::Id columnId, const QVariant& value)
+Expr& Expr::equal(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::Equal, columnId, value);
 }
 
-Expr& Expr::equal(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::equal(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::Equal, colIdLhs, colIdRhs);
 }
 
-Expr& Expr::unequal(Schema::Id columnId, const QVariant& value)
+Expr& Expr::unequal(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::Unequal, columnId, value);
 }
 
-Expr& Expr::unequal(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::unequal(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::Unequal, colIdLhs, colIdRhs);
 }
 
-Expr& Expr::lessEqual(Schema::Id columnId, const QVariant& value)
+Expr& Expr::lessEqual(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::LessEqual, columnId, value);
 }
 
-Expr& Expr::lessEqual(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::lessEqual(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::LessEqual, colIdLhs, colIdRhs);
 }
 
-Expr& Expr::less(Schema::Id columnId, const QVariant& value)
+Expr& Expr::less(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::Less, columnId, value);
 }
 
-Expr& Expr::less(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::less(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::Less, colIdLhs, colIdRhs);
 }
 
-Expr& Expr::greaterEqual(Schema::Id columnId, const QVariant& value)
+Expr& Expr::greaterEqual(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::GreaterEqual, columnId, value);
 }
 
-Expr& Expr::greaterEqual(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::greaterEqual(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::GreaterEqual, colIdLhs, colIdRhs);
 }
 
-Expr& Expr::greater(Schema::Id columnId, const QVariant& value)
+Expr& Expr::greater(const ColumnId& columnId, const QVariant& value)
 {
   return addComparison(ComparisonOperator::Greater, columnId, value);
 }
 
-Expr& Expr::greater(Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::greater(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(ComparisonOperator::Greater, colIdLhs, colIdRhs);
 }
@@ -99,7 +132,7 @@ Expr& Expr::braces(Expr& nestedExpr)
   return *this;
 }
 
-QString Expr::toQString(Schema& schema, Schema::Id defaultTableId) const
+QString Expr::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
 {
   if (m_termElements.size() == 0)
   {
@@ -135,22 +168,33 @@ Expr::Comparison::Comparison(ComparisonOperator op, const Operand& lhs, const Op
 
 Expr::Comparison::~Comparison() = default;
 
-QString Expr::Comparison::toQString(Schema& schema, Schema::Id defaultTableId) const
+QString Expr::Comparison::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId = std::nullopt) const
 {
   const auto getOperandString = [&schema, defaultTableId](const Operand& operand) -> QString
   {
     switch (operand.type)
     {
-    case OperandType::Attribute:
+    case OperandType::ColumnId:
     {
-      schema.throwIfTableIdNotExisting(defaultTableId);
+      const auto columnId = operand.value.value<ColumnId>();
+      if (!defaultTableId.has_value() && !columnId.isTableIdValid())
+      {
+        throw DatabaseException(DatabaseException::Type::InvalidId,
+          QString("Table id missing for column id %1").arg(columnId.get().columnId));
+      }
+      else if (defaultTableId && !columnId.isTableIdValid())
+      {
+        schema.throwIfTableIdNotExisting(*defaultTableId);
+      }
 
-      const auto colId = operand.value.toUInt();
-      const auto& table = schema.getTables().at(defaultTableId);
+      const auto colId = columnId.get().columnId;
+      const auto& table = schema.getTables().at(columnId.isTableIdValid()
+        ? columnId.get().tableId
+        : *defaultTableId);
 
       schema.throwIfColumnIdNotExisting(table, colId);
 
-      return QString("'%1'.%2").arg(table.name).arg(table.columns.at(colId).name);
+      return QString("'%1'.'%2'").arg(table.name).arg(table.columns.at(colId).name);
     }
     case OperandType::Value:
     {
@@ -205,7 +249,7 @@ Expr::NestedExpression::NestedExpression(Expr& expr)
 
 Expr::NestedExpression::~NestedExpression() = default;
 
-QString Expr::NestedExpression::toQString(Schema& schema, Schema::Id defaultTableId) const
+QString Expr::NestedExpression::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
 {
   return QString("(%1)").arg(m_nestedExpr->toQString(schema, defaultTableId));
 }
@@ -217,7 +261,7 @@ Expr::Logic::Logic(LogicalOperator op)
 
 Expr::Logic::~Logic() = default;
 
-QString Expr::Logic::toQString(Schema& schema, Schema::Id defaultTableId) const
+QString Expr::Logic::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
 {
   switch (m_operator)
   {
@@ -233,17 +277,17 @@ QString Expr::Logic::toQString(Schema& schema, Schema::Id defaultTableId) const
   return "";
 }
 
-Expr& Expr::addComparison(ComparisonOperator op, Schema::Id colIdLhs, Schema::Id colIdRhs)
+Expr& Expr::addComparison(ComparisonOperator op, const ColumnId& colIdLhs, const ColumnId& colIdRhs)
 {
   return addComparison(std::make_unique<Comparison>(op,
-    Operand { OperandType::Attribute, colIdLhs },
-    Operand { OperandType::Attribute, colIdRhs }));
+    Operand { OperandType::ColumnId, QVariant::fromValue(colIdLhs) },
+    Operand { OperandType::ColumnId, QVariant::fromValue(colIdRhs) }));
 }
 
-Expr& Expr::addComparison(ComparisonOperator op, Schema::Id colIdLhs, const QVariant& value)
+Expr& Expr::addComparison(ComparisonOperator op, const ColumnId& colIdLhs, const QVariant& value)
 {
   return addComparison(std::make_unique<Comparison>(op,
-    Operand { OperandType::Attribute, colIdLhs },
+    Operand { OperandType::ColumnId, QVariant::fromValue(colIdLhs) },
     Operand { OperandType::Value, value }));
 }
 

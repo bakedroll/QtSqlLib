@@ -344,7 +344,7 @@ TEST_F(DatabaseTest, expressionStringsCorrectTest)
     .and()
     .equal(ul(T1Cols::Text), "test1");
 
-  EXPECT_EQ(expr1.toQString(schema, ul(TIds::Table1)), "'test'.id < 2 AND 'test'.test == 'test1'");
+  EXPECT_EQ(expr1.toQString(schema, ul(TIds::Table1)), "'test'.'id' < 2 AND 'test'.'test' == 'test1'");
 
   Expr expr2;
   expr2
@@ -352,7 +352,7 @@ TEST_F(DatabaseTest, expressionStringsCorrectTest)
     .or()
     .braces(Expr().greater(ul(T1Cols::Id), QVariant(3)));
 
-  EXPECT_EQ(expr2.toQString(schema, ul(TIds::Table1)), "('test'.id != 2 AND 'test'.test != 'test1') OR ('test'.id > 3)");
+  EXPECT_EQ(expr2.toQString(schema, ul(TIds::Table1)), "('test'.'id' != 2 AND 'test'.'test' != 'test1') OR ('test'.'id' > 3)");
 }
 
 TEST_F(DatabaseTest, expressionThrowsTest)
@@ -566,7 +566,7 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
 
   const auto results = m_db->execQuery(FromTable(ul(TIds::Students))
     .select(ul(StudentsCols::Name))
-    .joinAll(ul(Rs::RelationshipStudentsLectures)));
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
 }
 
 /**

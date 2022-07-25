@@ -15,7 +15,8 @@ public:
     UnableToLoad,
     InvalidId,
     InvalidSyntax,
-    QueryError
+    QueryError,
+    UnexpectedError
   };
 
   DatabaseException(Type type, const QString& message);

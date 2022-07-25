@@ -104,58 +104,84 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
 
-  auto selectAll = m_columnIds.empty();
+  QString joinStr = "";
+  QString selectColsStr = "";
+
+  selectColsStr.append(createSelectString(schema, table,
+    m_columnIds.empty() ? getAllTableColumnIds(table) : m_columnIds));
+
   for (const auto& join : m_joins)
   {
-    selectAll &= join.second.columnIds.empty();
-  }
+    const auto relationshipId = join.first;
 
-  QString selectColsStr = "";
-  if (selectAll)
-  {
-    selectColsStr = "*";
-  }
-  else
-  {
-    selectColsStr.append(createSelectString(schema, table,
-      m_columnIds.empty() ? getAllTableColumnIds(table) : m_columnIds));
+    schema.throwIfRelationshipIsNotExisting(relationshipId);
+    const auto& relationship = schema.getRelationships().at(relationshipId);
 
-    for (const auto& join : m_joins)
+    Schema::Id joinTableId = 0U;
+    if (m_tableId == relationship.tableFromId)
     {
-      schema.throwIfRelationshipIsNotExisting(join.first);
-      const auto& relationship = schema.getRelationships().at(join.first);
+      joinTableId = relationship.tableToId;
+    }
+    else if (m_tableId == relationship.tableToId)
+    {
+      joinTableId = relationship.tableFromId;
+    }
+    else
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidId,
+        QString("Invalid relationship id %1 for join with table with id %2.").arg(relationshipId).arg(m_tableId));
+    }
 
-      auto joinTableId = 0U;
-      if (m_tableId == relationship.tableFromId)
+    schema.throwIfTableIdNotExisting(joinTableId);
+    const auto& joinTable = schema.getTables().at(joinTableId);
+
+    selectColsStr.append(", ");
+    selectColsStr.append(createSelectString(schema, joinTable,
+      join.second.columnIds.empty() ? getAllTableColumnIds(joinTable) : join.second.columnIds));
+
+    if (relationship.type == Schema::RelationshipType::ManyToMany)
+    {
+      // TODO
+    }
+    else
+    {
+      const auto& foreignKeyReferences = (relationship.type == Schema::RelationshipType::OneToMany
+        ? joinTable.relationshipToForeignKeyReferencesMap
+        : table.relationshipToForeignKeyReferencesMap);
+
+      auto parentTableId = joinTableId;
+      auto childTableId = m_tableId;
+      if (relationship.type == Schema::RelationshipType::OneToMany)
       {
-        joinTableId = relationship.tableToId;
-      }
-      else if (m_tableId == relationship.tableToId)
-      {
-        joinTableId = relationship.tableFromId;
-      }
-      else
-      {
-        throw DatabaseException(DatabaseException::Type::InvalidId,
-          QString("Invalid relationship id %1 for join with table with id %2.").arg(join.first).arg(m_tableId));
+        std::swap(parentTableId, childTableId);
       }
 
-      schema.throwIfTableIdNotExisting(joinTableId);
-      const auto& joinTable = schema.getTables().at(joinTableId);
+      if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
+      {
+        throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
+      }
 
-      selectColsStr.append(", ");
-      selectColsStr.append(createSelectString(schema, joinTable,
-        join.second.columnIds.empty() ? getAllTableColumnIds(joinTable) : join.second.columnIds));
+      Expr joinOnExpr;
+
+      const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
+      for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+      {
+        if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
+        {
+          joinOnExpr.and();
+        }
+        joinOnExpr.equal({{ parentTableId, idMapping.first.columnId }}, Expr::ColumnId({ childTableId, idMapping.second }));
+      }
+
+      joinStr.append(QString(" INNER JOIN '%1' ON %2")
+        .arg(joinTable.name)
+        .arg(joinOnExpr.toQString(schema)));
     }
   }
 
   QString queryStr;
   queryStr.append(QString("SELECT %1 FROM '%2'").arg(selectColsStr).arg(table.name));
-
-  if (!m_joins.empty())
-  {
-    printf("bla");
-  }
+  queryStr.append(joinStr);
 
   if (m_whereExpr)
   {
