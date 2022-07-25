@@ -160,16 +160,15 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schem
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  Schema::TupleValues resultValues;
-
+  ResultTuple tuple;
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)
   {
-    resultValues[{ m_tableId, primaryKey }] = query.value(currentValue);
+    tuple.values[{ m_tableId, primaryKey }] = query.value(currentValue);
     currentValue++;
   }
 
-  return { QueryResults::Validity::Valid, { resultValues } };
+  return { QueryResults::Validity::Valid, { { tuple } } };
 }
 
 void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const

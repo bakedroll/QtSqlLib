@@ -10,9 +10,17 @@ namespace QtSqlLib::API
 class IQuery
 {
 public:
+  using TupleValuesList = std::vector<Schema::TupleValues>;
+
+  struct ResultTuple
+  {
+    Schema::TupleValues values;
+    std::map<Schema::Id, TupleValuesList> joinedTuples;
+  };
+
   struct QueryResults
   {
-    using Values = std::vector<Schema::TupleValues>;
+    using ResultTuples = std::vector<ResultTuple>;
 
     enum class Validity
     {
@@ -21,7 +29,7 @@ public:
     };
 
     Validity validity = Validity::Invalid;
-    Values values;
+    ResultTuples resultTuples;
   };
 
   enum class QueryMode

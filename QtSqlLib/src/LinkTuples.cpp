@@ -150,7 +150,7 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(Schema& sc
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
   {
-    if ((previousQueryResults.validity == QueryResults::Validity::Invalid) || previousQueryResults.values.empty())
+    if ((previousQueryResults.validity == QueryResults::Validity::Invalid) || previousQueryResults.resultTuples.empty())
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Expected previous query results.");
@@ -160,12 +160,12 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(Schema& sc
   if (m_mode == Mode::ForeignKeyValuesRemaining)
   {
     throwIfInvalidPreviousQueryResults();
-    setForeignKeyValues(previousQueryResults.values[0]);
+    setForeignKeyValues(previousQueryResults.resultTuples[0].values);
   }
   else if (m_mode == Mode::AffectedChildKeyValuesRemaining)
   {
     throwIfInvalidPreviousQueryResults();
-    makeAndAddWhereExpr(previousQueryResults.values[0]);
+    makeAndAddWhereExpr(previousQueryResults.resultTuples[0].values);
   }
 
   return UpdateTable::getSqlQuery(schema, previousQueryResults);

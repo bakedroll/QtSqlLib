@@ -45,6 +45,16 @@ private:
 
 };
 
+static NTuple getKeyTuple(const QSqlQuery& query, const std::vector<int>& keyIndices)
+{
+  std::vector<QVariant> keys(keyIndices.size());
+  for (auto i=0; i<keyIndices.size(); ++i)
+  {
+    keys[i] = query.value(keyIndices[i]);
+  }
+  return NTuple(keys);
+}
+
 static QString createSelectString(Schema& schema, const std::vector<Schema::TableColumnId>& tableColumnIds)
 {
   const auto& tables = schema.getTables();
@@ -65,8 +75,8 @@ static QString createSelectString(Schema& schema, const std::vector<Schema::Tabl
 }
 
 FromTable::FromTable(Schema::Id tableId)
-  : m_tableId(tableId)
 {
+  m_columnSelectionInfo.tableId = tableId;
 }
 
 FromTable::~FromTable() = default;
@@ -131,15 +141,15 @@ FromTable& FromTable::where(Expr& expr)
 
 API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
 {
-  schema.throwIfTableIdNotExisting(m_tableId);
-  const auto& table = schema.getTables().at(m_tableId);
+  schema.throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
+  const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
 
   if (m_columnSelectionInfo.columnInfos.empty())
   {
     m_columnSelectionInfo.columnInfos = getAllTableColumnIds(table);
   }
 
-  addToSelectedColumns(schema, table, m_tableId, m_columnSelectionInfo);
+  addToSelectedColumns(schema, table, m_columnSelectionInfo);
   const auto joinStr = processJoinsAndCreateQuerySubstring(schema, table);
   const auto selectColsStr = createSelectString(schema, m_allSelectedColumns);
 
@@ -149,7 +159,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
 
   if (m_whereExpr)
   {
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, m_tableId)));
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, m_columnSelectionInfo.tableId)));
   }
 
   queryStr.append(";");
@@ -162,43 +172,52 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
   std::set<NTuple> retrievedResultKeys;
   std::map<Schema::Id, std::set<NTuple>> retrievedRelationResultKeys;
 
-  QueryResults::Values values;
+  QueryResults::ResultTuples resultTuples;
+  std::map<NTuple, int> resultTupleIndices;
 
   while (query.next())
   {
-    std::vector<QVariant> keys(m_columnSelectionInfo.keyColumnIndicesInQuery.size());
-    for (auto i=0; i<m_columnSelectionInfo.keyColumnIndicesInQuery.size(); ++i)
+    const auto keyTuple = getKeyTuple(query, m_columnSelectionInfo.keyColumnIndicesInQuery);
+
+    if (retrievedResultKeys.count(keyTuple) == 0)
     {
-      keys[i] = query.value(m_columnSelectionInfo.keyColumnIndicesInQuery[i]);
-    }
+      retrievedResultKeys.emplace(keyTuple);
 
-    if (retrievedResultKeys.count(NTuple(keys)) == 0)
-    {
-      retrievedResultKeys.emplace(NTuple(keys));
-
-      Schema::TupleValues resultValues;
-
-      auto i = 0;
+      ResultTuple tuple;
       for (auto& info : m_columnSelectionInfo.columnInfos)
       {
-        resultValues[{ m_tableId, info.columnId }] = query.value(info.indexInQuery);
-        i++;
+        tuple.values[{ m_columnSelectionInfo.tableId, info.columnId }] = query.value(info.indexInQuery);
       }
 
-      values.emplace_back(resultValues);
+      resultTupleIndices[keyTuple] = static_cast<int>(resultTuples.size());
+      resultTuples.emplace_back(tuple);
     }
 
+    auto& currentTuple = resultTuples[resultTupleIndices.at(keyTuple)];
+    for (const auto& join : m_joins)
+    {
+      const auto relationshipId = join.first;
+      auto& joinedTuples = currentTuple.joinedTuples[relationshipId];
 
+      const auto joinKeyTuple = getKeyTuple(query, join.second.keyColumnIndicesInQuery);
+      auto& relationResultKeys = retrievedRelationResultKeys[relationshipId];
 
+      if (relationResultKeys.count(joinKeyTuple) == 0)
+      {
+        relationResultKeys.emplace(joinKeyTuple);
 
+        Schema::TupleValues values;
+        for (auto& info : join.second.columnInfos)
+        {
+          values[{ join.second.tableId, info.columnId }] = query.value(info.indexInQuery);
+        }
+
+        joinedTuples.emplace_back(values);
+      }
+    }
   }
 
-  if (!m_joins.empty())
-  {
-    printf("");
-  }
-
-  return { QueryResults::Validity::Valid, values };
+  return { QueryResults::Validity::Valid, resultTuples };
 }
 
 void FromTable::throwIfMultipleSelects() const
@@ -219,7 +238,7 @@ void FromTable::throwIfMultipleJoins(Schema::Id relationshipId) const
   }
 }
 
-void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& table, Schema::Id tableId,
+void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& table,
                                      ColumnSelectionInfo& columnSelectionInfo)
 {
   for (auto& info : columnSelectionInfo.columnInfos)
@@ -233,7 +252,7 @@ void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& 
       columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(indexInQuery);
     }
 
-    m_allSelectedColumns.emplace_back(Schema::TableColumnId{ tableId, info.columnId });
+    m_allSelectedColumns.emplace_back(Schema::TableColumnId{ columnSelectionInfo.tableId, info.columnId });
   }
 
   for (const auto& keyColumnId : table.primaryKeys)
@@ -241,7 +260,7 @@ void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& 
     if (std::count_if(columnSelectionInfo.columnInfos.begin(), columnSelectionInfo.columnInfos.end(),
       [&keyColumnId](const ColumnInfo& info) { return info.columnId == keyColumnId; }) == 0)
     {
-      Schema::TableColumnId keyId{ tableId, keyColumnId };
+      Schema::TableColumnId keyId{ columnSelectionInfo.tableId, keyColumnId };
 
       columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(static_cast<int>(m_allSelectedColumns.size()));
 
@@ -262,30 +281,31 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
     schema.throwIfRelationshipIsNotExisting(relationshipId);
     const auto& relationship = schema.getRelationships().at(relationshipId);
 
-    Schema::Id joinTableId = 0U;
-    if (m_tableId == relationship.tableFromId)
+    if (m_columnSelectionInfo.tableId == relationship.tableFromId)
     {
-      joinTableId = relationship.tableToId;
+      join.second.tableId = relationship.tableToId;
     }
-    else if (m_tableId == relationship.tableToId)
+    else if (m_columnSelectionInfo.tableId == relationship.tableToId)
     {
-      joinTableId = relationship.tableFromId;
+      join.second.tableId = relationship.tableFromId;
     }
     else
     {
       throw DatabaseException(DatabaseException::Type::InvalidId,
-        QString("Invalid relationship id %1 for join with table with id %2.").arg(relationshipId).arg(m_tableId));
+        QString("Invalid relationship id %1 for join with table with id %2.")
+          .arg(relationshipId)
+          .arg(m_columnSelectionInfo.tableId));
     }
 
-    schema.throwIfTableIdNotExisting(joinTableId);
-    const auto& joinTable = schema.getTables().at(joinTableId);
+    schema.throwIfTableIdNotExisting(join.second.tableId);
+    const auto& joinTable = schema.getTables().at(join.second.tableId);
 
     if (join.second.columnInfos.empty())
     {
       join.second.columnInfos = getAllTableColumnIds(joinTable);
     }
 
-    addToSelectedColumns(schema, joinTable, joinTableId, join.second);
+    addToSelectedColumns(schema, joinTable, join.second);
 
     if (relationship.type == Schema::RelationshipType::ManyToMany)
     {
@@ -297,8 +317,8 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
         ? joinTable.relationshipToForeignKeyReferencesMap
         : table.relationshipToForeignKeyReferencesMap);
 
-      auto parentTableId = joinTableId;
-      auto childTableId = m_tableId;
+      auto parentTableId = join.second.tableId;
+      auto childTableId = m_columnSelectionInfo.tableId;
       if (relationship.type == Schema::RelationshipType::OneToMany)
       {
         std::swap(parentTableId, childTableId);

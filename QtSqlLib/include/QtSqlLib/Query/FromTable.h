@@ -60,13 +60,12 @@ private:
 
   struct ColumnSelectionInfo
   {
+    Schema::Id tableId = 0U;
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
     bool bIsSelecting = false;
     std::vector<int> keyColumnIndicesInQuery;
   };
-
-  Schema::Id m_tableId;
 
   ColumnSelectionInfo m_columnSelectionInfo;
   std::map<Schema::Id, ColumnSelectionInfo> m_joins;
@@ -79,7 +78,7 @@ private:
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(Schema::Id relationshipId) const;
 
-  void addToSelectedColumns(const Schema& schema, const Schema::Table& table, Schema::Id tableId,
+  void addToSelectedColumns(const Schema& schema, const Schema::Table& table,
                             ColumnSelectionInfo& columnSelectionInfo);
 
   QString processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table);

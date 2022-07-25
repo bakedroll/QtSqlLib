@@ -169,10 +169,10 @@ TEST_F(DatabaseTest, createTablesInsertAndQueryValues)
     .select(ul(T1Cols::Text), ul(T1Cols::Mandatory))
     .where(Expr().equal(ul(T1Cols::Text), "test1")));
 
-  EXPECT_EQ(results1.values.size(), 1);
+  EXPECT_EQ(results1.resultTuples.size(), 1);
 
-  const auto result1ColText = results1.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
-  const auto result1ColMand = results1.values[0].at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
+  const auto result1ColText = results1.resultTuples[0].values.at({ ul(TIds::Table1), ul(T1Cols::Text) });
+  const auto result1ColMand = results1.resultTuples[0].values.at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
 
   EXPECT_EQ(result1ColText.userType(), QMetaType::QString);
   EXPECT_EQ(result1ColMand.userType(), QMetaType::Double);
@@ -184,13 +184,13 @@ TEST_F(DatabaseTest, createTablesInsertAndQueryValues)
     .select(ul(T1Cols::Id), ul(T1Cols::Text), ul(T1Cols::Mandatory))
     .where(Expr().less(ul(T1Cols::Mandatory), QVariant(0.75))));
 
-  EXPECT_EQ(results2.values.size(), 3);
+  EXPECT_EQ(results2.resultTuples.size(), 3);
 
-  for (const auto& result : results2.values)
+  for (const auto& result : results2.resultTuples)
   {
-    const auto result2ColId = result.at({ ul(TIds::Table1), ul(T1Cols::Id) });
-    const auto result2ColText = result.at({ ul(TIds::Table1), ul(T1Cols::Text) });
-    const auto result2ColMand = result.at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
+    const auto result2ColId = result.values.at({ ul(TIds::Table1), ul(T1Cols::Id) });
+    const auto result2ColText = result.values.at({ ul(TIds::Table1), ul(T1Cols::Text) });
+    const auto result2ColMand = result.values.at({ ul(TIds::Table1), ul(T1Cols::Mandatory) });
 
     EXPECT_EQ(result2ColId.userType(), QMetaType::LongLong);
     EXPECT_EQ(result2ColText.userType(), QMetaType::QString);
@@ -429,9 +429,9 @@ TEST_F(DatabaseTest, updateTableTest)
   const auto results = m_db->execQuery(FromTable(ul(TIds::Table1))
     .select(ul(T1Cols::Text), ul(T1Cols::Mandatory)));
 
-  EXPECT_EQ(results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
-  EXPECT_EQ(results.values[1].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "updated");
-  EXPECT_EQ(results.values[2].at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
+  EXPECT_EQ(results.resultTuples[0].values.at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
+  EXPECT_EQ(results.resultTuples[1].values.at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "updated");
+  EXPECT_EQ(results.resultTuples[2].values.at({ ul(TIds::Table1), ul(T1Cols::Text) }).toString(), "unchanged");
 }
 
 TEST_F(DatabaseTest, fromTableThrows)
@@ -508,53 +508,53 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
   // Insert Lecture "Math"
   const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Math")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // Insert Project "Game Programming"
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Game Programming")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // Insert Project "Modeling"
   const auto projectModeling = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Modeling")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // Insert Project "Machine Learning"
   const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Machine Learning")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
   
   // (1) Insert Student "John" and link directly to Lecture "Math"
   const auto studentJohn = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "John")
     .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), lectureMath)
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // (7) Insert Project "Computer vision" and link direktly to Student "John"
   const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Computer Vision")
     .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), studentJohn)
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // (3) Insert Lecture "Programming" and link directly to Student "John"
   const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Programming")
     .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), studentJohn)
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // (1) (5) Insert Student Mary and link directly to Lecture "Programming" and to Project "Game Programming"
   const auto studentMary = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "Mary")
     .linkToOneTuple(ul(Rs::RelationshipStudentsLectures), lectureProgramming)
     .linkToOneTuple(ul(Rs::RelationshipStudentsProjects), projectGameProgramming)
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
   
   // (4) Insert Lecture "Database Systems" and link directly to Students "John" and "Mary"
   const auto lectureDbSystems = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Database Systems")
     .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { studentJohn, studentMary })
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
   
   // (2) (6) Insert Student Paul and link directly to Lectures "Math" and "Programming"
   //         AND to Projects "Game Programming" AND "Machine Learning"
@@ -562,7 +562,7 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
     .value(ul(StudentsCols::Name), "Paul")
     .linkToManyTuples(ul(Rs::RelationshipStudentsLectures), { lectureMath, lectureProgramming })
     .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectModeling, projectMachineLearning })
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto results = m_db->execQuery(FromTable(ul(TIds::Students))
     .select(ul(StudentsCols::Name))
@@ -619,43 +619,43 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
   // Insert tuples
   const auto studentJohn = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "John")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto studentMary = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "Mary")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto studentPaul = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
     .value(ul(StudentsCols::Name), "Paul")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto lectureMath = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Math")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto lectureProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Programming")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto lectureDbSystems = m_db->execQuery(InsertIntoExt(ul(TIds::Lectures))
     .value(ul(LecturesCols::Topic), "Database Systems")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto projectGameProgramming = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Game Programming")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto projectModeling = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Modeling")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto projectMachineLearning = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Machine Learning")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   const auto projectComputerVision = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
     .value(ul(ProjectsCols::Title), "Computer Vision")
-    .returnIds()).values[0];
+    .returnIds()).resultTuples[0].values;
 
   // (1)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
@@ -757,10 +757,10 @@ TEST_F(DatabaseTest, multiplePrimaryKeysTable)
     .value(ul(T1Cols::Text), "text")
     .returnIds());
 
-  EXPECT_EQ(results.values.size(), 1);
+  EXPECT_EQ(results.resultTuples.size(), 1);
 
-  const auto resultId = results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Id) });
-  const auto resultText = results.values[0].at({ ul(TIds::Table1), ul(T1Cols::Text) });
+  const auto resultId = results.resultTuples[0].values.at({ ul(TIds::Table1), ul(T1Cols::Id) });
+  const auto resultText = results.resultTuples[0].values.at({ ul(TIds::Table1), ul(T1Cols::Text) });
 
   EXPECT_EQ(resultId.userType(), QMetaType::LongLong);
   EXPECT_EQ(resultText.userType(), QMetaType::QString);

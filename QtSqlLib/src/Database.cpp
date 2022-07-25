@@ -77,10 +77,10 @@ static API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryE
   {
     query.accept(executeVisitor);
   }
-  catch (DatabaseException& e)
+  catch (DatabaseException&)
   {
     QSqlDatabase::database().rollback();
-    throw e;
+    throw;
   }
 
   QSqlDatabase::database().commit();
@@ -278,12 +278,12 @@ void Database::loadDatabaseFile(const QString& filename)
 int Database::queryDatabaseVersion()
 {
   const auto results = execQuery(Query::FromTable(s_versionTableid).select(s_versionColId));
-  if (results.values.empty())
+  if (results.resultTuples.empty())
   {
     return -1;
   }
 
-  return results.values[0].at({ s_versionTableid, s_versionColId }).toInt();
+  return results.resultTuples[0].values.at({ s_versionTableid, s_versionColId }).toInt();
 }
 
 void Database::createOrMigrateTables(int currentVersion)
@@ -331,7 +331,7 @@ bool Database::isVersionTableExisting() const
         .and()
         .equal(s_sqliteMasterNameColId, s_versionTableName)));
 
-  return !results.values.empty();
+  return !results.resultTuples.empty();
 }
 
 }
