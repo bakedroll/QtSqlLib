@@ -566,7 +566,7 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
 
   const auto results = m_db->execQuery(FromTable(ul(TIds::Students))
     .select(ul(StudentsCols::Name))
-    .joinAll(ul(Rs::RelationshipStudentsProjects)));
+    .joinAll(ul(Rs::RelationshipStudentsLectures)));
 }
 
 /**

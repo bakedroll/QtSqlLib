@@ -74,6 +74,32 @@ static QString createSelectString(Schema& schema, const std::vector<Schema::Tabl
   return selectColsStr;
 }
 
+static void appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Schema::Id relationshipId, Schema::Id parentTableId,
+                                     const Schema::Table& joinTable, Schema::Id childTableId,
+                                     const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences)
+{
+  if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
+  }
+
+  Expr joinOnExpr;
+
+  const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
+  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+  {
+    if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
+    {
+      joinOnExpr.and();
+    }
+    joinOnExpr.equal({{ parentTableId, idMapping.first.columnId }}, Expr::ColumnId({ childTableId, idMapping.second }));
+  }
+
+  joinStrOut.append(QString(" INNER JOIN '%1' ON %2")
+    .arg(joinTable.name)
+    .arg(joinOnExpr.toQString(schema)));
+}
+
 FromTable::FromTable(Schema::Id tableId)
 {
   m_columnSelectionInfo.tableId = tableId;
@@ -164,13 +190,20 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
 
   queryStr.append(";");
 
+  if (!m_joins.empty())
+  {
+    printf("");
+  }
+
   return { QSqlQuery(queryStr) };
 }
 
 API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const
 {
+  using JoinKey = std::pair<Schema::Id, NTuple>;
+
   std::set<NTuple> retrievedResultKeys;
-  std::map<Schema::Id, std::set<NTuple>> retrievedRelationResultKeys;
+  std::map<JoinKey, std::set<NTuple>> retrievedRelationResultKeys;
 
   QueryResults::ResultTuples resultTuples;
   std::map<NTuple, int> resultTupleIndices;
@@ -200,7 +233,7 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
       auto& joinedTuples = currentTuple.joinedTuples[relationshipId];
 
       const auto joinKeyTuple = getKeyTuple(query, join.second.keyColumnIndicesInQuery);
-      auto& relationResultKeys = retrievedRelationResultKeys[relationshipId];
+      auto& relationResultKeys = retrievedRelationResultKeys[{ relationshipId, keyTuple }];
 
       if (relationResultKeys.count(joinKeyTuple) == 0)
       {
@@ -215,6 +248,11 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
         joinedTuples.emplace_back(values);
       }
     }
+  }
+
+  if (!m_joins.empty())
+  {
+    printf("");
   }
 
   return { QueryResults::Validity::Valid, resultTuples };
@@ -309,41 +347,38 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
 
     if (relationship.type == Schema::RelationshipType::ManyToMany)
     {
+      const auto parentFromTableId = m_columnSelectionInfo.tableId;
+      const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
+      const auto parentToTableId = join.second.tableId;
+
+      schema.throwIfTableIdNotExisting(linkTableId);
+      const auto& linkTable = schema.getTables().at(linkTableId);
+
+      const auto& foreignKeyReferences = linkTable.relationshipToForeignKeyReferencesMap;
+
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, linkTable, linkTableId, foreignKeyReferences);
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, joinTable, linkTableId, foreignKeyReferences);
       // TODO
+
+      printf("bla");
     }
     else
     {
-      const auto& foreignKeyReferences = (relationship.type == Schema::RelationshipType::OneToMany
+      const auto needToSwapParentChild = (relationship.type == Schema::RelationshipType::OneToMany
+        && relationship.tableFromId == m_columnSelectionInfo.tableId);
+
+      const auto& foreignKeyReferences = (needToSwapParentChild
         ? joinTable.relationshipToForeignKeyReferencesMap
         : table.relationshipToForeignKeyReferencesMap);
 
       auto parentTableId = join.second.tableId;
       auto childTableId = m_columnSelectionInfo.tableId;
-      if (relationship.type == Schema::RelationshipType::OneToMany)
+      if (needToSwapParentChild)
       {
         std::swap(parentTableId, childTableId);
       }
 
-      if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
-      {
-        throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
-      }
-
-      Expr joinOnExpr;
-
-      const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
-      for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
-      {
-        if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
-        {
-          joinOnExpr.and();
-        }
-        joinOnExpr.equal({{ parentTableId, idMapping.first.columnId }}, Expr::ColumnId({ childTableId, idMapping.second }));
-      }
-
-      joinStr.append(QString(" INNER JOIN '%1' ON %2")
-        .arg(joinTable.name)
-        .arg(joinOnExpr.toQString(schema)));
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentTableId, joinTable, childTableId, foreignKeyReferences);
     }
   }
 
