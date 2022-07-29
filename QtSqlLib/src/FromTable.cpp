@@ -190,11 +190,6 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
 
   queryStr.append(";");
 
-  if (!m_joins.empty())
-  {
-    printf("");
-  }
-
   return { QSqlQuery(queryStr) };
 }
 
@@ -248,11 +243,6 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
         joinedTuples.emplace_back(values);
       }
     }
-  }
-
-  if (!m_joins.empty())
-  {
-    printf("");
   }
 
   return { QueryResults::Validity::Valid, resultTuples };
@@ -358,9 +348,6 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
 
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, linkTable, linkTableId, foreignKeyReferences);
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, joinTable, linkTableId, foreignKeyReferences);
-      // TODO
-
-      printf("bla");
     }
     else
     {

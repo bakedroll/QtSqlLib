@@ -2,6 +2,7 @@
 
 #include <QtSqlLib/Query/QuerySequence.h>
 #include "QtSqlLib/Query/UpdateTable.h"
+#include "QtSqlLib/Query/BatchInsertInto.h"
 
 #include <QtSqlLib/Schema.h>
 
@@ -46,6 +47,23 @@ private:
 
   private:
     Mode m_mode;
+    const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
+
+  };
+
+  class BatchInsertRemainingKeys : public BatchInsertInto
+  {
+  public:
+    BatchInsertRemainingKeys(
+      Schema::Id tableId,
+      int numRelations,
+      const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
+    ~BatchInsertRemainingKeys() override;
+
+    SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
+
+  private:
+    int m_numRelations;
     const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };

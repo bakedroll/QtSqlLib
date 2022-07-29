@@ -171,6 +171,44 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(Schema& sc
   return UpdateTable::getSqlQuery(schema, previousQueryResults);
 }
 
+LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(Schema::Id tableId,
+  int numRelations,
+  const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
+  : BatchInsertInto(tableId)
+  , m_numRelations(numRelations)
+  , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
+{
+}
+
+LinkTuples::BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
+
+API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(Schema& schema,
+  QueryResults& previousQueryResults)
+{
+  if (previousQueryResults.validity != QueryResults::Validity::Valid || previousQueryResults.resultTuples.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Expected previous query results.");
+  }
+
+  const auto& prevValues = previousQueryResults.resultTuples[0].values;
+  for (const auto& value : prevValues)
+  {
+    if (m_primaryForeignKeyColIdMap.count(value.first) == 0)
+    {
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Missing foreign key ref.");
+    }
+    QVariantList list;
+    for (auto i=0; i<m_numRelations; ++i)
+    {
+      list << value.second;
+    }
+
+    values(m_primaryForeignKeyColIdMap.at(value.first), list);
+  }
+
+  return BatchInsertInto::getSqlQuery(schema, previousQueryResults);
+}
+
 void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationship& relationship,
                                        Schema::Id fromTableId, Schema::Id toTableId)
 {
@@ -249,7 +287,11 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
     appendValues(toRowIds, foreignKeyRefsTo);
   }
 
-  auto batchInsertQuery = std::make_unique<BatchInsertInto>(linkTableId);
+  auto batchInsertQuery = m_bRemainingFromKeys
+    ? std::make_unique<BatchInsertRemainingKeys>(linkTableId, static_cast<int>(m_toTupleKeyValuesList.size()),
+      foreignKeyRefsFrom.primaryForeignKeyColIdMap)
+    : std::make_unique<BatchInsertInto>(linkTableId);
+
   for (const auto& values : columnValuesMap)
   {
     batchInsertQuery->values(values.first, values.second);

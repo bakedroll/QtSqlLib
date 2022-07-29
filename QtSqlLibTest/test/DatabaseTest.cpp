@@ -487,6 +487,7 @@ TEST_F(DatabaseTest, fromTableThrows)
  * @expected:
  * Relations Students-Lectures:
  * John    <-->    Math
+              >    Programming
  *            >    Database Systems
  * Mary    <-->    Programming
  *            >    Database Systems
@@ -564,8 +565,8 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
     .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectModeling, projectMachineLearning })
     .returnIds()).resultTuples[0].values;
 
-  const auto results = m_db->execQuery(FromTable(ul(TIds::Students))
-    .select(ul(StudentsCols::Name))
+  const auto results = m_db->execQuery(FromTable(ul(TIds::Lectures))
+    .select(ul(LecturesCols::Topic))
     .joinAll(ul(Rs::RelationshipStudentsLectures)));
 }
 
