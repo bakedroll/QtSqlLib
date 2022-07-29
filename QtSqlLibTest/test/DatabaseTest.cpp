@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <QtSqlLib/API/IQueryVisitor.h>
+#include <QtSqlLib/API/IQuery.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Query/InsertIntoExt.h>
@@ -99,6 +100,74 @@ using ProjectsCols = TestDb::ProjectsCols;
 using LecturesCols = TestDb::LecturesCols;
 using TIds = TestDb::TableIds;
 using Rs = TestDb::Relationships;
+
+bool isResultTuplesContaining(const std::vector<QtSqlLib::API::IQuery::ResultTuple>& results,
+  Schema::Id tableId, Schema::Id columnId, QVariant value)
+{
+  const Schema::TableColumnId colId{ tableId, columnId };
+  for (const auto& result : results)
+  {
+    if (result.values.count(colId) == 0)
+    {
+      return false;
+    }
+    if (result.values.at(colId) == value)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool isResultTuplesContaining(const QtSqlLib::API::IQuery::TupleValuesList& results,
+  Schema::Id tableId, Schema::Id columnId, QVariant value)
+{
+  const Schema::TableColumnId colId{ tableId, columnId };
+  for (const auto& result : results)
+  {
+    if (result.count(colId) == 0)
+    {
+      return false;
+    }
+    if (result.at(colId) == value)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+static QtSqlLib::API::IQuery::TupleValuesList s_nullTupleValuesList;
+
+QtSqlLib::API::IQuery::TupleValuesList& getJoinedTuples(std::vector<QtSqlLib::API::IQuery::ResultTuple>& results,
+  Schema::Id tableId, Schema::Id columnId, const QVariant& value, Schema::Id relationshipId)
+{
+  const Schema::TableColumnId colId{ tableId, columnId };
+  for (auto& result : results)
+  {
+    if (result.values.at(colId) == value)
+    {
+      return result.joinedTuples.at(relationshipId);
+    }
+  }
+  return s_nullTupleValuesList;
+}
+
+void expectRelations(std::vector<QtSqlLib::API::IQuery::ResultTuple>& results,
+  Schema::Id relationshipId,
+  Schema::Id fromTableId, Schema::Id fromColId, Schema::Id toTableId, Schema::Id toColId,
+  const QVariant& fromValue, const QVariantList& toValues)
+{
+  ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
+
+  auto joinedTuples = getJoinedTuples(results, fromTableId, fromColId, fromValue, relationshipId);
+  EXPECT_EQ(joinedTuples.size(), toValues.size());
+
+  for (const auto& value : toValues)
+  {
+    EXPECT_TRUE(isResultTuplesContaining(joinedTuples, toTableId, toColId, value));
+  }
+}
 
 class DatabaseTest : public testing::Test
 {
@@ -565,9 +634,103 @@ TEST_F(DatabaseTest, linkTuplesOnInsertTest)
     .linkToManyTuples(ul(Rs::RelationshipStudentsProjects), { projectModeling, projectMachineLearning })
     .returnIds()).resultTuples[0].values;
 
-  const auto results = m_db->execQuery(FromTable(ul(TIds::Lectures))
-    .select(ul(LecturesCols::Topic))
+  // Expectations:
+  auto results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .select(ul(StudentsCols::Name))
+    .joinColumns(ul(Rs::RelationshipStudentsLectures), ul(LecturesCols::Topic)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "John", QVariantList() << "Math" << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Mary", QVariantList() << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Paul", QVariantList() << "Math" << "Programming");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Lectures))
+    .selectAll()
+    .joinColumns(ul(Rs::RelationshipStudentsLectures), ul(StudentsCols::Name)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Math", QVariantList() << "John" << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Programming", QVariantList() << "John" << "Mary" << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Database Systems", QVariantList() << "John" << "Mary");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .select(ul(StudentsCols::Name))
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "John", QVariantList() << "Computer Vision");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Mary", QVariantList() << "Game Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Paul", QVariantList() << "Modeling" << "Machine Learning");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Projects))
+    .selectAll()
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Computer Vision", QVariantList() << "John");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Game Programming", QVariantList() << "Mary");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Modeling", QVariantList() << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Machine Learning", QVariantList() << "Paul");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(ul(Rs::RelationshipStudentsProjects))
     .joinAll(ul(Rs::RelationshipStudentsLectures)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "John", QVariantList() << "Math" << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Mary", QVariantList() << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Paul", QVariantList() << "Math" << "Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "John", QVariantList() << "Computer Vision");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Mary", QVariantList() << "Game Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
 /**
@@ -670,7 +833,7 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
 
   // (3)
   m_db->execQuery(LinkTuples(ul(Rs::RelationshipStudentsLectures))
-    .fromOne(lectureProgramming)
+    .fromOne(lectureMath)
     .toOne(studentJohn));
 
   // (4)
@@ -739,6 +902,104 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
     .fromOne(studentMary)
     .toMany({ projectComputerVision, lectureProgramming }))
     , DatabaseException);
+
+  // Expectations:
+  auto results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .select(ul(StudentsCols::Name))
+    .joinColumns(ul(Rs::RelationshipStudentsLectures), ul(LecturesCols::Topic)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "John", QVariantList() << "Math" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Mary", QVariantList() << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Paul", QVariantList() << "Math" << "Programming");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Lectures))
+    .selectAll()
+    .joinColumns(ul(Rs::RelationshipStudentsLectures), ul(StudentsCols::Name)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Math", QVariantList() << "John" << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Programming", QVariantList() << "Mary" << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Lectures), ul(LecturesCols::Topic), ul(TIds::Students), ul(StudentsCols::Name),
+    "Database Systems", QVariantList() << "John" << "Mary");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .select(ul(StudentsCols::Name))
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "John", QVariantList() << "Computer Vision");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Mary", QVariantList() << "Game Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Paul", QVariantList() << "Modeling" << "Machine Learning");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Projects))
+    .selectAll()
+    .joinAll(ul(Rs::RelationshipStudentsProjects)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Computer Vision", QVariantList() << "John");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Game Programming", QVariantList() << "Mary");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Modeling", QVariantList() << "Paul");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Projects), ul(ProjectsCols::Title),ul(TIds::Students), ul(StudentsCols::Name),
+    "Machine Learning", QVariantList() << "Paul");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(ul(Rs::RelationshipStudentsProjects))
+    .joinAll(ul(Rs::RelationshipStudentsLectures)));
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "John", QVariantList() << "Math" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Mary", QVariantList() << "Programming" << "Database Systems");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsLectures),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Lectures), ul(LecturesCols::Topic),
+    "Paul", QVariantList() << "Math" << "Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "John", QVariantList() << "Computer Vision");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Mary", QVariantList() << "Game Programming");
+
+  expectRelations(results.resultTuples, ul(Rs::RelationshipStudentsProjects),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
