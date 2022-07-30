@@ -36,8 +36,6 @@ private:
 
   static int getDatabaseVersion();
 
-  bool isVersionTableExisting() const;
-
 };
 
 }

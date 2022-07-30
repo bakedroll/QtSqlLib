@@ -26,6 +26,28 @@ static const Schema::Id s_versionColId = 0;
 static const Schema::Id s_versionTableid = std::numeric_limits<Schema::Id>::max();
 static const QString s_versionTableName = "database_version";
 
+static void verifyPrimaryKeys(const Schema::Table& table)
+{
+  for (const auto& key : table.primaryKeys)
+  {
+    auto found = false;
+    for (const auto& column : table.columns)
+    {
+      if (column.first == key)
+      {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidId,
+        QString("Invalid primary key specified for table '%1'").arg(table.name));
+    }
+  }
+}
+
 static QString getDataTypeName(Schema::DataType type, int varcharLength)
 {
   switch (type)
@@ -86,6 +108,26 @@ static API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryE
   QSqlDatabase::database().commit();
 
   return executeVisitor.getLastQueryResults();
+}
+
+static bool isVersionTableExisting()
+{
+  Schema sqliteMasterSchema;
+
+  auto& table = sqliteMasterSchema.getTables()[s_sqliteMasterTableId];
+  table.name = "sqlite_master";
+  table.columns[s_sqliteMasterTypeColId].name = "type";
+  table.columns[s_sqliteMasterNameColId].name = "name";
+
+  const auto results = execQueryForSchema(sqliteMasterSchema,
+    Query::FromTable(s_sqliteMasterTableId)
+    .select(s_sqliteMasterNameColId)
+    .where(Expr()
+      .equal(s_sqliteMasterTypeColId, "table")
+      .and()
+      .equal(s_sqliteMasterNameColId, s_versionTableName)));
+
+  return !results.resultTuples.empty();
 }
 
 class CreateTable : public Query::Query
@@ -296,6 +338,7 @@ void Database::createOrMigrateTables(int currentVersion)
       Query::QuerySequence sequence;
       for (const auto& table : m_schema.getTables())
       {
+        verifyPrimaryKeys(table.second);
         sequence.addQuery(std::make_unique<CreateTable>(table.second));
       }
 
@@ -312,26 +355,6 @@ void Database::createOrMigrateTables(int currentVersion)
 int Database::getDatabaseVersion()
 {
   return 1;
-}
-
-bool Database::isVersionTableExisting() const
-{
-  Schema sqliteMasterSchema;
-
-  auto& table = sqliteMasterSchema.getTables()[s_sqliteMasterTableId];
-  table.name = "sqlite_master";
-  table.columns[s_sqliteMasterTypeColId].name = "type";
-  table.columns[s_sqliteMasterNameColId].name = "name";
-
-  const auto results = execQueryForSchema(sqliteMasterSchema,
-    Query::FromTable(s_sqliteMasterTableId)
-      .select(s_sqliteMasterNameColId)
-      .where(Expr()
-        .equal(s_sqliteMasterTypeColId, "table")
-        .and()
-        .equal(s_sqliteMasterNameColId, s_versionTableName)));
-
-  return !results.resultTuples.empty();
 }
 
 }

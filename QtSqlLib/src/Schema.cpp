@@ -116,7 +116,8 @@ void Schema::configureRelationships()
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {
       Table linkTable;
-      linkTable.name = QString("link_%1_to_%2").arg(parentTable.name).arg(childTable.name);
+      linkTable.name = QString("rel_%1_link_%2_to_%3")
+        .arg(relationship.first).arg(parentTable.name).arg(childTable.name);
 
       auto currentColId = 0U;
 
