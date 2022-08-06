@@ -61,29 +61,48 @@ private:
   struct ColumnSelectionInfo
   {
     Schema::Id tableId = 0U;
+    QString tableAlias;
+  
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
     bool bIsSelecting = false;
     std::vector<int> keyColumnIndicesInQuery;
   };
 
+  struct TableAliasColumnId
+  {
+    QString tableAlias;
+    Schema::TableColumnId tableColumnId;
+  };
+
   ColumnSelectionInfo m_columnSelectionInfo;
   std::map<Schema::Id, ColumnSelectionInfo> m_joins;
 
-  std::vector<Schema::TableColumnId> m_allSelectedColumns;
-  std::set<Schema::TableColumnId> m_extraSelectedColumns;
+  std::vector<TableAliasColumnId> m_allSelectedColumns;
+  // TODO: consider extra columns
+  //std::set<Schema::TableColumnId> m_extraSelectedColumns;
 
   std::unique_ptr<Expr> m_whereExpr;
+  bool m_isTableAliasesNeeded;
 
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(Schema::Id relationshipId) const;
 
+  void verifyJoinsAndCheckAliasesNeeded(Schema& schema);
+  void generateTableAliases();
+
   void addToSelectedColumns(const Schema& schema, const Schema::Table& table,
                             ColumnSelectionInfo& columnSelectionInfo);
-
   QString processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table);
 
   static std::vector<ColumnInfo> getAllTableColumnIds(const Schema::Table& table);
+
+  QString createSelectString(Schema& schema, const std::vector<TableAliasColumnId>& tableColumnIds) const;
+  void appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Schema::Id relationshipId,
+                                Schema::Id parentTableId, const QString& parentTableAlias,
+                                Schema::Id childTableId, const QString& childTableAlias,
+                                const Schema::Table& joinTable, const QString& joinTableAlias,
+                                const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences) const;
 
 };
 

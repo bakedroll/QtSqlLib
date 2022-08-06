@@ -8,17 +8,22 @@ namespace QtSqlLib
 {
 
 Expr::ColumnId::ColumnId()
-  : ColumnId({0U, 0U}, false)
+  : ColumnId("", {0U, 0U}, false)
 {
 }
 
 Expr::ColumnId::ColumnId(const Schema::TableColumnId& tableColumnId)
-  : ColumnId(tableColumnId, true)
+  : ColumnId("", tableColumnId, true)
 {
 }
 
 Expr::ColumnId::ColumnId(Schema::Id columnId)
-  : ColumnId({0U, columnId}, false)
+  : ColumnId("", {0U, columnId}, false)
+{
+}
+
+Expr::ColumnId::ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId)
+  : ColumnId(tableAlias, tableColumnId, true)
 {
 }
 
@@ -34,7 +39,13 @@ bool Expr::ColumnId::isTableIdValid() const
   return m_bIsTableIdValid;
 }
 
-Expr::ColumnId::ColumnId(const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+QString Expr::ColumnId::getTableAlias() const
+{
+  return m_tableAlias;
+}
+
+Expr::ColumnId::ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+  m_tableAlias(tableAlias),
   m_tableColumnId(tableColumnId),
   m_bIsTableIdValid(bIsTableIdValid)
 {
@@ -194,7 +205,9 @@ QString Expr::Comparison::toQString(Schema& schema, const std::optional<Schema::
 
       schema.throwIfColumnIdNotExisting(table, colId);
 
-      return QString("'%1'.'%2'").arg(table.name).arg(table.columns.at(colId).name);
+      const auto tableAlias = columnId.getTableAlias();
+
+      return QString("'%1'.'%2'").arg(tableAlias.isEmpty() ? table.name : tableAlias).arg(table.columns.at(colId).name);
     }
     case OperandType::Value:
     {

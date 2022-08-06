@@ -19,14 +19,17 @@ public:
     ColumnId();
     ColumnId(const Schema::TableColumnId& tableColumnId);
     ColumnId(Schema::Id columnId);
+    ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId);
     virtual ~ColumnId();
 
     const Schema::TableColumnId& get() const;
     bool isTableIdValid() const;
+    QString getTableAlias() const;
 
   private:
-    ColumnId(const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid);
+    ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid);
 
+    QString m_tableAlias;
     Schema::TableColumnId m_tableColumnId;
     bool m_bIsTableIdValid;
 

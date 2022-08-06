@@ -1080,6 +1080,8 @@ TEST_F(DatabaseTest, specialRelationships)
     ul(TIds::Projects), ul(ProjectsCols::Title), ul(TIds::Students), ul(StudentsCols::Name),
     "Project2", QVariantList() << "Student1");
 
+  // TODO: exception for ambitious table ids in where expression
+
   /*printf("");
 
   results = m_db->execQuery(FromTable(ul(TIds::Students))

@@ -55,52 +55,8 @@ static NTuple getKeyTuple(const QSqlQuery& query, const std::vector<int>& keyInd
   return NTuple(keys);
 }
 
-static QString createSelectString(Schema& schema, const std::vector<Schema::TableColumnId>& tableColumnIds)
-{
-  const auto& tables = schema.getTables();
-
-  QString selectColsStr = "";
-  for (const auto& id : tableColumnIds)
-  {
-    if (!selectColsStr.isEmpty())
-    {
-      selectColsStr.append(", ");
-    }
-
-    const auto& table = tables.at(id.tableId);
-    selectColsStr.append(QString("'%1'.'%2'").arg(table.name).arg(table.columns.at(id.columnId).name));
-  }
-
-  return selectColsStr;
-}
-
-static void appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Schema::Id relationshipId, Schema::Id parentTableId,
-                                     const Schema::Table& joinTable, Schema::Id childTableId,
-                                     const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences)
-{
-  if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
-  }
-
-  Expr joinOnExpr;
-
-  const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
-  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
-  {
-    if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
-    {
-      joinOnExpr.and();
-    }
-    joinOnExpr.equal({{ parentTableId, idMapping.first.columnId }}, Expr::ColumnId({ childTableId, idMapping.second }));
-  }
-
-  joinStrOut.append(QString(" INNER JOIN '%1' ON %2")
-    .arg(joinTable.name)
-    .arg(joinOnExpr.toQString(schema)));
-}
-
 FromTable::FromTable(Schema::Id tableId)
+  : m_isTableAliasesNeeded(false)
 {
   m_columnSelectionInfo.tableId = tableId;
 }
@@ -175,12 +131,23 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
     m_columnSelectionInfo.columnInfos = getAllTableColumnIds(table);
   }
 
+  verifyJoinsAndCheckAliasesNeeded(schema);
+  if (m_isTableAliasesNeeded)
+  {
+    generateTableAliases();
+  }
+
   addToSelectedColumns(schema, table, m_columnSelectionInfo);
   const auto joinStr = processJoinsAndCreateQuerySubstring(schema, table);
   const auto selectColsStr = createSelectString(schema, m_allSelectedColumns);
 
   QString queryStr;
   queryStr.append(QString("SELECT %1 FROM '%2'").arg(selectColsStr).arg(table.name));
+  if (m_isTableAliasesNeeded)
+  {
+    queryStr.append(QString(" as '%1'").arg(m_columnSelectionInfo.tableAlias));
+  }
+
   queryStr.append(joinStr);
 
   if (m_whereExpr)
@@ -266,42 +233,9 @@ void FromTable::throwIfMultipleJoins(Schema::Id relationshipId) const
   }
 }
 
-void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& table,
-                                     ColumnSelectionInfo& columnSelectionInfo)
+void FromTable::verifyJoinsAndCheckAliasesNeeded(Schema& schema)
 {
-  for (auto& info : columnSelectionInfo.columnInfos)
-  {
-    schema.throwIfColumnIdNotExisting(table, info.columnId);
-
-    const auto indexInQuery = static_cast<int>(m_allSelectedColumns.size());
-    info.indexInQuery = indexInQuery;
-    if (table.primaryKeys.count(info.columnId) > 0)
-    {
-      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(indexInQuery);
-    }
-
-    m_allSelectedColumns.emplace_back(Schema::TableColumnId{ columnSelectionInfo.tableId, info.columnId });
-  }
-
-  for (const auto& keyColumnId : table.primaryKeys)
-  {
-    if (std::count_if(columnSelectionInfo.columnInfos.begin(), columnSelectionInfo.columnInfos.end(),
-      [&keyColumnId](const ColumnInfo& info) { return info.columnId == keyColumnId; }) == 0)
-    {
-      Schema::TableColumnId keyId{ columnSelectionInfo.tableId, keyColumnId };
-
-      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(static_cast<int>(m_allSelectedColumns.size()));
-
-      m_allSelectedColumns.emplace_back(keyId);
-      m_extraSelectedColumns.insert(keyId);
-    }
-  }
-}
-
-QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table)
-{
-  QString joinStr = "";
-
+  std::set<Schema::Id> joinTableIds;
   for (auto& join : m_joins)
   {
     const auto relationshipId = join.first;
@@ -321,12 +255,82 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
     {
       throw DatabaseException(DatabaseException::Type::InvalidId,
         QString("Invalid relationship id %1 for join with table with id %2.")
-          .arg(relationshipId)
-          .arg(m_columnSelectionInfo.tableId));
+        .arg(relationshipId)
+        .arg(m_columnSelectionInfo.tableId));
     }
 
     schema.throwIfTableIdNotExisting(join.second.tableId);
+    if (joinTableIds.count(join.second.tableId) == 0)
+    {
+      joinTableIds.insert(join.second.tableId);
+    }
+    else
+    {
+      m_isTableAliasesNeeded = true;
+    }
+  }
+}
+
+void FromTable::generateTableAliases()
+{
+  auto tableAliasIndex = 0;
+  QString tableAliasBody = "t_alias_%1";
+
+  const auto getNextTableAlias = [&tableAliasIndex, &tableAliasBody]() -> QString
+  {
+    return tableAliasBody.arg(tableAliasIndex++);
+  };
+
+  m_columnSelectionInfo.tableAlias = getNextTableAlias();
+  for (auto& join : m_joins)
+  {
+    join.second.tableAlias = getNextTableAlias();
+  }
+}
+
+void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& table,
+                                     ColumnSelectionInfo& columnSelectionInfo)
+{
+  for (auto& info : columnSelectionInfo.columnInfos)
+  {
+    schema.throwIfColumnIdNotExisting(table, info.columnId);
+
+    const auto indexInQuery = static_cast<int>(m_allSelectedColumns.size());
+    info.indexInQuery = indexInQuery;
+    if (table.primaryKeys.count(info.columnId) > 0)
+    {
+      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(indexInQuery);
+    }
+
+    m_allSelectedColumns.emplace_back(TableAliasColumnId{ columnSelectionInfo.tableAlias,
+      Schema::TableColumnId{ columnSelectionInfo.tableId, info.columnId } });
+  }
+
+  for (const auto& keyColumnId : table.primaryKeys)
+  {
+    if (std::count_if(columnSelectionInfo.columnInfos.begin(), columnSelectionInfo.columnInfos.end(),
+      [&keyColumnId](const ColumnInfo& info) { return info.columnId == keyColumnId; }) == 0)
+    {
+      const Schema::TableColumnId keyId{ columnSelectionInfo.tableId, keyColumnId };
+
+      columnSelectionInfo.keyColumnIndicesInQuery.emplace_back(static_cast<int>(m_allSelectedColumns.size()));
+
+      m_allSelectedColumns.emplace_back(TableAliasColumnId{ columnSelectionInfo.tableAlias, keyId });
+      // TODO: consider extra columns
+      // m_extraSelectedColumns.insert(keyId);
+    }
+  }
+}
+
+QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table)
+{
+  QString joinStr = "";
+  for (auto& join : m_joins)
+  {
+    const auto relationshipId = join.first;
+    const auto& relationship = schema.getRelationships().at(relationshipId);
     const auto& joinTable = schema.getTables().at(join.second.tableId);
+    const auto& joinTableAlias = join.second.tableAlias;
 
     if (join.second.columnInfos.empty())
     {
@@ -338,16 +342,23 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
     if (relationship.type == Schema::RelationshipType::ManyToMany)
     {
       const auto parentFromTableId = m_columnSelectionInfo.tableId;
-      const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
-      const auto parentToTableId = join.second.tableId;
+      const auto& parentFromTableAlias = m_columnSelectionInfo.tableAlias;
 
+      const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
       schema.throwIfTableIdNotExisting(linkTableId);
+
       const auto& linkTable = schema.getTables().at(linkTableId);
+      const auto& linkTableAlias = linkTable.name;
+
+      const auto parentToTableId = join.second.tableId;
+      const auto& parentToTableAlias = join.second.tableAlias;
 
       const auto& foreignKeyReferences = linkTable.relationshipToForeignKeyReferencesMap;
 
-      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, linkTable, linkTableId, foreignKeyReferences);
-      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, joinTable, linkTableId, foreignKeyReferences);
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, parentFromTableAlias,
+                               linkTableId, linkTableAlias, linkTable, linkTableAlias, foreignKeyReferences);
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, parentToTableAlias,
+                               linkTableId, linkTableAlias, joinTable, joinTableAlias, foreignKeyReferences);
     }
     else
     {
@@ -358,14 +369,15 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
         ? joinTable.relationshipToForeignKeyReferencesMap
         : table.relationshipToForeignKeyReferencesMap);
 
-      auto parentTableId = join.second.tableId;
-      auto childTableId = m_columnSelectionInfo.tableId;
+      auto& parentTableColSelInfo = join.second;
+      auto& childTableColSelInfo = m_columnSelectionInfo;
       if (needToSwapParentChild)
       {
-        std::swap(parentTableId, childTableId);
+        std::swap(parentTableColSelInfo, childTableColSelInfo);
       }
 
-      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentTableId, joinTable, childTableId, foreignKeyReferences);
+      appendJoinQuerySubstring(joinStr, schema, relationshipId, parentTableColSelInfo.tableId, parentTableColSelInfo.tableAlias,
+                               childTableColSelInfo.tableId, childTableColSelInfo.tableAlias, joinTable, joinTableAlias, foreignKeyReferences);
     }
   }
 
@@ -380,6 +392,70 @@ std::vector<FromTable::ColumnInfo> FromTable::getAllTableColumnIds(const Schema:
     columnInfos.emplace_back(ColumnInfo{ column.first, -1 });
   }
   return columnInfos;
+}
+
+QString FromTable::createSelectString(Schema& schema, const std::vector<TableAliasColumnId>& tableColumnIds) const
+{
+  const auto& tables = schema.getTables();
+
+  QString selectColsStr = "";
+  for (const auto& id : tableColumnIds)
+  {
+    if (!selectColsStr.isEmpty())
+    {
+      selectColsStr.append(", ");
+    }
+
+    const auto& table = tables.at(id.tableColumnId.tableId);
+    const auto tableName = (m_isTableAliasesNeeded ? id.tableAlias : table.name);
+
+    selectColsStr.append(QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(id.tableColumnId.columnId).name));
+  }
+
+  return selectColsStr;
+}
+
+void FromTable::appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Schema::Id relationshipId,
+                                         Schema::Id parentTableId, const QString& parentTableAlias,
+                                         Schema::Id childTableId, const QString& childTableAlias,
+                                         const Schema::Table& joinTable, const QString& joinTableAlias,
+                                         const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences) const
+{
+  if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
+  }
+
+  Expr joinOnExpr;
+
+  const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
+  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+  {
+    if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
+    {
+      joinOnExpr.and();
+    }
+
+    if (m_isTableAliasesNeeded)
+    {
+      joinOnExpr.equal(
+        Expr::ColumnId{ parentTableAlias, { parentTableId, idMapping.first.columnId} },
+        Expr::ColumnId{ childTableAlias, {childTableId, idMapping.second} });
+    }
+    else
+    {
+      joinOnExpr.equal({{ parentTableId, idMapping.first.columnId}}, Expr::ColumnId({childTableId, idMapping.second}));
+    }
+  }
+
+  joinStrOut.append(QString(" INNER JOIN '%1'").arg(joinTable.name));
+
+  if (m_isTableAliasesNeeded)
+  {
+    joinStrOut.append(QString(" AS '%1'").arg(joinTableAlias));
+  }
+
+  joinStrOut.append(QString(" ON %1").arg(joinOnExpr.toQString(schema)));
 }
 
 }
