@@ -80,8 +80,6 @@ private:
   std::map<Schema::Id, ColumnSelectionInfo> m_joins;
 
   std::vector<TableAliasColumnId> m_allSelectedColumns;
-  // TODO: consider extra columns
-  //std::set<Schema::TableColumnId> m_extraSelectedColumns;
 
   std::unique_ptr<Expr> m_whereExpr;
   bool m_isTableAliasesNeeded;

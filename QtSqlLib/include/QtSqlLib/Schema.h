@@ -104,7 +104,7 @@ public:
 
   void throwIfTableIdNotExisting(Id tableId) const;
   void throwIfRelationshipIsNotExisting(Id relationshipId) const;
-  void throwIfColumnIdNotExisting(const Table& table, Id colId) const;
+  static void throwIfColumnIdNotExisting(const Table& table, Id colId);
 
   Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const;
   Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const;

@@ -214,21 +214,23 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
 {
   auto parentTableId = relationship.tableFromId;
   auto childTableId = relationship.tableToId;
+
   if (relationship.type == Schema::RelationshipType::ManyToOne)
   {
     std::swap(parentTableId, childTableId);
   }
 
-  const auto keyValuesToInsert = (parentTableId == fromTableId ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
-  const auto affectedChildTupleKeys = (childTableId == fromTableId
-    ? std::vector<Schema::TupleValues>{ m_fromTupleKeyValues }
-    : m_toTupleKeyValuesList);
+  const auto isCorrectTableRelationDirection = (parentTableId == fromTableId || fromTableId == toTableId);
+  const auto keyValuesToInsert = (isCorrectTableRelationDirection ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
+  const auto affectedChildTupleKeys = (isCorrectTableRelationDirection
+    ? m_toTupleKeyValuesList
+    : std::vector<Schema::TupleValues>{ m_fromTupleKeyValues });
 
   const auto& childTable = schema.getTables().at(childTableId);
   const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
 
-  const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && (parentTableId == fromTableId));
-  const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && (childTableId == fromTableId));
+  const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && ((parentTableId == fromTableId) || (toTableId == fromTableId)));
+  const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && ((childTableId == fromTableId) && (toTableId != fromTableId)));
 
   for (const auto& affectedChildRowId : affectedChildTupleKeys)
   {

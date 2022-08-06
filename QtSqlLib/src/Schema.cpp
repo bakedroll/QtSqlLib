@@ -132,7 +132,7 @@ void Schema::configureRelationships()
           const auto& refCol = refTable.columns.at(refColId);
 
           Column col;
-          col.name = QString("%1_%2").arg(refTable.name).arg(refCol.name);
+          col.name = QString("%1_%2_%3").arg(refTable.name).arg(refCol.name).arg(currentColId);
           col.type = refCol.type;
 
           foreignKeyReference.primaryForeignKeyColIdMap[{ refTableId, refColId }] = currentColId;
@@ -178,7 +178,7 @@ void Schema::throwIfRelationshipIsNotExisting(Id relationshipId) const
   }
 }
 
-void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
+void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId)
 {
   if (table.columns.count(colId) == 0)
   {
@@ -308,7 +308,7 @@ std::pair<Schema::Id, Schema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTab
   if (bIsOneToMany)
   {
     if ((relationship.type != Schema::RelationshipType::ManyToMany) &&
-      ((isManyToOne && (relationship.tableToId == tableToId)) || 
+      ((isManyToOne && (relationship.tableToId == tableToId)) ||
         (isOneToMany && (relationship.tableToId != tableToId))))
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,

@@ -254,6 +254,8 @@ void FromTable::throwIfMultipleJoins(Schema::Id relationshipId) const
 void FromTable::verifyJoinsAndCheckAliasesNeeded(Schema& schema)
 {
   std::set<Schema::Id> joinTableIds;
+  joinTableIds.insert(m_columnSelectionInfo.tableId);
+
   for (auto& join : m_joins)
   {
     const auto relationshipId = join.first;
@@ -334,8 +336,6 @@ void FromTable::addToSelectedColumns(const Schema& schema, const Schema::Table& 
       columnSelectionInfo.primaryKeyColumnIndicesInQuery.emplace_back(static_cast<int>(m_allSelectedColumns.size()));
 
       m_allSelectedColumns.emplace_back(TableAliasColumnId{ columnSelectionInfo.tableAlias, keyId });
-      // TODO: consider extra columns
-      // m_extraSelectedColumns.insert(keyId);
     }
   }
 }

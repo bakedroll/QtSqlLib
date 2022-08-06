@@ -75,7 +75,9 @@ public:
     SpecialRel1,
     SpecialRel2,
     SpecialRel3,
-    SpecialRel4
+    SpecialRel4,
+    SpecialRel5,
+    SpecialRel6
   };
 
   using ConfigFunc = std::function<void(SchemaConfigurator&)>;
@@ -246,6 +248,17 @@ void expectSpecialRelation4Students(QtSqlLib::API::IQuery::QueryResults::ResultT
   expectRelations(tuples, ul(Rs::SpecialRel4),
     ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
     "Student3", QVariantList() << "Project1" << "Project2" << "Project3");
+}
+
+void expectSpecialRelation5Students(QtSqlLib::API::IQuery::QueryResults::ResultTuples& tuples)
+{
+  expectRelations(tuples, ul(Rs::SpecialRel5),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student1", QVariantList() << "Student1" << "Student2");
+
+  expectRelations(tuples, ul(Rs::SpecialRel5),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student2", QVariantList() << "Student3");
 }
 
 class DatabaseTest : public testing::Test
@@ -1099,6 +1112,8 @@ TEST_F(DatabaseTest, specialRelationships)
     configurator.configureRelationship(ul(Rs::SpecialRel2), ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::OneToMany);
     configurator.configureRelationship(ul(Rs::SpecialRel3), ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::ManyToMany);
     configurator.configureRelationship(ul(Rs::SpecialRel4), ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::ManyToMany);
+    configurator.configureRelationship(ul(Rs::SpecialRel5), ul(TIds::Students), ul(TIds::Students), Schema::RelationshipType::OneToMany);
+    configurator.configureRelationship(ul(Rs::SpecialRel6), ul(TIds::Students), ul(TIds::Students), Schema::RelationshipType::ManyToMany);
   });
 
   m_db->initialize(s_dbFilename);
@@ -1163,6 +1178,22 @@ TEST_F(DatabaseTest, specialRelationships)
     .fromOne(student3)
     .toMany ({ project1, project2, project3 }));
 
+  m_db->execQuery(LinkTuples(ul(Rs::SpecialRel5))
+    .fromOne(student1)
+    .toMany ({ student1, student2 }));
+
+  m_db->execQuery(LinkTuples(ul(Rs::SpecialRel5))
+    .fromOne(student2)
+    .toMany ({ student3 }));
+
+  /*m_db->execQuery(LinkTuples(ul(Rs::SpecialRel6))
+    .fromOne(student1)
+    .toMany ({ student2, student3 }));
+
+  m_db->execQuery(LinkTuples(ul(Rs::SpecialRel6))
+    .fromOne(student2)
+    .toOne ({ student3 }));*/
+
   auto results = m_db->execQuery(FromTable(ul(TIds::Students))
     .select(ul(StudentsCols::Name))
     .joinColumns(ul(Rs::SpecialRel1), ul(ProjectsCols::Title)));
@@ -1214,6 +1245,12 @@ TEST_F(DatabaseTest, specialRelationships)
   expectSpecialRelation2Students(results.resultTuples);
   expectSpecialRelation3Students(results.resultTuples);
   expectSpecialRelation4Students(results.resultTuples);
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(ul(Rs::SpecialRel5)));
+
+  expectSpecialRelation5Students(results.resultTuples);
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
