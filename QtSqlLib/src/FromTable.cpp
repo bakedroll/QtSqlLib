@@ -203,14 +203,14 @@ API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& 
     auto& currentTuple = resultTuples[resultTupleIndices.at(keyTuple)];
     for (const auto& join : m_joins)
     {
+      const auto relationshipId = join.first;
+      auto& joinedTuples = currentTuple.joinedTuples[relationshipId];
+
       const auto foreignKeyTuple = getKeyTuple(query, join.second.foreignKeyColumnIndicesInQuery);
       if (foreignKeyTuple.isNull())
       {
         continue;
       }
-
-      const auto relationshipId = join.first;
-      auto& joinedTuples = currentTuple.joinedTuples[relationshipId];
 
       const auto joinKeyTuple = getKeyTuple(query, join.second.primaryKeyColumnIndicesInQuery);
       auto& relationResultKeys = retrievedRelationResultKeys[{ relationshipId, keyTuple }];
@@ -386,10 +386,10 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
 
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, parentFromTableAlias,
                                linkTableId, linkTableAlias, linkTable, linkTableAlias, foreignKeyReferences,
-                               join.second.foreignKeyColumnIndicesInQuery, false);
+                               join.second.foreignKeyColumnIndicesInQuery);
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, parentToTableAlias,
                                linkTableId, linkTableAlias, joinTable, joinTableAlias, foreignKeyReferences,
-                               join.second.foreignKeyColumnIndicesInQuery, false);
+                               join.second.foreignKeyColumnIndicesInQuery);
     }
     else
     {
@@ -409,7 +409,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
 
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentTableColSelInfo->tableId, parentTableColSelInfo->tableAlias,
                                childTableColSelInfo->tableId, childTableColSelInfo->tableAlias, joinTable, joinTableAlias, foreignKeyReferences,
-                               join.second.foreignKeyColumnIndicesInQuery, true);
+                               join.second.foreignKeyColumnIndicesInQuery);
     }
   }
 
@@ -452,7 +452,7 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Sc
                                          Schema::Id childTableId, const QString& childTableAlias,
                                          const Schema::Table& joinTable, const QString& joinTableAlias,
                                          const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences,
-                                         std::vector<int>& foreignKeyColumnIndicesInQuery, bool isParentKeyNullable)
+                                         std::vector<int>& foreignKeyColumnIndicesInQuery)
 {
   if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
   {
@@ -482,21 +482,9 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Sc
     {
       joinOnExpr.equal({{ parentTableId, idMapping.first.columnId}}, Expr::ColumnId({childTableId, idMapping.second}));
     }
-
-    if (isParentKeyNullable)
-    {
-      if (m_isTableAliasesNeeded)
-      {
-        joinOnExpr.or().isNull(Expr::ColumnId(childTableAlias, { childTableId, idMapping.second }));
-      }
-      else
-      {
-        joinOnExpr.or().isNull(Expr::ColumnId({ childTableId, idMapping.second }));
-      }
-    }
   }
 
-  joinStrOut.append(QString(" INNER JOIN '%1'").arg(joinTable.name));
+  joinStrOut.append(QString(" LEFT JOIN '%1'").arg(joinTable.name));
 
   if (m_isTableAliasesNeeded)
   {
