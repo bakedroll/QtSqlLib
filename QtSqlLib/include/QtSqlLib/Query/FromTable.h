@@ -66,7 +66,8 @@ private:
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
     bool bIsSelecting = false;
-    std::vector<int> keyColumnIndicesInQuery;
+    std::vector<int> primaryKeyColumnIndicesInQuery;
+    std::vector<int> foreignKeyColumnIndicesInQuery;
   };
 
   struct TableAliasColumnId
@@ -93,6 +94,10 @@ private:
 
   void addToSelectedColumns(const Schema& schema, const Schema::Table& table,
                             ColumnSelectionInfo& columnSelectionInfo);
+  void addForeignKeyColumns(const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap,
+                            std::vector<int>& foreignKeyColumnIndicesInQuery,
+                            Schema::Id childTableId, const QString& childTableAlias);
+
   QString processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table);
 
   static std::vector<ColumnInfo> getAllTableColumnIds(const Schema::Table& table);
@@ -102,7 +107,8 @@ private:
                                 Schema::Id parentTableId, const QString& parentTableAlias,
                                 Schema::Id childTableId, const QString& childTableAlias,
                                 const Schema::Table& joinTable, const QString& joinTableAlias,
-                                const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences) const;
+                                const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences,
+                                std::vector<int>& foreignKeyColumnIndicesInQuery, bool isParentKeyNullable);
 
 };
 

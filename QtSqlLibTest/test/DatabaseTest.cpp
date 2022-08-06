@@ -1048,6 +1048,10 @@ TEST_F(DatabaseTest, specialRelationships)
     .value(ul(ProjectsCols::Title), "Project2")
     .returnIds()).resultTuples[0].values;
 
+  const auto project3 = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Project3")
+    .returnIds()).resultTuples[0].values;
+
   m_db->execQuery(LinkTuples(SpecialRel1)
     .fromOne(student1)
     .toOne(project1));
@@ -1060,9 +1064,13 @@ TEST_F(DatabaseTest, specialRelationships)
     .fromOne(project2)
     .toOne({ student1 }));
 
+  m_db->execQuery(LinkTuples(SpecialRel2)
+    .fromOne(project3)
+    .toOne({ student2 }));
+
   auto results = m_db->execQuery(FromTable(ul(TIds::Students))
-    .selectAll()
-    .joinAll(SpecialRel1));
+    .select(ul(StudentsCols::Name))
+    .joinColumns(SpecialRel1, ul(ProjectsCols::Title)));
 
   expectRelations(results.resultTuples, SpecialRel1,
     ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
@@ -1080,16 +1088,26 @@ TEST_F(DatabaseTest, specialRelationships)
     ul(TIds::Projects), ul(ProjectsCols::Title), ul(TIds::Students), ul(StudentsCols::Name),
     "Project2", QVariantList() << "Student1");
 
-  // TODO: exception for ambitious table ids in where expression
-
-  /*printf("");
-
+  expectRelations(results.resultTuples, SpecialRel2,
+    ul(TIds::Projects), ul(ProjectsCols::Title), ul(TIds::Students), ul(StudentsCols::Name),
+    "Project3", QVariantList() << "Student2");
+  
   results = m_db->execQuery(FromTable(ul(TIds::Students))
     .selectAll()
     .joinAll(SpecialRel1)
     .joinAll(SpecialRel2));
 
-  printf("bla");*/
+  expectRelations(results.resultTuples, SpecialRel1,
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Student1", QVariantList() << "Project1" << "Project2");
+
+  expectRelations(results.resultTuples, SpecialRel2,
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Student1", QVariantList() << "Project1" << "Project2");
+
+  expectRelations(results.resultTuples, SpecialRel2,
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Student2", QVariantList() << "Project3");
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)

@@ -120,6 +120,11 @@ Expr& Expr::greater(const ColumnId& colIdLhs, const ColumnId& colIdRhs)
   return addComparison(ComparisonOperator::Greater, colIdLhs, colIdRhs);
 }
 
+Expr& Expr::isNull(const ColumnId& columnId)
+{
+  return addComparison(ComparisonOperator::IsNull, columnId, ColumnId());
+}
+
 Expr& Expr::or()
 {
   return addLogic(std::make_unique<Logic>(LogicalOperator::Or));
@@ -190,8 +195,7 @@ QString Expr::Comparison::toQString(Schema& schema, const std::optional<Schema::
       const auto columnId = operand.value.value<ColumnId>();
       if (!defaultTableId.has_value() && !columnId.isTableIdValid())
       {
-        throw DatabaseException(DatabaseException::Type::InvalidId,
-          QString("Table id missing for column id %1").arg(columnId.get().columnId));
+        return "NULL";
       }
       else if (defaultTableId && !columnId.isTableIdValid())
       {
@@ -246,6 +250,9 @@ QString Expr::Comparison::toQString(Schema& schema, const std::optional<Schema::
     break;
   case ComparisonOperator::Greater:
     operatorStr = ">";
+    break;
+  case ComparisonOperator::IsNull:
+    operatorStr = "is";
     break;
   default:
     assert(false);

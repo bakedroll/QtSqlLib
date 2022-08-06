@@ -61,6 +61,8 @@ public:
   Expr& greater(const ColumnId& columnId, const QVariant& value);
   Expr& greater(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
 
+  Expr& isNull(const ColumnId& columnId);
+
   Expr& or();
   Expr& and();
 
@@ -76,7 +78,8 @@ private:
     LessEqual,
     Less,
     GreaterEqual,
-    Greater
+    Greater,
+    IsNull
   };
 
   enum class OperandType
