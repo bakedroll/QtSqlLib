@@ -1002,6 +1002,94 @@ TEST_F(DatabaseTest, linkTuplesQueryTest)
     "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
+TEST_F(DatabaseTest, specialRelationships)
+{
+  enum Relationship
+  {
+    SpecialRel1,
+    SpecialRel2,
+    SpecialRel3,
+    SpecialRel4,
+  };
+
+  m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+  {
+    configurator.configureTable(ul(TIds::Students), "students")
+      .column(ul(StudentsCols::Id), "id", DataType::Integer).autoIncrement().notNull()
+      .column(ul(StudentsCols::Name), "name", DataType::Varchar, 128)
+      .primaryKeys(ul(StudentsCols::Id));
+
+    configurator.configureTable(ul(TIds::Projects), "projects")
+      .column(ul(ProjectsCols::Id), "id", DataType::Integer).autoIncrement().notNull()
+      .column(ul(ProjectsCols::Title), "title", DataType::Varchar, 128)
+      .primaryKeys(ul(ProjectsCols::Id));
+
+    configurator.configureRelationship(SpecialRel1, ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::OneToMany);
+    configurator.configureRelationship(SpecialRel2, ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::OneToMany);
+    configurator.configureRelationship(SpecialRel3, ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::ManyToMany);
+    configurator.configureRelationship(SpecialRel4, ul(TIds::Students), ul(TIds::Projects), Schema::RelationshipType::ManyToMany);
+  });
+
+  m_db->initialize(s_dbFilename);
+
+  const auto student1 = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Student1")
+    .returnIds()).resultTuples[0].values;
+
+  const auto student2 = m_db->execQuery(InsertIntoExt(ul(TIds::Students))
+    .value(ul(StudentsCols::Name), "Student2")
+    .returnIds()).resultTuples[0].values;
+
+  const auto project1 = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Project1")
+    .returnIds()).resultTuples[0].values;
+
+  const auto project2 = m_db->execQuery(InsertIntoExt(ul(TIds::Projects))
+    .value(ul(ProjectsCols::Title), "Project2")
+    .returnIds()).resultTuples[0].values;
+
+  m_db->execQuery(LinkTuples(SpecialRel1)
+    .fromOne(student1)
+    .toOne(project1));
+
+  m_db->execQuery(LinkTuples(SpecialRel2)
+    .fromOne(student1)
+    .toMany({ project1, project2 }));
+
+  m_db->execQuery(LinkTuples(SpecialRel1)
+    .fromOne(project2)
+    .toOne({ student1 }));
+
+  auto results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(SpecialRel1));
+
+  expectRelations(results.resultTuples, SpecialRel1,
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Projects), ul(ProjectsCols::Title),
+    "Student1", QVariantList() << "Project1" << "Project2");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Projects))
+    .selectAll()
+    .joinAll(SpecialRel2));
+
+  expectRelations(results.resultTuples, SpecialRel2,
+    ul(TIds::Projects), ul(ProjectsCols::Title), ul(TIds::Students), ul(StudentsCols::Name),
+    "Project1", QVariantList() << "Student1");
+
+  expectRelations(results.resultTuples, SpecialRel2,
+    ul(TIds::Projects), ul(ProjectsCols::Title), ul(TIds::Students), ul(StudentsCols::Name),
+    "Project2", QVariantList() << "Student1");
+
+  /*printf("");
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(SpecialRel1)
+    .joinAll(SpecialRel2));
+
+  printf("bla");*/
+}
+
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)
 {
   m_db->setConfigureSchemaFunc([](SchemaConfigurator& configurator)
