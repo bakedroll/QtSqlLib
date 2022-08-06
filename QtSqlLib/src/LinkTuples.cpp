@@ -232,9 +232,15 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
   const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && ((parentTableId == fromTableId) || (toTableId == fromTableId)));
   const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && ((childTableId == fromTableId) && (toTableId != fromTableId)));
 
+  if (foreignKeyRefs.size() != 1)
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError,
+      "Foreign key references table seems to be corrupted.");
+  }
+
   for (const auto& affectedChildRowId : affectedChildTupleKeys)
   {
-    auto updateQuery = std::make_unique<UpdateTableForeignKeys>(childTableId, foreignKeyRefs.primaryForeignKeyColIdMap);
+    auto updateQuery = std::make_unique<UpdateTableForeignKeys>(childTableId, foreignKeyRefs[0].primaryForeignKeyColIdMap);
 
     if (isRemainingForeignKeyValues)
     {
@@ -263,8 +269,21 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);
-  const auto& foreignKeyRefsFrom = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, fromTableId });
-  const auto& foreignKeyRefsTo = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, toTableId });
+
+  const auto isSelfRelationship = (fromTableId == toTableId);
+
+  const auto& foreignKeyRefsFromList = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, fromTableId });
+  const auto& foreignKeyRefsToList = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, toTableId });
+
+  if ((isSelfRelationship && foreignKeyRefsFromList.size() != 2) ||
+    (!isSelfRelationship && (foreignKeyRefsFromList.size() != 1 || foreignKeyRefsToList.size() != 1)))
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError,
+      "Foreign key references table seems to be corrupted.");
+  }
+
+  const auto& foreignKeyRefsFrom =  foreignKeyRefsFromList[0];
+  const auto& foreignKeyRefsTo = (isSelfRelationship ? foreignKeyRefsToList[1] : foreignKeyRefsToList[0]);
 
   std::map<Schema::Id, QVariantList> columnValuesMap;
 

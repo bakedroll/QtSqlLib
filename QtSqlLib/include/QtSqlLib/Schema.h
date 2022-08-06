@@ -68,11 +68,13 @@ public:
     PrimaryForeignKeyColumnIdMap primaryForeignKeyColIdMap;
   };
 
+  using RelationshipToForeignKeyReferencesMap = std::map<RelationshipTableId, std::vector<ForeignKeyReference>>;
+
   struct Table
   {
     QString name;
     std::map<Id, Column> columns;
-    std::map<RelationshipTableId, ForeignKeyReference> relationshipToForeignKeyReferencesMap;
+    RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
     std::set<Id> primaryKeys;
   };
 

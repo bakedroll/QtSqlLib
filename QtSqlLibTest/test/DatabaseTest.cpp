@@ -259,6 +259,25 @@ void expectSpecialRelation5Students(QtSqlLib::API::IQuery::QueryResults::ResultT
   expectRelations(tuples, ul(Rs::SpecialRel5),
     ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
     "Student2", QVariantList() << "Student3");
+
+  expectRelations(tuples, ul(Rs::SpecialRel5),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student3", QVariantList());
+}
+
+void expectSpecialRelation6Students(QtSqlLib::API::IQuery::QueryResults::ResultTuples& tuples)
+{
+  expectRelations(tuples, ul(Rs::SpecialRel6),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student1", QVariantList() << "Student2" << "Student3");
+
+  expectRelations(tuples, ul(Rs::SpecialRel6),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student2", QVariantList() << "Student3");
+
+  expectRelations(tuples, ul(Rs::SpecialRel6),
+    ul(TIds::Students), ul(StudentsCols::Name), ul(TIds::Students), ul(StudentsCols::Name),
+    "Student3", QVariantList());
 }
 
 class DatabaseTest : public testing::Test
@@ -1186,13 +1205,13 @@ TEST_F(DatabaseTest, specialRelationships)
     .fromOne(student2)
     .toMany ({ student3 }));
 
-  /*m_db->execQuery(LinkTuples(ul(Rs::SpecialRel6))
+  m_db->execQuery(LinkTuples(ul(Rs::SpecialRel6))
     .fromOne(student1)
     .toMany ({ student2, student3 }));
 
   m_db->execQuery(LinkTuples(ul(Rs::SpecialRel6))
     .fromOne(student2)
-    .toOne ({ student3 }));*/
+    .toOne ({ student3 }));
 
   auto results = m_db->execQuery(FromTable(ul(TIds::Students))
     .select(ul(StudentsCols::Name))
@@ -1251,6 +1270,28 @@ TEST_F(DatabaseTest, specialRelationships)
     .joinAll(ul(Rs::SpecialRel5)));
 
   expectSpecialRelation5Students(results.resultTuples);
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(ul(Rs::SpecialRel6)));
+
+  expectSpecialRelation6Students(results.resultTuples);
+
+  results = m_db->execQuery(FromTable(ul(TIds::Students))
+    .selectAll()
+    .joinAll(ul(Rs::SpecialRel1))
+    .joinAll(ul(Rs::SpecialRel2))
+    .joinAll(ul(Rs::SpecialRel3))
+    .joinAll(ul(Rs::SpecialRel4))
+    .joinAll(ul(Rs::SpecialRel5))
+    .joinAll(ul(Rs::SpecialRel6)));
+
+  expectSpecialRelation1Students(results.resultTuples);
+  expectSpecialRelation2Students(results.resultTuples);
+  expectSpecialRelation3Students(results.resultTuples);
+  expectSpecialRelation4Students(results.resultTuples);
+  expectSpecialRelation5Students(results.resultTuples);
+  expectSpecialRelation6Students(results.resultTuples);
 }
 
 TEST_F(DatabaseTest, multiplePrimaryKeysTable)

@@ -377,18 +377,19 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
       schema.throwIfTableIdNotExisting(linkTableId);
 
       const auto& linkTable = schema.getTables().at(linkTableId);
-      const auto& linkTableAlias = linkTable.name;
 
       const auto parentToTableId = join.second.tableId;
       const auto& parentToTableAlias = join.second.tableAlias;
 
       const auto& foreignKeyReferences = linkTable.relationshipToForeignKeyReferencesMap;
 
+      const auto secondForeignKeyRefIndex = (parentFromTableId == parentToTableId ? 1 : 0);
+
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentFromTableId, parentFromTableAlias,
-                               linkTableId, linkTableAlias, linkTable, linkTableAlias, foreignKeyReferences,
+                               linkTableId, "", linkTable, "", foreignKeyReferences, 0,
                                join.second.foreignKeyColumnIndicesInQuery);
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentToTableId, parentToTableAlias,
-                               linkTableId, linkTableAlias, joinTable, joinTableAlias, foreignKeyReferences,
+                               linkTableId, "", joinTable, joinTableAlias, foreignKeyReferences, secondForeignKeyRefIndex,
                                join.second.foreignKeyColumnIndicesInQuery);
     }
     else
@@ -408,7 +409,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(Schema& schema, const Sch
       }
 
       appendJoinQuerySubstring(joinStr, schema, relationshipId, parentTableColSelInfo->tableId, parentTableColSelInfo->tableAlias,
-                               childTableColSelInfo->tableId, childTableColSelInfo->tableAlias, joinTable, joinTableAlias, foreignKeyReferences,
+                               childTableColSelInfo->tableId, childTableColSelInfo->tableAlias, joinTable, joinTableAlias, foreignKeyReferences, 0,
                                join.second.foreignKeyColumnIndicesInQuery);
     }
   }
@@ -439,7 +440,7 @@ QString FromTable::createSelectString(Schema& schema, const std::vector<TableAli
     }
 
     const auto& table = tables.at(id.tableColumnId.tableId);
-    const auto tableName = (m_isTableAliasesNeeded ? id.tableAlias : table.name);
+    const auto tableName = (m_isTableAliasesNeeded && !id.tableAlias.isEmpty() ? id.tableAlias : table.name);
 
     selectColsStr.append(QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(id.tableColumnId.columnId).name));
   }
@@ -451,7 +452,8 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Sc
                                          Schema::Id parentTableId, const QString& parentTableAlias,
                                          Schema::Id childTableId, const QString& childTableAlias,
                                          const Schema::Table& joinTable, const QString& joinTableAlias,
-                                         const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences,
+                                         const Schema::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
+                                         int foreignKeyReferencesIndex,
                                          std::vector<int>& foreignKeyColumnIndicesInQuery)
 {
   if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
@@ -462,31 +464,37 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Sc
   Expr joinOnExpr;
 
   const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
-  addForeignKeyColumns(foreignKeyReference.primaryForeignKeyColIdMap, foreignKeyColumnIndicesInQuery,
+  if (foreignKeyReference.size() <= foreignKeyReferencesIndex)
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
+  }
+
+  const auto& foreignKeyRef = foreignKeyReference[foreignKeyReferencesIndex];
+
+  addForeignKeyColumns(foreignKeyRef.primaryForeignKeyColIdMap, foreignKeyColumnIndicesInQuery,
     childTableId, childTableAlias);
 
-  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+  for (const auto& idMapping : foreignKeyRef.primaryForeignKeyColIdMap)
   {
-    if (idMapping.first != foreignKeyReference.primaryForeignKeyColIdMap.cbegin()->first)
+    if (idMapping.first != foreignKeyRef.primaryForeignKeyColIdMap.cbegin()->first)
     {
       joinOnExpr.and();
     }
 
-    if (m_isTableAliasesNeeded)
-    {
-      joinOnExpr.equal(
-        Expr::ColumnId{ parentTableAlias, { parentTableId, idMapping.first.columnId} },
-        Expr::ColumnId{ childTableAlias, {childTableId, idMapping.second} });
-    }
-    else
-    {
-      joinOnExpr.equal({{ parentTableId, idMapping.first.columnId}}, Expr::ColumnId({childTableId, idMapping.second}));
-    }
+    const auto parentColumnId = (m_isTableAliasesNeeded && !parentTableAlias.isEmpty()
+      ? Expr::ColumnId(parentTableAlias, { parentTableId, idMapping.first.columnId})
+      : Expr::ColumnId({ parentTableId, idMapping.first.columnId }));
+
+    const auto childColumnId = (m_isTableAliasesNeeded && !childTableAlias.isEmpty()
+      ? Expr::ColumnId(childTableAlias, { childTableId, idMapping.second})
+      : Expr::ColumnId({childTableId, idMapping.second}));
+
+    joinOnExpr.equal(parentColumnId, childColumnId);
   }
 
   joinStrOut.append(QString(" LEFT JOIN '%1'").arg(joinTable.name));
 
-  if (m_isTableAliasesNeeded)
+  if (m_isTableAliasesNeeded && !joinTableAlias.isEmpty())
   {
     joinStrOut.append(QString(" AS '%1'").arg(joinTableAlias));
   }

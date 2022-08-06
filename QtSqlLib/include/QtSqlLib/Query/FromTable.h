@@ -105,7 +105,8 @@ private:
                                 Schema::Id parentTableId, const QString& parentTableAlias,
                                 Schema::Id childTableId, const QString& childTableAlias,
                                 const Schema::Table& joinTable, const QString& joinTableAlias,
-                                const std::map<Schema::RelationshipTableId, Schema::ForeignKeyReference>& foreignKeyReferences,
+                                const Schema::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
+                                int foreignKeyReferencesIndex,
                                 std::vector<int>& foreignKeyColumnIndicesInQuery);
 
 };

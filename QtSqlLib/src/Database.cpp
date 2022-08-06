@@ -186,34 +186,37 @@ public:
     {
       for (const auto& foreignKeyReferences : m_table.relationshipToForeignKeyReferencesMap)
       {
-        QString foreignKeyColNames;
-        QString parentKeyColNames;
-
-        const auto& parentTable = schema.getTables().at(foreignKeyReferences.second.referenceTableId);
-
-        for (const auto& refKeyColumn : foreignKeyReferences.second.primaryForeignKeyColIdMap)
+        for (const auto& foreignKeyRef : foreignKeyReferences.second)
         {
-          foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
-          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.columnId).name);
-        }
-        cutTailingComma(foreignKeyColNames);
-        cutTailingComma(parentKeyColNames);
+          const auto& parentTable = schema.getTables().at(foreignKeyRef.referenceTableId);
 
-        QString onDeleteStr;
-        if (foreignKeyReferences.second.onDeleteAction != Schema::ForeignKeyAction::NoAction)
-        {
-          onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyReferences.second.onDeleteAction));
-        }
+          QString foreignKeyColNames;
+          QString parentKeyColNames;
 
-        QString onUpdateStr;
-        if (foreignKeyReferences.second.onUpdateAction != Schema::ForeignKeyAction::NoAction)
-        {
-          onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyReferences.second.onUpdateAction));
-        }
+          for (const auto& refKeyColumn : foreignKeyRef.primaryForeignKeyColIdMap)
+          {
+            foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
+            parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.columnId).name);
+          }
+          cutTailingComma(foreignKeyColNames);
+          cutTailingComma(parentKeyColNames);
 
-        columns += QString("FOREIGN KEY (%1) REFERENCES '%2'(%3)%4%5, ")
-          .arg(foreignKeyColNames).arg(parentTable.name).arg(parentKeyColNames)
-          .arg(onDeleteStr).arg(onUpdateStr);
+          QString onDeleteStr;
+          if (foreignKeyRef.onDeleteAction != Schema::ForeignKeyAction::NoAction)
+          {
+            onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyRef.onDeleteAction));
+          }
+
+          QString onUpdateStr;
+          if (foreignKeyRef.onUpdateAction != Schema::ForeignKeyAction::NoAction)
+          {
+            onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyRef.onUpdateAction));
+          }
+
+          columns += QString("FOREIGN KEY (%1) REFERENCES '%2'(%3)%4%5, ")
+            .arg(foreignKeyColNames).arg(parentTable.name).arg(parentKeyColNames)
+            .arg(onDeleteStr).arg(onUpdateStr);
+        }
       }
     }
 

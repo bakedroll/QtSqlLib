@@ -111,7 +111,7 @@ void Schema::configureRelationships()
         foreignKeyReference.primaryForeignKeyColIdMap[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
       }
 
-      childTable.relationshipToForeignKeyReferencesMap[{ relationship.first, parentTableId }] = foreignKeyReference;
+      childTable.relationshipToForeignKeyReferencesMap[{ relationship.first, parentTableId }].emplace_back(foreignKeyReference);
     }
     else if (relationship.second.type == RelationshipType::ManyToMany)
     {
@@ -142,7 +142,7 @@ void Schema::configureRelationships()
           currentColId++;
         }
 
-        linkTable.relationshipToForeignKeyReferencesMap[{ relationship.first, refTableId }] = foreignKeyReference;
+        linkTable.relationshipToForeignKeyReferencesMap[{ relationship.first, refTableId }].emplace_back(foreignKeyReference);
       };
 
       addRefTableColumns(parentTableId, parentTable);
