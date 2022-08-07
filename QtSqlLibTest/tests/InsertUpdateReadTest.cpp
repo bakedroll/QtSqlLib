@@ -14,17 +14,14 @@ namespace QtSqlLibTest
  */
 TEST(InsertUpdateReadTest, insertAndRead)
 {
-  DatabaseDummy db;
+  SchemaConfigurator configurator;
+  configurator.configureTable(TableIds::Table1, "table1")
+    .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .column(Table1Cols::Text, "text", DataType::Varchar, 128)
+    .column(Table1Cols::Number, "number", DataType::Real).notNull();
 
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(Table1Cols::Text, "text", DataType::Varchar, 128)
-      .column(Table1Cols::Number, "number", DataType::Real).notNull();
-  });
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
   db.execQuery(InsertInto(TableIds::Table1)
     .value(Table1Cols::Text, "test")
@@ -84,17 +81,14 @@ TEST(InsertUpdateReadTest, insertAndRead)
  */
 TEST(InsertUpdateReadTest, insertUpdateAndRead)
 {
-  DatabaseDummy db;
+  SchemaConfigurator configurator;
+  configurator.configureTable(TableIds::Table1, "table1")
+    .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .column(Table1Cols::Text, "text", DataType::Varchar, 128)
+    .column(Table1Cols::Number, "number", DataType::Integer);
 
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(Table1Cols::Text, "text", DataType::Varchar, 128)
-      .column(Table1Cols::Number, "number", DataType::Integer);
-  });
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
   db.execQuery(BatchInsertInto(TableIds::Table1)
     .values(Table1Cols::Text, QVariantList() << "value1" << "value2" << "value3")
@@ -121,17 +115,14 @@ TEST(InsertUpdateReadTest, insertUpdateAndRead)
  */
 TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
 {
-  DatabaseDummy db;
+  SchemaConfigurator configurator;
+  configurator.configureTable(TableIds::Table1, "table1")
+    .column(Table1Cols::Id, "id", DataType::Integer).notNull()
+    .column(Table1Cols::Text, "text", DataType::Varchar, 128).notNull()
+    .primaryKeys({ Table1Cols::Id, Table1Cols::Text });
 
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id", DataType::Integer).notNull()
-      .column(Table1Cols::Text, "text", DataType::Varchar, 128).notNull()
-      .primaryKeys({ Table1Cols::Id, Table1Cols::Text });
-  });
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
   const auto results = db.execQuery(InsertIntoExt(TableIds::Table1)
     .value(Table1Cols::Id, 1)
@@ -156,133 +147,170 @@ TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
  */
 TEST(InsertUpdateReadTest, databaseImitializationExceptions)
 {
-  DatabaseDummy db1;
-  db1.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+  // Two different tables must not have the same id
+  const auto case1 = []()
   {
-    // Two different tables must not have the same id
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "id", DataType::Integer);
 
     configurator.configureTable(TableIds::Table1, "table2")
       .column(Table2Cols::Id, "id", DataType::Integer);
-  });
 
-  DatabaseDummy db2;
-  db2.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // Two different tables must not have the same name
+  const auto case2 = []()
   {
-    // Two different tables must not have the same name
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "id", DataType::Integer);
 
     configurator.configureTable(TableIds::Table2, "table1")
       .column(Table2Cols::Id, "id", DataType::Integer);
-  });
 
-  DatabaseDummy db3;
-  db3.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // A table name must not start with 'sqlite_'
+  const auto case3 = []()
   {
-    // A table name must not start with 'sqlite_'
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "sqlite_table")
       .column(Table1Cols::Id, "id", DataType::Integer);
-  });
 
-  DatabaseDummy db4;
-  db4.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // Two columns of the same table must not have the same id
+  const auto case4 = []()
   {
-    // Two columns of the same table must not have the same id
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "id1", DataType::Integer)
       .column(Table1Cols::Id, "id2", DataType::Integer);
-  });
 
-  DatabaseDummy db5;
-  db5.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // Two columns of the same table must not have the same name
+  const auto case5 = []()
   {
-    // Two columns of the same table must not have the same name
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "col", DataType::Integer)
       .column(Table1Cols::Text, "col", DataType::Integer);
-  });
 
-  DatabaseDummy db6;
-  db6.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // The varchar length parameter must be greater than 0 for varchar attribute
+  const auto case6 = []()
   {
-    // The varchar length parameter must be greater than 0 for varchar attribute
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Text, "text", DataType::Varchar, 0);
-  });
 
-  DatabaseDummy db7;
-  db7.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // Only one attribute can be the primary key
+  const auto case7 = []()
   {
-    // Only one attribute can be the primary key
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "Id", DataType::Integer).primaryKey()
       .column(Table1Cols::Text, "text", DataType::Varchar).primaryKey();
-  });
 
-  DatabaseDummy db8;
-  db8.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // primaryKey() must not be called multiple times for a column
+  const auto case8 = []()
   {
-    // primaryKey() must not be called multiple times for a column
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "Id", DataType::Integer).primaryKey().primaryKey();
-  });
 
-  DatabaseDummy db9;
-  db9.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // autoIncrement() must not be called multiple times for a column
+  const auto case9 = []()
   {
-    // autoIncrement() must not be called multiple times for a column
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "Id", DataType::Integer).autoIncrement().autoIncrement();
-  });
 
-  DatabaseDummy db10;
-  db10.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // notNull() must not be called multiple times for a column
+  const auto case10 = []()
   {
-    // notNull() must not be called multiple times for a column
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "Id", DataType::Integer).notNull().notNull();
-  });
 
-  DatabaseDummy db11;
-  db11.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // primaryKey(), autoIncrement() and notNoll() must be called after column()
+  const auto case11 = []()
   {
-    // primaryKey(), autoIncrement() and notNoll() must be called after column()
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1")
       .primaryKey();
-  });
 
-  DatabaseDummy db12;
-  db12.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // column name must not ne empty
+  const auto case12 = []()
   {
-    // column name must not ne empty
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "table1").
       column(Table1Cols::Id, "", DataType::Integer);
-  });
 
-  DatabaseDummy db13;
-  db13.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
+
+  // table name must not ne empty
+  const auto case13 = []()
   {
-    // table name must not ne empty
+    SchemaConfigurator configurator;
     configurator.configureTable(TableIds::Table1, "");
-  });
 
-  const auto filename = Funcs::getDefaultDatabaseFilename();
+    TestDatabase db;
+    db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  };
 
-  EXPECT_THROW(db1.initialize(filename), DatabaseException);
-  EXPECT_THROW(db2.initialize(filename), DatabaseException);
-  EXPECT_THROW(db3.initialize(filename), DatabaseException);
-  EXPECT_THROW(db4.initialize(filename), DatabaseException);
-  EXPECT_THROW(db5.initialize(filename), DatabaseException);
-  EXPECT_THROW(db6.initialize(filename), DatabaseException);
-  EXPECT_THROW(db7.initialize(filename), DatabaseException);
-  EXPECT_THROW(db8.initialize(filename), DatabaseException);
-  EXPECT_THROW(db9.initialize(filename), DatabaseException);
-  EXPECT_THROW(db10.initialize(filename), DatabaseException);
-  EXPECT_THROW(db11.initialize(filename), DatabaseException);
-  EXPECT_THROW(db12.initialize(filename), DatabaseException);
-  EXPECT_THROW(db13.initialize(filename), DatabaseException);
+  EXPECT_THROW(case1(), DatabaseException);
+  EXPECT_THROW(case2(), DatabaseException);
+  EXPECT_THROW(case3(), DatabaseException);
+  EXPECT_THROW(case4(), DatabaseException);
+  EXPECT_THROW(case5(), DatabaseException);
+  EXPECT_THROW(case6(), DatabaseException);
+  EXPECT_THROW(case7(), DatabaseException);
+  EXPECT_THROW(case8(), DatabaseException);
+  EXPECT_THROW(case9(), DatabaseException);
+  EXPECT_THROW(case10(), DatabaseException);
+  EXPECT_THROW(case11(), DatabaseException);
+  EXPECT_THROW(case12(), DatabaseException);
+  EXPECT_THROW(case13(), DatabaseException);
 }
 
 /**

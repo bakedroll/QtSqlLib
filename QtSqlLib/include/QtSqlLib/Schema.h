@@ -5,7 +5,6 @@
 #include <QVariant>
 
 #include <map>
-#include <set>
 
 namespace QtSqlLib
 {

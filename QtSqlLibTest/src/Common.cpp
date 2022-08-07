@@ -10,30 +10,6 @@ QString Funcs::getDefaultDatabaseFilename()
   return "test.db";
 }
 
-void Funcs::setupReplationshipTestsSchema(DatabaseDummy& db)
-{
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Students, "students")
-      .column(StudentsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(StudentsCols::Name, "name", DataType::Varchar, 128);
-
-    configurator.configureTable(TableIds::Projects, "projects")
-      .column(ProjectsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(ProjectsCols::Title, "title", DataType::Varchar, 128);
-
-    configurator.configureTable(TableIds::Lectures, "lectures")
-      .column(LecturesCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(LecturesCols::Topic, "topic", DataType::Varchar, 128);
-
-    configurator.configureRelationship(Relationships::StudentsProjects, TableIds::Students, TableIds::Projects,
-      ISchema::RelationshipType::OneToMany).onDelete(ISchema::ForeignKeyAction::Cascade);
-
-    configurator.configureRelationship(Relationships::StudentsLectures, TableIds::Students, TableIds::Lectures,
-      ISchema::RelationshipType::ManyToMany);
-  });
-}
-
 bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, ISchema::Id tableId,
                                      ISchema::Id columnId, QVariant value)
 {

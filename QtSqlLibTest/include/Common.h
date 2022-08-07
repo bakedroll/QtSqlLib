@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DatabaseDummy.h>
+#include <TestDatabase.h>
 
 #include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/DatabaseException.h>
@@ -118,8 +118,6 @@ public:
   Funcs() = delete;
 
   static QString getDefaultDatabaseFilename();
-
-  static void setupReplationshipTestsSchema(DatabaseDummy& db);
 
   static bool isResultTuplesContaining(
     const std::vector<IQuery::ResultTuple>& results,

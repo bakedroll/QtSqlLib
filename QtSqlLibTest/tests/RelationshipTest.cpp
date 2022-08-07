@@ -110,28 +110,28 @@ static void expectSpecialRelation6Students(IQuery::QueryResults::ResultTuples& t
     "Student3", QVariantList());
 }
 
-static void setupReplationshipTestsSchema(DatabaseDummy& db)
+static void setupReplationshipTestsDatabase(TestDatabase& db)
 {
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Students, "students")
-      .column(StudentsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(StudentsCols::Name, "name", DataType::Varchar, 128);
+  SchemaConfigurator configurator;
+  configurator.configureTable(TableIds::Students, "students")
+    .column(StudentsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .column(StudentsCols::Name, "name", DataType::Varchar, 128);
 
-    configurator.configureTable(TableIds::Projects, "projects")
-      .column(ProjectsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(ProjectsCols::Title, "title", DataType::Varchar, 128);
+  configurator.configureTable(TableIds::Projects, "projects")
+    .column(ProjectsCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .column(ProjectsCols::Title, "title", DataType::Varchar, 128);
 
-    configurator.configureTable(TableIds::Lectures, "lectures")
-      .column(LecturesCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-      .column(LecturesCols::Topic, "topic", DataType::Varchar, 128);
+  configurator.configureTable(TableIds::Lectures, "lectures")
+    .column(LecturesCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .column(LecturesCols::Topic, "topic", DataType::Varchar, 128);
 
-    configurator.configureRelationship(Relationships::StudentsProjects, TableIds::Students, TableIds::Projects,
-      ISchema::RelationshipType::OneToMany).onDelete(ISchema::ForeignKeyAction::Cascade);
+  configurator.configureRelationship(Relationships::StudentsProjects, TableIds::Students, TableIds::Projects,
+    ISchema::RelationshipType::OneToMany).onDelete(ISchema::ForeignKeyAction::Cascade);
 
-    configurator.configureRelationship(Relationships::StudentsLectures, TableIds::Students, TableIds::Lectures,
-      ISchema::RelationshipType::ManyToMany);
-  });
+  configurator.configureRelationship(Relationships::StudentsLectures, TableIds::Students, TableIds::Lectures,
+    ISchema::RelationshipType::ManyToMany);
+
+  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 }
 
 /**
@@ -169,11 +169,8 @@ static void setupReplationshipTestsSchema(DatabaseDummy& db)
  */
 TEST(RelationshipTest, linkTuplesOnInsertTest)
 {
-  DatabaseDummy db;
-
-  setupReplationshipTestsSchema(db);
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  setupReplationshipTestsDatabase(db);
 
   // Insert Lecture "Math"
   const auto lectureMath = db.execQuery(InsertIntoExt(TableIds::Lectures)
@@ -376,10 +373,8 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
  */
 TEST(RelationshipTest, linkTuplesQueryTest)
 {
-  DatabaseDummy db;
-  setupReplationshipTestsSchema(db);
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  setupReplationshipTestsDatabase(db);
 
   // Insert tuples
   const auto studentJohn = db.execQuery(InsertIntoExt(TableIds::Students)
@@ -605,29 +600,26 @@ TEST(RelationshipTest, linkTuplesQueryTest)
 
 TEST(RelationshipTest, specialRelationships)
 {
-  DatabaseDummy db;
+  SchemaConfigurator configurator;
+  configurator.configureTable(TableIds::Students, "students")
+    .column(StudentsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
+    .column(StudentsCols::Name, "name", DataType::Varchar, 128)
+    .primaryKeys({ StudentsCols::Id });
 
-  db.setConfigureSchemaFunc([](SchemaConfigurator& configurator)
-  {
-    configurator.configureTable(TableIds::Students, "students")
-      .column(StudentsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
-      .column(StudentsCols::Name, "name", DataType::Varchar, 128)
-      .primaryKeys({ StudentsCols::Id });
+  configurator.configureTable(TableIds::Projects, "projects")
+    .column(ProjectsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
+    .column(ProjectsCols::Title, "title", DataType::Varchar, 128)
+    .primaryKeys({ ProjectsCols::Id });
 
-    configurator.configureTable(TableIds::Projects, "projects")
-      .column(ProjectsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
-      .column(ProjectsCols::Title, "title", DataType::Varchar, 128)
-      .primaryKeys({ ProjectsCols::Id });
+  configurator.configureRelationship(Relationships::Special1, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
+  configurator.configureRelationship(Relationships::Special2, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
+  configurator.configureRelationship(Relationships::Special3, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::ManyToMany);
+  configurator.configureRelationship(Relationships::Special4, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::ManyToMany);
+  configurator.configureRelationship(Relationships::Special5, TableIds::Students, TableIds::Students, ISchema::RelationshipType::OneToMany);
+  configurator.configureRelationship(Relationships::Special6, TableIds::Students, TableIds::Students, ISchema::RelationshipType::ManyToMany);
 
-    configurator.configureRelationship(Relationships::Special1, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
-    configurator.configureRelationship(Relationships::Special2, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
-    configurator.configureRelationship(Relationships::Special3, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::ManyToMany);
-    configurator.configureRelationship(Relationships::Special4, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::ManyToMany);
-    configurator.configureRelationship(Relationships::Special5, TableIds::Students, TableIds::Students, ISchema::RelationshipType::OneToMany);
-    configurator.configureRelationship(Relationships::Special6, TableIds::Students, TableIds::Students, ISchema::RelationshipType::ManyToMany);
-  });
-
-  db.initialize(Funcs::getDefaultDatabaseFilename());
+  TestDatabase db;
+  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
   const auto student1 = db.execQuery(InsertIntoExt(TableIds::Students)
     .value(StudentsCols::Name, "Student1")

@@ -200,7 +200,8 @@ Database::~Database()
   Database::close();
 }
 
-void Database::initialize(const QString& fileName, const QString& databaseName)
+void Database::initialize(API::ISchemaConfigurator& schemaConfigurator, const QString& fileName,
+                          const QString& databaseName)
 {
   if (m_db)
   {
@@ -209,12 +210,11 @@ void Database::initialize(const QString& fileName, const QString& databaseName)
 
   m_databaseName = databaseName;
 
-  SchemaConfigurator configurator(m_schema);
-  configurator.configureTable(s_versionTableid, s_versionTableName)
+  schemaConfigurator.configureTable(s_versionTableid, s_versionTableName)
     .column(s_versionColId, "version", API::ISchema::DataType::Integer).primaryKey().notNull();
 
-  configureSchema(configurator);
-  m_schema.configureRelationships();
+  m_schema = schemaConfigurator.getSchema();
+  m_schema->configureRelationships();
 
   loadDatabaseFile(fileName);
 }
@@ -232,7 +232,7 @@ void Database::close()
 
 API::IQuery::QueryResults Database::execQuery(API::IQueryElement& query)
 {
-  return execQueryForSchema(m_schema, query);
+  return execQueryForSchema(*m_schema, query);
 }
 
 void Database::loadDatabaseFile(const QString& filename)
@@ -291,7 +291,7 @@ void Database::createOrMigrateTables(int currentVersion)
     if (version == 1)
     {
       Query::QuerySequence sequence;
-      for (const auto& table : m_schema.getTables())
+      for (const auto& table : m_schema->getTables())
       {
         verifyPrimaryKeys(table.second);
         sequence.addQuery(std::make_unique<CreateTable>(table.second));
@@ -309,7 +309,7 @@ void Database::createOrMigrateTables(int currentVersion)
 
 API::IQuery::QueryResults Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
 {
-  if (!m_db)
+  if (!m_db || !m_schema)
   {
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Database is not yet initialized.");
   }

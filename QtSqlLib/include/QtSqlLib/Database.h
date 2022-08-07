@@ -17,18 +17,16 @@ public:
   Database();
   ~Database() override;
 
-  void initialize(const QString& fileName, const QString& databaseName = QSqlDatabase::defaultConnection) override;
+  void initialize(API::ISchemaConfigurator& schemaConfigurator, const QString& fileName,
+                  const QString& databaseName = QSqlDatabase::defaultConnection) override;
   void close() override;
 
   API::IQuery::QueryResults execQuery(API::IQueryElement& query) override;
 
-protected:
-  virtual void configureSchema(SchemaConfigurator& configurator) = 0;
-
 private:
   std::unique_ptr<QSqlDatabase> m_db;
+  std::unique_ptr<API::ISchema> m_schema;
 
-  Schema m_schema;
   QString m_databaseName;
 
   void loadDatabaseFile(const QString& filename);
