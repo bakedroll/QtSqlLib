@@ -33,7 +33,7 @@ void BaseInsert::throwIfColumnIdAlreadyExisting(Schema::Id id) const
   }
 }
 
-QSqlQuery BaseInsert::getQSqlQuery(Schema& schema) const
+QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, Schema& schema) const
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 
@@ -56,7 +56,7 @@ QSqlQuery BaseInsert::getQSqlQuery(Schema& schema) const
   const auto queryString = QString("INSERT INTO '%1' (%2) VALUES (%3);").arg(table.name).arg(columnsString).arg(valuesString);
   UTILS_LOG_DEBUG(queryString.toStdString().c_str());
 
-  QSqlQuery query;
+  QSqlQuery query(db);
   query.prepare(queryString);
 
   bindQueryValues(query);

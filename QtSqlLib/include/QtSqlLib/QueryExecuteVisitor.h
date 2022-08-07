@@ -5,13 +5,15 @@
 #include <QtSqlLib/API/IQuery.h>
 #include <QtSqlLib/Schema.h>
 
+#include <QSqlDatabase>
+
 namespace QtSqlLib
 {
 
 class QueryExecuteVisitor : public API::IQueryVisitor
 {
 public:
-  QueryExecuteVisitor(Schema& schema);
+  QueryExecuteVisitor(const QSqlDatabase& sqlDb, Schema& schema);
   ~QueryExecuteVisitor() override;
 
   void visit(API::IQuery& query) override;
@@ -20,7 +22,9 @@ public:
   API::IQuery::QueryResults getLastQueryResults() const;
 
 private:
+  const QSqlDatabase& m_sqlDb;
   Schema& m_schema;
+
   API::IQuery::QueryResults m_lastResults;
 
 };

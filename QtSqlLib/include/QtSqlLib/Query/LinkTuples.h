@@ -43,7 +43,7 @@ private:
     void setForeignKeyValues(const Schema::TupleValues& parentKeyValues);
     void makeAndAddWhereExpr(const Schema::TupleValues& affectedChildKeyValues);
 
-    SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
 
   private:
     Mode m_mode;
@@ -60,7 +60,7 @@ private:
       const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~BatchInsertRemainingKeys() override;
 
-    SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
 
   private:
     int m_numRelations;

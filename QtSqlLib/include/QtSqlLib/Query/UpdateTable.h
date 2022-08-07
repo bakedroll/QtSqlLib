@@ -16,7 +16,7 @@ public:
   UpdateTable& set(Schema::Id columnId, const QVariant& newValue);
   UpdateTable& where(Expr& expr);
 
-  SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
 
 private:
   Schema::Id m_tableId;

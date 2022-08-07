@@ -133,7 +133,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
   const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
@@ -169,7 +169,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(Schema& schema, QueryResults& previ
 
   queryStr.append(";");
 
-  return { QSqlQuery(queryStr) };
+  return { QSqlQuery(queryStr, db) };
 }
 
 API::IQuery::QueryResults FromTable::getQueryResults(Schema& schema, QSqlQuery& query) const

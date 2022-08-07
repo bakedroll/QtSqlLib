@@ -17,7 +17,7 @@ public:
 
   BatchInsertInto& values(Schema::Id columnId, const QVariantList& values);
 
-  SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

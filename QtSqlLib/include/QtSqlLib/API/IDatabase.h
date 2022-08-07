@@ -13,7 +13,7 @@ public:
   IDatabase() = default;
   virtual ~IDatabase() = default;
 
-  virtual void initialize(const QString& filename) = 0;
+  virtual void initialize(const QString& fileName, const QString& databaseName) = 0;
   virtual void close() = 0;
 
   virtual IQuery::QueryResults execQuery(IQueryElement& query) = 0;

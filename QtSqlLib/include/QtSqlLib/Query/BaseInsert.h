@@ -18,7 +18,7 @@ public:
   void addColumnId(Schema::Id id);
 
 protected:
-  QSqlQuery getQSqlQuery(Schema& schema) const;
+  QSqlQuery getQSqlQuery(const QSqlDatabase& db, Schema& schema) const;
   virtual void bindQueryValues(QSqlQuery& query) const = 0;
 
 private:

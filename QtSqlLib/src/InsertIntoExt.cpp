@@ -134,7 +134,7 @@ InsertIntoExt::QueryInsertedIds::QueryInsertedIds(Schema::Id tableId)
 
 InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
 
-API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -147,7 +147,8 @@ API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(Schema& schem
   keyColumns = keyColumns.left(keyColumns.length() - 2);
 
   return { QSqlQuery(QString("SELECT rowid, %1 FROM '%2' WHERE rowid = last_insert_rowid();")
-    .arg(keyColumns).arg(table.name)) };
+    .arg(keyColumns).arg(table.name),
+    db) };
 }
 
 API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schema& schema, QSqlQuery& query) const

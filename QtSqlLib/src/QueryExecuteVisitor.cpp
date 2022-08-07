@@ -10,8 +10,9 @@
 namespace QtSqlLib
 {
 
-QueryExecuteVisitor::QueryExecuteVisitor(Schema& schema)
-  : m_schema(schema)
+QueryExecuteVisitor::QueryExecuteVisitor(const QSqlDatabase& sqlDb, Schema& schema) :
+  m_sqlDb(sqlDb),
+  m_schema(schema)
 {
 }
 
@@ -19,7 +20,7 @@ QueryExecuteVisitor::~QueryExecuteVisitor() = default;
 
 void QueryExecuteVisitor::visit(API::IQuery& query)
 {
-  auto q = query.getSqlQuery(m_schema, m_lastResults);
+  auto q = query.getSqlQuery(m_sqlDb, m_schema, m_lastResults);
   const auto isBatch = (q.mode == API::IQuery::QueryMode::Batch);
 
   if ((!isBatch && !q.qtQuery.exec()) || (isBatch && !q.qtQuery.execBatch()))

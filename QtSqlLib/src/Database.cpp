@@ -18,6 +18,8 @@
 namespace QtSqlLib
 {
 
+static const int s_defaultSchemaTargetVersion = 1;
+
 static const Schema::Id s_sqliteMasterTableId = 0;
 static const Schema::Id s_sqliteMasterTypeColId = 0;
 static const Schema::Id s_sqliteMasterNameColId = 1;
@@ -86,50 +88,6 @@ static QString getActionString(Schema::ForeignKeyAction action)
   return "";
 }
 
-static API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryElement& query)
-{
-  QueryPrepareVisitor prepateVisitor(schema);
-  query.accept(prepateVisitor);
-
-  QueryExecuteVisitor executeVisitor(schema);
-
-  QSqlDatabase::database().transaction();
-
-  try
-  {
-    query.accept(executeVisitor);
-  }
-  catch (DatabaseException&)
-  {
-    QSqlDatabase::database().rollback();
-    throw;
-  }
-
-  QSqlDatabase::database().commit();
-
-  return executeVisitor.getLastQueryResults();
-}
-
-static bool isVersionTableExisting()
-{
-  Schema sqliteMasterSchema;
-
-  auto& table = sqliteMasterSchema.getTables()[s_sqliteMasterTableId];
-  table.name = "sqlite_master";
-  table.columns[s_sqliteMasterTypeColId].name = "type";
-  table.columns[s_sqliteMasterNameColId].name = "name";
-
-  const auto results = execQueryForSchema(sqliteMasterSchema,
-    Query::FromTable(s_sqliteMasterTableId)
-    .select(s_sqliteMasterNameColId)
-    .where(Expr()
-      .equal(s_sqliteMasterTypeColId, "table")
-      .and()
-      .equal(s_sqliteMasterNameColId, s_versionTableName)));
-
-  return !results.resultTuples.empty();
-}
-
 class CreateTable : public Query::Query
 {
 public:
@@ -140,7 +98,7 @@ public:
 
   ~CreateTable() override = default;
 
-  API::IQuery::SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) override
+  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -240,26 +198,25 @@ private:
 
 };
 
-Database::Database()
-  : m_isInitialized(false)
+Database::Database() :
+  m_isInitialized(false)
 {
 }
 
 Database::~Database()
 {
-  if (m_db.isOpen())
-  {
-    m_db.close();
-  }
+  Database::close();
 }
 
-void Database::initialize(const QString& filename)
+void Database::initialize(const QString& fileName, const QString& databaseName)
 {
   if (m_isInitialized)
   {
     UTILS_LOG_WARN("Database is already initialized.");
     return;
   }
+
+  m_databaseName = databaseName;
 
   SchemaConfigurator configurator(m_schema);
   configurator.configureTable(s_versionTableid, s_versionTableName)
@@ -268,14 +225,20 @@ void Database::initialize(const QString& filename)
   configureSchema(configurator);
   m_schema.configureRelationships();
 
-  loadDatabaseFile(filename);
+  loadDatabaseFile(fileName);
 
   m_isInitialized = true;
 }
 
 void Database::close()
 {
-  m_db.close();
+  if (m_db && m_db->isOpen())
+  {
+    m_db->close();
+    m_db.reset();
+
+    QSqlDatabase::removeDatabase(m_databaseName);
+  }
 }
 
 API::IQuery::QueryResults Database::execQuery(API::IQueryElement& query)
@@ -285,10 +248,10 @@ API::IQuery::QueryResults Database::execQuery(API::IQueryElement& query)
 
 void Database::loadDatabaseFile(const QString& filename)
 {
-  m_db = QSqlDatabase::addDatabase("QSQLITE");
-  m_db.setDatabaseName(filename);
+  m_db = std::make_unique<QSqlDatabase>(QSqlDatabase::addDatabase("QSQLITE", m_databaseName));
+  m_db->setDatabaseName(filename);
 
-  if (!m_db.open())
+  if (!m_db->open())
   {
     throw DatabaseException(DatabaseException::Type::UnableToLoad,
       QString("Could not load database file: %1.").arg(filename));
@@ -307,7 +270,7 @@ void Database::loadDatabaseFile(const QString& filename)
         "Could not query version.");
     }
 
-    const auto targetVersion = getDatabaseVersion();
+    const auto targetVersion = s_defaultSchemaTargetVersion;
     if (currentVersion < targetVersion)
     {
       createOrMigrateTables(currentVersion);
@@ -333,7 +296,7 @@ int Database::queryDatabaseVersion()
 
 void Database::createOrMigrateTables(int currentVersion)
 {
-  const auto targetVersion = getDatabaseVersion();
+  const auto targetVersion = s_defaultSchemaTargetVersion;
   for (auto version = currentVersion+1; version <= targetVersion; version++)
   {
     if (version == 1)
@@ -355,9 +318,53 @@ void Database::createOrMigrateTables(int currentVersion)
   }
 }
 
-int Database::getDatabaseVersion()
+API::IQuery::QueryResults Database::execQueryForSchema(Schema& schema, API::IQueryElement& query) const
 {
-  return 1;
+  if (!m_db)
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Database is not yet initialized.");
+  }
+
+  QueryPrepareVisitor prepateVisitor(schema);
+  query.accept(prepateVisitor);
+
+  QueryExecuteVisitor executeVisitor(*m_db, schema);
+
+  QSqlDatabase::database().transaction();
+
+  try
+  {
+    query.accept(executeVisitor);
+  }
+  catch (DatabaseException&)
+  {
+    QSqlDatabase::database().rollback();
+    throw;
+  }
+
+  QSqlDatabase::database().commit();
+
+  return executeVisitor.getLastQueryResults();
+}
+
+bool Database::isVersionTableExisting() const
+{
+  Schema sqliteMasterSchema;
+
+  auto& table = sqliteMasterSchema.getTables()[s_sqliteMasterTableId];
+  table.name = "sqlite_master";
+  table.columns[s_sqliteMasterTypeColId].name = "type";
+  table.columns[s_sqliteMasterNameColId].name = "name";
+
+  const auto results = execQueryForSchema(sqliteMasterSchema,
+    Query::FromTable(s_sqliteMasterTableId)
+    .select(s_sqliteMasterNameColId)
+    .where(Expr()
+      .equal(s_sqliteMasterTypeColId, "table")
+      .and()
+      .equal(s_sqliteMasterNameColId, s_versionTableName)));
+
+  return !results.resultTuples.empty();
 }
 
 }

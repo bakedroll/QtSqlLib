@@ -2,6 +2,7 @@
 
 #include <QtSqlLib/Schema.h>
 
+#include <QSqlDatabase>
 #include <QSqlQuery>
 
 namespace QtSqlLib::API
@@ -50,7 +51,7 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual SqlQuery getSqlQuery(Schema& schema, QueryResults& previousQueryResults) = 0;
+  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) = 0;
   virtual QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const { return {}; }
 
 };

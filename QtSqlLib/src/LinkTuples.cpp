@@ -145,7 +145,7 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::Tuple
   where(whereExpr);
 }
 
-API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(Schema& schema,
+API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, Schema& schema,
                                                                       QueryResults& previousQueryResults)
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
@@ -168,7 +168,7 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(Schema& sc
     makeAndAddWhereExpr(previousQueryResults.resultTuples[0].values);
   }
 
-  return UpdateTable::getSqlQuery(schema, previousQueryResults);
+  return UpdateTable::getSqlQuery(db, schema, previousQueryResults);
 }
 
 LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(Schema::Id tableId,
@@ -182,8 +182,8 @@ LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(Schema::Id tableI
 
 LinkTuples::BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
 
-API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(Schema& schema,
-  QueryResults& previousQueryResults)
+API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, Schema& schema,
+                                                                        QueryResults& previousQueryResults)
 {
   if (previousQueryResults.validity != QueryResults::Validity::Valid || previousQueryResults.resultTuples.empty())
   {
@@ -206,7 +206,7 @@ API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(Schema& 
     values(m_primaryForeignKeyColIdMap.at(value.first), list);
   }
 
-  return BatchInsertInto::getSqlQuery(schema, previousQueryResults);
+  return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }
 
 void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationship& relationship,

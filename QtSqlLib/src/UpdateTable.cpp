@@ -35,7 +35,7 @@ UpdateTable& UpdateTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery UpdateTable::getSqlQuery(Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 
@@ -68,7 +68,7 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(Schema& schema, QueryResults& pre
   }
 
   queryStr.append(";");
-  QSqlQuery query;
+  QSqlQuery query(db);
   query.prepare(queryStr);
 
   for (const auto& colValue : m_colIdNewValueMap)

@@ -6,6 +6,8 @@
 
 #include <QSqlDatabase>
 
+#include <memory>
+
 namespace QtSqlLib
 {
 
@@ -15,7 +17,7 @@ public:
   Database();
   ~Database() override;
 
-  void initialize(const QString& filename) override;
+  void initialize(const QString& fileName, const QString& databaseName = QSqlDatabase::defaultConnection) override;
   void close() override;
 
   API::IQuery::QueryResults execQuery(API::IQueryElement& query) override;
@@ -24,17 +26,20 @@ protected:
   virtual void configureSchema(SchemaConfigurator& configurator) = 0;
 
 private:
-  QSqlDatabase m_db;
+  std::unique_ptr<QSqlDatabase> m_db;
 
   Schema m_schema;
 
   bool m_isInitialized;
+  QString m_databaseName;
 
   void loadDatabaseFile(const QString& filename);
   int  queryDatabaseVersion();
   void createOrMigrateTables(int currentVersion = 1);
 
-  static int getDatabaseVersion();
+  API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryElement& query) const;
+
+  bool isVersionTableExisting() const;
 
 };
 
