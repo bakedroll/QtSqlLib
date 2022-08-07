@@ -15,36 +15,10 @@ public:
   ~FromTable() override;
 
   FromTable& selectAll();
-  FromTable& select(API::ISchema::Id columnId);
-
-  template <typename... T>
-  FromTable& select(API::ISchema::Id columnId, T... args)
-  {
-    m_columnSelectionInfo.bIsSelecting = true;
-
-    select(columnId);
-    select(args...);
-
-    m_columnSelectionInfo.bIsSelecting = false;
-    m_columnSelectionInfo.bColumnsSelected = true;
-    return *this;
-  }
+  FromTable& select(const std::vector<API::ISchema::Id>& columnIds);
 
   FromTable& joinAll(API::ISchema::Id relationshipId);
-  FromTable& joinColumns(API::ISchema::Id relationshipId, API::ISchema::Id columnId);
-
-  template <typename... T>
-  FromTable& joinColumns(API::ISchema::Id relationshipId, API::ISchema::Id columnId, T... args)
-  {
-    m_joins[relationshipId].bIsSelecting = true;
-
-    joinColumns(relationshipId, columnId);
-    joinColumns(relationshipId, args...);
-
-    m_joins[relationshipId].bIsSelecting = false;
-    m_joins[relationshipId].bColumnsSelected = true;
-    return *this;
-  }
+  FromTable& joinColumns(API::ISchema::Id relationshipId, const std::vector<API::ISchema::Id>& columnIds);
 
   FromTable& where(Expr& expr);
 
@@ -65,7 +39,6 @@ private:
   
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
-    bool bIsSelecting = false;
     std::vector<int> primaryKeyColumnIndicesInQuery;
     std::vector<int> foreignKeyColumnIndicesInQuery;
   };

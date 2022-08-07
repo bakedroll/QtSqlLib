@@ -236,8 +236,8 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
 
   // Expectations:
   auto results = db.execQuery(FromTable(TableIds::Students)
-    .select(StudentsCols::Name)
-    .joinColumns(Relationships::StudentsLectures, LecturesCols::Topic));
+    .select({ StudentsCols::Name })
+    .joinColumns(Relationships::StudentsLectures, { LecturesCols::Topic }));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsLectures,
     TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
@@ -253,7 +253,7 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
 
   results = db.execQuery(FromTable(TableIds::Lectures)
     .selectAll()
-    .joinColumns(Relationships::StudentsLectures, StudentsCols::Name));
+    .joinColumns(Relationships::StudentsLectures, { StudentsCols::Name }));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsLectures,
     TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
@@ -268,7 +268,7 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
     "Database Systems", QVariantList() << "John" << "Mary");
 
   results = db.execQuery(FromTable(TableIds::Students)
-    .select(StudentsCols::Name)
+    .select({ StudentsCols::Name })
     .joinAll(Relationships::StudentsProjects));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsProjects,
@@ -506,8 +506,8 @@ TEST(RelationshipTest, linkTuplesQueryTest)
 
   // Expectations:
   auto results = db.execQuery(FromTable(TableIds::Students)
-    .select(StudentsCols::Name)
-    .joinColumns(Relationships::StudentsLectures, LecturesCols::Topic));
+    .select({ StudentsCols::Name })
+    .joinColumns(Relationships::StudentsLectures, { LecturesCols::Topic }));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsLectures,
     TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
@@ -523,7 +523,7 @@ TEST(RelationshipTest, linkTuplesQueryTest)
 
   results = db.execQuery(FromTable(TableIds::Lectures)
     .selectAll()
-    .joinColumns(Relationships::StudentsLectures, StudentsCols::Name));
+    .joinColumns(Relationships::StudentsLectures, { StudentsCols::Name }));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsLectures,
     TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
@@ -538,7 +538,7 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     "Database Systems", QVariantList() << "John" << "Mary");
 
   results = db.execQuery(FromTable(TableIds::Students)
-    .select(StudentsCols::Name)
+    .select({ StudentsCols::Name })
     .joinAll(Relationships::StudentsProjects));
 
   Funcs::expectRelations(results.resultTuples, Relationships::StudentsProjects,
@@ -612,12 +612,12 @@ TEST(RelationshipTest, specialRelationships)
     configurator.configureTable(TableIds::Students, "students")
       .column(StudentsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
       .column(StudentsCols::Name, "name", DataType::Varchar, 128)
-      .primaryKeys(StudentsCols::Id);
+      .primaryKeys({ StudentsCols::Id });
 
     configurator.configureTable(TableIds::Projects, "projects")
       .column(ProjectsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
       .column(ProjectsCols::Title, "title", DataType::Varchar, 128)
-      .primaryKeys(ProjectsCols::Id);
+      .primaryKeys({ ProjectsCols::Id });
 
     configurator.configureRelationship(Relationships::Special1, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
     configurator.configureRelationship(Relationships::Special2, TableIds::Students, TableIds::Projects, ISchema::RelationshipType::OneToMany);
@@ -706,8 +706,8 @@ TEST(RelationshipTest, specialRelationships)
     .toOne ({ student3 }));
 
   auto results = db.execQuery(FromTable(TableIds::Students)
-    .select(StudentsCols::Name)
-    .joinColumns(Relationships::Special1, ProjectsCols::Title));
+    .select({ StudentsCols::Name })
+    .joinColumns(Relationships::Special1, { ProjectsCols::Title }));
 
   expectSpecialRelation1Students(results.resultTuples);
 

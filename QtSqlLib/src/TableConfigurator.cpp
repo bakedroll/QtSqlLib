@@ -7,14 +7,14 @@ namespace QtSqlLib
 
 TableConfigurator::TableConfigurator(API::ISchema::Table& table)
   : m_table(table)
-  , m_bIsConfiguringPrimaryKeys(false)
   , m_bIsPrimaryKeysConfigured(false)
 {
 }
 
 TableConfigurator::~TableConfigurator() = default;
 
-TableConfigurator& TableConfigurator::column(API::ISchema::Id columnId, const QString& columnName, API::ISchema::DataType type, int varcharLength)
+API::ITableConfigurator& TableConfigurator::column(API::ISchema::Id columnId, const QString& columnName,
+                                                   API::ISchema::DataType type, int varcharLength)
 {
   if (m_table.columns.count(columnId) > 0)
   {
@@ -53,7 +53,7 @@ TableConfigurator& TableConfigurator::column(API::ISchema::Id columnId, const QS
   return *this;
 }
 
-TableConfigurator& TableConfigurator::primaryKey()
+API::ITableConfigurator& TableConfigurator::primaryKey()
 {
   checkColumn();
   const auto colId = m_lastColumnId.value();
@@ -76,7 +76,7 @@ TableConfigurator& TableConfigurator::primaryKey()
   return *this;
 }
 
-TableConfigurator& TableConfigurator::autoIncrement()
+API::ITableConfigurator& TableConfigurator::autoIncrement()
 {
   checkColumn();
   auto& col = m_table.columns.at(m_lastColumnId.value());
@@ -91,7 +91,7 @@ TableConfigurator& TableConfigurator::autoIncrement()
   return *this;
 }
 
-TableConfigurator& TableConfigurator::notNull()
+API::ITableConfigurator& TableConfigurator::notNull()
 {
   checkColumn();
   auto& col = m_table.columns.at(m_lastColumnId.value());
@@ -106,7 +106,7 @@ TableConfigurator& TableConfigurator::notNull()
   return *this;
 }
 
-TableConfigurator& TableConfigurator::primaryKeys(API::ISchema::Id columnId)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const std::set<API::ISchema::Id>& columnIds)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -114,12 +114,14 @@ TableConfigurator& TableConfigurator::primaryKeys(API::ISchema::Id columnId)
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
-  m_table.primaryKeys.insert(columnId);
-
-  if (!m_bIsConfiguringPrimaryKeys)
+  if (columnIds.empty())
   {
-    m_bIsPrimaryKeysConfigured = true;
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
+
+  m_table.primaryKeys = columnIds;
+  m_bIsPrimaryKeysConfigured = true;
   return *this;
 }
 

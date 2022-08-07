@@ -16,7 +16,7 @@ RelationshipConfigurator::RelationshipConfigurator(API::ISchema::Relationship& r
 
 RelationshipConfigurator::~RelationshipConfigurator() = default;
 
-RelationshipConfigurator& RelationshipConfigurator::onDelete(API::ISchema::ForeignKeyAction action)
+API::IRelationshipConfigurator& RelationshipConfigurator::onDelete(API::ISchema::ForeignKeyAction action)
 {
   if (m_bOnDeleteCalled)
   {
@@ -30,7 +30,7 @@ RelationshipConfigurator& RelationshipConfigurator::onDelete(API::ISchema::Forei
   return *this;
 }
 
-RelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ISchema::ForeignKeyAction action)
+API::IRelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ISchema::ForeignKeyAction action)
 {
   if (m_bOnUpdateCalled)
   {
@@ -43,4 +43,5 @@ RelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ISchema::Forei
   m_bOnUpdateCalled = true;
   return *this;
 }
+
 }

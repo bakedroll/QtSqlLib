@@ -1,18 +1,18 @@
 #pragma once
 
-#include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/API/IRelationshipConfigurator.h>
 
 namespace QtSqlLib
 {
 
-class RelationshipConfigurator
+class RelationshipConfigurator : public API::IRelationshipConfigurator
 {
 public:
   RelationshipConfigurator(API::ISchema::Relationship& relationship);
-  virtual ~RelationshipConfigurator();
+  ~RelationshipConfigurator() override;
 
-  RelationshipConfigurator& onDelete(API::ISchema::ForeignKeyAction action);
-  RelationshipConfigurator& onUpdate(API::ISchema::ForeignKeyAction action);
+  IRelationshipConfigurator& onDelete(API::ISchema::ForeignKeyAction action) override;
+  IRelationshipConfigurator& onUpdate(API::ISchema::ForeignKeyAction action) override;
 
 private:
   API::ISchema::Relationship& m_relationship;

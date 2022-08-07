@@ -274,7 +274,7 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  const auto results = execQuery(Query::FromTable(s_versionTableid).select(s_versionColId));
+  const auto results = execQuery(Query::FromTable(s_versionTableid).select({ s_versionColId }));
   if (results.resultTuples.empty())
   {
     return -1;
@@ -347,7 +347,7 @@ bool Database::isVersionTableExisting() const
 
   const auto results = execQueryForSchema(sqliteMasterSchema,
     Query::FromTable(s_sqliteMasterTableId)
-    .select(s_sqliteMasterNameColId)
+    .select({ s_sqliteMasterNameColId })
     .where(Expr()
       .equal(s_sqliteMasterTypeColId, "table")
       .and()

@@ -35,7 +35,7 @@ TEST(InsertUpdateReadTest, insertAndRead)
     .values(Table1Cols::Number, QVariantList() << 0.6 << 0.7 << 0.8));
 
   auto results = db.execQuery(FromTable(TableIds::Table1)
-    .select(Table1Cols::Text, Table1Cols::Number));
+    .select({ Table1Cols::Text, Table1Cols::Number }));
 
   EXPECT_EQ(results.resultTuples.size(), 4);
 
@@ -54,7 +54,7 @@ TEST(InsertUpdateReadTest, insertAndRead)
   EXPECT_DOUBLE_EQ(resultColNr.toDouble(), 0.5);
 
   results = db.execQuery(FromTable(TableIds::Table1)
-    .select(Table1Cols::Id, Table1Cols::Text, Table1Cols::Number)
+    .select({ Table1Cols::Id, Table1Cols::Text, Table1Cols::Number })
     .where(Expr().less(Table1Cols::Number, QVariant(0.75))));
 
   EXPECT_EQ(results.resultTuples.size(), 3);
@@ -105,7 +105,7 @@ TEST(InsertUpdateReadTest, insertUpdateAndRead)
     .where(Expr().equal(Table1Cols::Number, QVariant(2))));
 
   const auto results = db.execQuery(FromTable(TableIds::Table1)
-    .select(Table1Cols::Text, Table1Cols::Number));
+    .select({ Table1Cols::Text, Table1Cols::Number }));
 
   EXPECT_EQ(results.resultTuples.size(), 3);
 
@@ -128,7 +128,7 @@ TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
     configurator.configureTable(TableIds::Table1, "table1")
       .column(Table1Cols::Id, "id", DataType::Integer).notNull()
       .column(Table1Cols::Text, "text", DataType::Varchar, 128).notNull()
-      .primaryKeys(Table1Cols::Id, Table1Cols::Text);
+      .primaryKeys({ Table1Cols::Id, Table1Cols::Text });
   });
 
   db.initialize(Funcs::getDefaultDatabaseFilename());
@@ -292,11 +292,11 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
 TEST(InsertUpdateReadTest, fromTableExceptions)
 {
   EXPECT_THROW(
-    FromTable(TableIds::Students).select(StudentsCols::Name).select(StudentsCols::Id),
+    FromTable(TableIds::Students).select({ StudentsCols::Name }).select({ StudentsCols::Id }),
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students).select(StudentsCols::Name).selectAll(),
+    FromTable(TableIds::Students).select({ StudentsCols::Name }).selectAll(),
     DatabaseException);
 
   EXPECT_THROW(
@@ -305,13 +305,13 @@ TEST(InsertUpdateReadTest, fromTableExceptions)
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsProjects, StudentsCols::Name)
-      .joinColumns(Relationships::StudentsProjects, StudentsCols::Id),
+      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Name })
+      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Id }),
     DatabaseException);
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsProjects, StudentsCols::Name)
+      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Name })
       .joinAll(Relationships::StudentsProjects),
     DatabaseException);
 

@@ -84,16 +84,21 @@ FromTable& FromTable::selectAll()
   return *this;
 }
 
-FromTable& FromTable::select(API::ISchema::Id columnId)
+FromTable& FromTable::select(const std::vector<API::ISchema::Id>& columnIds)
 {
   throwIfMultipleSelects();
 
-  m_columnSelectionInfo.columnInfos.emplace_back(ColumnInfo { columnId, -1 });
-
-  if (!m_columnSelectionInfo.bIsSelecting)
+  if (columnIds.empty())
   {
-    m_columnSelectionInfo.bColumnsSelected = true;
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
+
+  for (const auto& id : columnIds)
+  {
+    m_columnSelectionInfo.columnInfos.emplace_back(ColumnInfo{ id, -1 });
+  }
+
+  m_columnSelectionInfo.bColumnsSelected = true;
   return *this;
 }
 
@@ -107,17 +112,22 @@ FromTable& FromTable::joinAll(API::ISchema::Id relationshipId)
   return *this;
 }
 
-FromTable& FromTable::joinColumns(API::ISchema::Id relationshipId, API::ISchema::Id columnId)
+FromTable& FromTable::joinColumns(API::ISchema::Id relationshipId, const std::vector<API::ISchema::Id>& columnIds)
 {
   throwIfMultipleJoins(relationshipId);
 
-  auto& joinData = m_joins[relationshipId];
-  joinData.columnInfos.emplace_back(ColumnInfo{ columnId, -1 });
-
-  if (!joinData.bIsSelecting)
+  if (columnIds.empty())
   {
-    joinData.bColumnsSelected = true;
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
+
+  auto& joinData = m_joins[relationshipId];
+  for (const auto& id : columnIds)
+  {
+    joinData.columnInfos.emplace_back(ColumnInfo{ id, -1 });
+  }
+
+  joinData.bColumnsSelected = true;
   return *this;
 }
 

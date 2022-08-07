@@ -1,6 +1,8 @@
 #include "QtSqlLib/SchemaConfigurator.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/RelationshipConfigurator.h"
+#include "QtSqlLib/TableConfigurator.h"
 
 namespace QtSqlLib
 {
@@ -12,7 +14,7 @@ SchemaConfigurator::SchemaConfigurator(API::ISchema& schema)
 
 SchemaConfigurator::~SchemaConfigurator() = default;
 
-TableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tableId, const QString& tableName)
+API::ITableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tableId, const QString& tableName)
 {
   if (m_schema.getTables().count(tableId) > 0)
   {
@@ -47,8 +49,8 @@ TableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tableId, 
   return *m_tableConfigurators.at(tableId);
 }
 
-RelationshipConfigurator& SchemaConfigurator::configureRelationship(API::ISchema::Id relationshipId, API::ISchema::Id tableFromId,
-                                                                    API::ISchema::Id tableToId, API::ISchema::RelationshipType type)
+API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(API::ISchema::Id relationshipId, API::ISchema::Id tableFromId,
+                                                                          API::ISchema::Id tableToId, API::ISchema::RelationshipType type)
 {
   if (m_schema.getRelationships().count(relationshipId) > 0)
   {
