@@ -2,7 +2,7 @@
 #pragma once
 
 #include <QtSqlLib/Query/Query.h>
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 #include <vector>
 
@@ -12,20 +12,20 @@ namespace QtSqlLib::Query
 class BaseInsert : public Query
 {
 public:
-  BaseInsert(Schema::Id tableId);
+  BaseInsert(API::ISchema::Id tableId);
   ~BaseInsert() override;
 
-  void addColumnId(Schema::Id id);
+  void addColumnId(API::ISchema::Id id);
 
 protected:
-  QSqlQuery getQSqlQuery(const QSqlDatabase& db, Schema& schema) const;
+  QSqlQuery getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema) const;
   virtual void bindQueryValues(QSqlQuery& query) const = 0;
 
 private:
-  void throwIfColumnIdAlreadyExisting(Schema::Id id) const;
+  void throwIfColumnIdAlreadyExisting(API::ISchema::Id id) const;
 
-  Schema::Id m_tableId;
-  std::vector<Schema::Id> m_columnIds;
+  API::ISchema::Id m_tableId;
+  std::vector<API::ISchema::Id> m_columnIds;
 
 };
 

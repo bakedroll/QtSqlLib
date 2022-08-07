@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 #include <QVariant>
 #include <QMetaType>
@@ -17,20 +17,20 @@ public:
   {
   public:
     ColumnId();
-    ColumnId(const Schema::TableColumnId& tableColumnId);
-    ColumnId(Schema::Id columnId);
-    ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId);
+    ColumnId(const API::ISchema::TableColumnId& tableColumnId);
+    ColumnId(API::ISchema::Id columnId);
+    ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId);
     virtual ~ColumnId();
 
-    const Schema::TableColumnId& get() const;
+    const API::ISchema::TableColumnId& get() const;
     bool isTableIdValid() const;
     QString getTableAlias() const;
 
   private:
-    ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid);
+    ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId, bool bIsTableIdValid);
 
     QString m_tableAlias;
-    Schema::TableColumnId m_tableColumnId;
+    API::ISchema::TableColumnId m_tableColumnId;
     bool m_bIsTableIdValid;
 
   };
@@ -68,7 +68,7 @@ public:
 
   Expr& braces(Expr& nestedExpr);
 
-  QString toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId = std::nullopt) const;
+  QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId = std::nullopt) const;
 
 private:
   enum class ComparisonOperator
@@ -105,7 +105,7 @@ private:
   public:
     ITermElement() = default;
     virtual ~ITermElement() = default;
-    virtual QString toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId = std::nullopt) const = 0;
+    virtual QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId = std::nullopt) const = 0;
 
   };
 
@@ -115,7 +115,7 @@ private:
     Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs);
     ~Comparison() override;
 
-    QString toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
 
   private:
     ComparisonOperator m_operator;
@@ -130,7 +130,7 @@ private:
     explicit NestedExpression(Expr& expr);
     ~NestedExpression() override;
 
-    QString toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
 
   private:
     std::unique_ptr<Expr> m_nestedExpr;
@@ -143,7 +143,7 @@ private:
     explicit Logic(LogicalOperator op);
     ~Logic() override;
 
-    QString toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
 
   private:
     LogicalOperator m_operator;

@@ -11,14 +11,14 @@ namespace QtSqlLib::Query
 class FromTable : public Query
 {
 public:
-  FromTable(Schema::Id tableId);
+  FromTable(API::ISchema::Id tableId);
   ~FromTable() override;
 
   FromTable& selectAll();
-  FromTable& select(Schema::Id columnId);
+  FromTable& select(API::ISchema::Id columnId);
 
   template <typename... T>
-  FromTable& select(Schema::Id columnId, T... args)
+  FromTable& select(API::ISchema::Id columnId, T... args)
   {
     m_columnSelectionInfo.bIsSelecting = true;
 
@@ -30,11 +30,11 @@ public:
     return *this;
   }
 
-  FromTable& joinAll(Schema::Id relationshipId);
-  FromTable& joinColumns(Schema::Id relationshipId, Schema::Id columnId);
+  FromTable& joinAll(API::ISchema::Id relationshipId);
+  FromTable& joinColumns(API::ISchema::Id relationshipId, API::ISchema::Id columnId);
 
   template <typename... T>
-  FromTable& joinColumns(Schema::Id relationshipId, Schema::Id columnId, T... args)
+  FromTable& joinColumns(API::ISchema::Id relationshipId, API::ISchema::Id columnId, T... args)
   {
     m_joins[relationshipId].bIsSelecting = true;
 
@@ -48,19 +48,19 @@ public:
 
   FromTable& where(Expr& expr);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
-  QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
+  QueryResults getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
 private:
   struct ColumnInfo
   {
-    Schema::Id columnId = 0U;
+    API::ISchema::Id columnId = 0U;
     int indexInQuery = -1;
   };
 
   struct ColumnSelectionInfo
   {
-    Schema::Id tableId = 0U;
+    API::ISchema::Id tableId = 0U;
     QString tableAlias;
   
     std::vector<ColumnInfo> columnInfos;
@@ -73,11 +73,11 @@ private:
   struct TableAliasColumnId
   {
     QString tableAlias;
-    Schema::TableColumnId tableColumnId;
+    API::ISchema::TableColumnId tableColumnId;
   };
 
   ColumnSelectionInfo m_columnSelectionInfo;
-  std::map<Schema::Id, ColumnSelectionInfo> m_joins;
+  std::map<API::ISchema::Id, ColumnSelectionInfo> m_joins;
 
   std::vector<TableAliasColumnId> m_allSelectedColumns;
 
@@ -85,27 +85,27 @@ private:
   bool m_isTableAliasesNeeded;
 
   void throwIfMultipleSelects() const;
-  void throwIfMultipleJoins(Schema::Id relationshipId) const;
+  void throwIfMultipleJoins(API::ISchema::Id relationshipId) const;
 
-  void verifyJoinsAndCheckAliasesNeeded(Schema& schema);
+  void verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema);
   void generateTableAliases();
 
-  void addToSelectedColumns(const Schema& schema, const Schema::Table& table,
+  void addToSelectedColumns(const API::ISchema& schema, const API::ISchema::Table& table,
                             ColumnSelectionInfo& columnSelectionInfo);
-  void addForeignKeyColumns(const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap,
+  void addForeignKeyColumns(const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap,
                             std::vector<int>& foreignKeyColumnIndicesInQuery,
-                            Schema::Id childTableId, const QString& childTableAlias);
+                            API::ISchema::Id childTableId, const QString& childTableAlias);
 
-  QString processJoinsAndCreateQuerySubstring(Schema& schema, const Schema::Table& table);
+  QString processJoinsAndCreateQuerySubstring(API::ISchema& schema, const API::ISchema::Table& table);
 
-  static std::vector<ColumnInfo> getAllTableColumnIds(const Schema::Table& table);
+  static std::vector<ColumnInfo> getAllTableColumnIds(const API::ISchema::Table& table);
 
-  QString createSelectString(Schema& schema, const std::vector<TableAliasColumnId>& tableColumnIds) const;
-  void appendJoinQuerySubstring(QString& joinStrOut, Schema& schema, Schema::Id relationshipId,
-                                Schema::Id parentTableId, const QString& parentTableAlias,
-                                Schema::Id childTableId, const QString& childTableAlias,
-                                const Schema::Table& joinTable, const QString& joinTableAlias,
-                                const Schema::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
+  QString createSelectString(API::ISchema& schema, const std::vector<TableAliasColumnId>& tableColumnIds) const;
+  void appendJoinQuerySubstring(QString& joinStrOut, API::ISchema& schema, API::ISchema::Id relationshipId,
+                                API::ISchema::Id parentTableId, const QString& parentTableAlias,
+                                API::ISchema::Id childTableId, const QString& childTableAlias,
+                                const API::ISchema::Table& joinTable, const QString& joinTableAlias,
+                                const API::ISchema::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
                                 int foreignKeyReferencesIndex,
                                 std::vector<int>& foreignKeyColumnIndicesInQuery);
 

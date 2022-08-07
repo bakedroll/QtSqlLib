@@ -10,7 +10,7 @@
 namespace QtSqlLib
 {
 
-QueryExecuteVisitor::QueryExecuteVisitor(const QSqlDatabase& sqlDb, Schema& schema) :
+QueryExecuteVisitor::QueryExecuteVisitor(const QSqlDatabase& sqlDb, API::ISchema& schema) :
   m_sqlDb(sqlDb),
   m_schema(schema)
 {

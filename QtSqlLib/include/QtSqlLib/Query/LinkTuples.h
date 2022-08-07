@@ -1,10 +1,10 @@
 #pragma once
 
+#include <QtSqlLib/API/ISchema.h>
+
 #include <QtSqlLib/Query/QuerySequence.h>
 #include "QtSqlLib/Query/UpdateTable.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
-
-#include <QtSqlLib/Schema.h>
 
 namespace QtSqlLib::Query
 {
@@ -12,16 +12,16 @@ namespace QtSqlLib::Query
 class LinkTuples : public QuerySequence
 {
 public:
-  LinkTuples(Schema::Id relationshipId);
+  LinkTuples(API::ISchema::Id relationshipId);
   ~LinkTuples() override;
 
-  LinkTuples& fromOne(const Schema::TupleValues& tupleKeyValues);
+  LinkTuples& fromOne(const API::ISchema::TupleValues& tupleKeyValues);
   LinkTuples& fromRemainingKey();
 
-  LinkTuples& toOne(const Schema::TupleValues& tupleKeyValues);
-  LinkTuples& toMany(const std::vector<Schema::TupleValues>& tupleKeyValuesList);
+  LinkTuples& toOne(const API::ISchema::TupleValues& tupleKeyValues);
+  LinkTuples& toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
 
-  void prepare(Schema& schema) override;
+  void prepare(API::ISchema& schema) override;
 
 private:
   class UpdateTableForeignKeys : public UpdateTable
@@ -35,19 +35,19 @@ private:
     };
 
     UpdateTableForeignKeys(
-      Schema::Id tableId,
-      const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
+      API::ISchema::Id tableId,
+      const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
     void setMode(Mode mode);
-    void setForeignKeyValues(const Schema::TupleValues& parentKeyValues);
-    void makeAndAddWhereExpr(const Schema::TupleValues& affectedChildKeyValues);
+    void setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues);
+    void makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues);
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
   private:
     Mode m_mode;
-    const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
+    const API::ISchema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 
@@ -55,16 +55,16 @@ private:
   {
   public:
     BatchInsertRemainingKeys(
-      Schema::Id tableId,
+      API::ISchema::Id tableId,
       int numRelations,
-      const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
+      const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~BatchInsertRemainingKeys() override;
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
   private:
     int m_numRelations;
-    const Schema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
+    const API::ISchema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 
@@ -81,19 +81,19 @@ private:
     ToMany
   };
 
-  Schema::Id m_relationshipId;
+  API::ISchema::Id m_relationshipId;
   ExpectedCall m_expectedCall;
 
   RelationshipType m_type;
 
   bool m_bRemainingFromKeys;
-  Schema::TupleValues m_fromTupleKeyValues;
-  std::vector<Schema::TupleValues> m_toTupleKeyValuesList;
+  API::ISchema::TupleValues m_fromTupleKeyValues;
+  std::vector<API::ISchema::TupleValues> m_toTupleKeyValuesList;
 
-  void prepareToOneLinkQuery(Schema& schema, const Schema::Relationship& relationship,
-                                 Schema::Id fromTableId, Schema::Id toTableId);
-  void prepareToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
-                                  Schema::Id fromTableId, Schema::Id toTableId);
+  void prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
+                                 API::ISchema::Id fromTableId, API::ISchema::Id toTableId);
+  void prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
+                                  API::ISchema::Id fromTableId, API::ISchema::Id toTableId);
 
 };
 

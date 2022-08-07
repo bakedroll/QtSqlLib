@@ -5,7 +5,7 @@
 namespace QtSqlLib
 {
 
-QueryPrepareVisitor::QueryPrepareVisitor(Schema& schema)
+QueryPrepareVisitor::QueryPrepareVisitor(API::ISchema& schema)
   : m_schema(schema)
 {
 }

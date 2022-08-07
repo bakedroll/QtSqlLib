@@ -4,14 +4,14 @@
 
 namespace QtSqlLib::Query
 {
-UpdateTable::UpdateTable(Schema::Id tableId)
+UpdateTable::UpdateTable(API::ISchema::Id tableId)
   : m_tableId(tableId)
 {
 }
 
 UpdateTable::~UpdateTable() = default;
 
-UpdateTable& UpdateTable::set(Schema::Id columnId, const QVariant& newValue)
+UpdateTable& UpdateTable::set(API::ISchema::Id columnId, const QVariant& newValue)
 {
   if (m_colIdNewValueMap.count(columnId) > 0)
   {
@@ -35,7 +35,7 @@ UpdateTable& UpdateTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 

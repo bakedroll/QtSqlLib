@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 namespace QtSqlLib::API
 {
@@ -19,10 +19,9 @@ public:
 
   virtual void addQuery(std::unique_ptr<IQueryElement> sequence) = 0;
 
-  virtual void prepare(Schema& schema) = 0;
+  virtual void prepare(ISchema& schema) = 0;
   virtual void traverse(IQueryVisitor& visitor) = 0;
 
 };
 
 }
-

@@ -34,17 +34,17 @@ Schema::Schema() = default;
 
 Schema::~Schema() = default;
 
-std::map<Schema::Id, Schema::Table>& Schema::getTables()
+std::map<API::ISchema::Id, API::ISchema::Table>& Schema::getTables()
 {
   return m_tables;
 }
 
-std::map<Schema::Id, Schema::Relationship>& Schema::getRelationships()
+std::map<API::ISchema::Id, Schema::Relationship>& Schema::getRelationships()
 {
   return m_relationships;
 }
 
-Schema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
+API::ISchema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
 {
   throwIfRelationshipIsNotExisting(relationshipId);
   return m_mapManyToManyRelationshipToLinkTableId.at(relationshipId);
@@ -121,7 +121,7 @@ void Schema::configureRelationships()
 
       auto currentColId = 0U;
 
-      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](Schema::Id refTableId, const Table& refTable)
+      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](Id refTableId, const Table& refTable)
       {
         ForeignKeyReference foreignKeyReference { refTableId,
           relationship.second.onUpdateAction,
@@ -178,7 +178,7 @@ void Schema::throwIfRelationshipIsNotExisting(Id relationshipId) const
   }
 }
 
-void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId)
+void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
 {
   if (table.columns.count(colId) == 0)
   {
@@ -187,7 +187,7 @@ void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId)
   }
 }
 
-Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
+API::ISchema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
 {
   if (tupleKeyValues.empty())
   {
@@ -236,7 +236,7 @@ Schema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyV
   return tableId;
 }
 
-Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
+API::ISchema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
 {
   if (tupleKeyValuesList.empty())
   {
@@ -245,7 +245,7 @@ Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleV
   }
 
   auto firstTableIdSet = false;
-  Schema::Id tableId = 0;
+  API::ISchema::Id tableId = 0;
   for (const auto& tupleKeyValues : tupleKeyValuesList)
   {
     if (!firstTableIdSet)
@@ -267,25 +267,25 @@ Schema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleV
   return tableId;
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
-  Schema::Id relationshipId,
+std::pair<API::ISchema::Id, Schema::Id> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
+  Id relationshipId,
   const TupleValues& fromTupleKeyValues,
   const TupleValues& toTupleKeyValues) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
-  Schema::Id relationshipId,
+std::pair<API::ISchema::Id, API::ISchema::Id> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
+  Id relationshipId,
   const TupleValues& fromTupleKeyValues,
   const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
 
-std::pair<Schema::Id, Schema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
+std::pair<API::ISchema::Id, API::ISchema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
-  Schema::Id relationshipId,
+  Id relationshipId,
   const TupleValues& fromTupleKeyValues,
   const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
@@ -302,12 +302,12 @@ std::pair<Schema::Id, Schema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTab
     ? validatePrimaryKeysAndGetTableId(fromTupleKeyValues)
     : expectedTableFromId);
 
-  const auto isOneToMany = (relationship.type == Schema::RelationshipType::OneToMany);
-  const auto isManyToOne = (relationship.type == Schema::RelationshipType::ManyToOne);
+  const auto isOneToMany = (relationship.type == RelationshipType::OneToMany);
+  const auto isManyToOne = (relationship.type == RelationshipType::ManyToOne);
 
   if (bIsOneToMany)
   {
-    if ((relationship.type != Schema::RelationshipType::ManyToMany) &&
+    if ((relationship.type != RelationshipType::ManyToMany) &&
       ((isManyToOne && (relationship.tableToId == tableToId)) ||
         (isOneToMany && (relationship.tableToId != tableToId))))
     {
@@ -326,9 +326,9 @@ std::pair<Schema::Id, Schema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTab
 }
 
 bool Schema::isTableIdsMatching(
-  const Schema::Relationship& relationship,
-  Schema::Id tableFromId,
-  Schema::Id tableToId,
+  const Relationship& relationship,
+  Id tableFromId,
+  Id tableToId,
   bool bIgnoreFromKeys)
 {
   if (bIgnoreFromKeys)

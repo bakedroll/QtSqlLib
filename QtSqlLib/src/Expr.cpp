@@ -12,24 +12,24 @@ Expr::ColumnId::ColumnId()
 {
 }
 
-Expr::ColumnId::ColumnId(const Schema::TableColumnId& tableColumnId)
+Expr::ColumnId::ColumnId(const API::ISchema::TableColumnId& tableColumnId)
   : ColumnId("", tableColumnId, true)
 {
 }
 
-Expr::ColumnId::ColumnId(Schema::Id columnId)
+Expr::ColumnId::ColumnId(API::ISchema::Id columnId)
   : ColumnId("", {0U, columnId}, false)
 {
 }
 
-Expr::ColumnId::ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId)
+Expr::ColumnId::ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId)
   : ColumnId(tableAlias, tableColumnId, true)
 {
 }
 
 Expr::ColumnId::~ColumnId() = default;
 
-const Schema::TableColumnId& Expr::ColumnId::get() const
+const API::ISchema::TableColumnId& Expr::ColumnId::get() const
 {
   return m_tableColumnId;
 }
@@ -44,7 +44,7 @@ QString Expr::ColumnId::getTableAlias() const
   return m_tableAlias;
 }
 
-Expr::ColumnId::ColumnId(const QString& tableAlias, const Schema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+Expr::ColumnId::ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
   m_tableAlias(tableAlias),
   m_tableColumnId(tableColumnId),
   m_bIsTableIdValid(bIsTableIdValid)
@@ -148,7 +148,7 @@ Expr& Expr::braces(Expr& nestedExpr)
   return *this;
 }
 
-QString Expr::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
+QString Expr::toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const
 {
   if (m_termElements.size() == 0)
   {
@@ -184,7 +184,7 @@ Expr::Comparison::Comparison(ComparisonOperator op, const Operand& lhs, const Op
 
 Expr::Comparison::~Comparison() = default;
 
-QString Expr::Comparison::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId = std::nullopt) const
+QString Expr::Comparison::toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId = std::nullopt) const
 {
   const auto getOperandString = [&schema, defaultTableId](const Operand& operand) -> QString
   {
@@ -269,7 +269,7 @@ Expr::NestedExpression::NestedExpression(Expr& expr)
 
 Expr::NestedExpression::~NestedExpression() = default;
 
-QString Expr::NestedExpression::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
+QString Expr::NestedExpression::toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const
 {
   return QString("(%1)").arg(m_nestedExpr->toQString(schema, defaultTableId));
 }
@@ -281,7 +281,7 @@ Expr::Logic::Logic(LogicalOperator op)
 
 Expr::Logic::~Logic() = default;
 
-QString Expr::Logic::toQString(Schema& schema, const std::optional<Schema::Id>& defaultTableId) const
+QString Expr::Logic::toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const
 {
   switch (m_operator)
   {

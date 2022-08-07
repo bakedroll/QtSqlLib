@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QtSqlLib/API/ISchema.h>
+
 #include <QVariant>
 
 #include <map>
@@ -8,118 +10,35 @@
 namespace QtSqlLib
 {
 
-class Schema
+class Schema : public API::ISchema
 {
 public:
-  using Id = unsigned int;
-
-  struct TableColumnId
-  {
-    Schema::Id tableId = 0U;
-    Schema::Id columnId = 0U;
-
-    bool operator<(const TableColumnId& rhs) const;
-    bool operator!=(const TableColumnId& rhs) const;
-  };
-
-  struct RelationshipTableId
-  {
-    Schema::Id relationshipId = 0U;
-    Schema::Id tableId = 0U;
-
-    bool operator<(const RelationshipTableId& rhs) const;
-  };
-
-  using TupleValues = std::map<TableColumnId, QVariant>;
-  using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, Id>;
-
-  enum class ForeignKeyAction
-  {
-    NoAction,
-    Restrict,
-    SetNull,
-    SetDefault,
-    Cascade
-  };
-
-  enum class DataType
-  {
-    Integer,
-    Real,
-    Varchar,
-    Blob
-  };
-
-  struct Column
-  {
-    QString name;
-    DataType type = DataType::Integer;
-    int varcharLength = 0;
-
-    bool bIsAutoIncrement = false;
-    bool bIsNotNull = false;
-  };
-
-  struct ForeignKeyReference
-  {
-    Id referenceTableId = 0;
-    ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
-    ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
-    PrimaryForeignKeyColumnIdMap primaryForeignKeyColIdMap;
-  };
-
-  using RelationshipToForeignKeyReferencesMap = std::map<RelationshipTableId, std::vector<ForeignKeyReference>>;
-
-  struct Table
-  {
-    QString name;
-    std::map<Id, Column> columns;
-    RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
-    std::set<Id> primaryKeys;
-  };
-
-  enum class RelationshipType
-  {
-    OneToMany,
-    ManyToOne,
-    ManyToMany
-  };
-
-  struct Relationship
-  {
-    Id tableFromId = 0;
-    Id tableToId = 0;
-    RelationshipType type = RelationshipType::OneToMany;
-    ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
-    ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
-  };
-
   Schema();
-  virtual ~Schema();
+  ~Schema() override;
 
-  std::map<Id, Table>& getTables();
-  std::map<Id, Relationship>& getRelationships();
+  std::map<Id, Table>& getTables() override;
+  std::map<Id, Relationship>& getRelationships() override;
 
-  Id getManyToManyLinkTableId(Id relationshipId) const;
+  Id getManyToManyLinkTableId(Id relationshipId) const override;
 
-  void configureRelationships();
+  void configureRelationships() override;
 
-  void throwIfTableIdNotExisting(Id tableId) const;
-  void throwIfRelationshipIsNotExisting(Id relationshipId) const;
-  static void throwIfColumnIdNotExisting(const Table& table, Id colId);
+  void throwIfTableIdNotExisting(Id tableId) const override;
+  void throwIfRelationshipIsNotExisting(Id relationshipId) const override;
+  void throwIfColumnIdNotExisting(const Table& table, Id colId) const override;
 
-  Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const;
-  Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const;
+  Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const override;
+  Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const override;
 
   std::pair<Id, Id> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
-    Schema::Id relationshipId,
+    Id relationshipId,
     const TupleValues& fromTupleKeyValues,
-    const TupleValues& toTupleKeyValues) const;
+    const TupleValues& toTupleKeyValues) const override;
 
   std::pair<Id, Id> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
-    Schema::Id relationshipId,
+    Id relationshipId,
     const TupleValues& fromTupleKeyValues,
-    const std::vector<TupleValues>& toTupleKeyValuesList) const;
+    const std::vector<TupleValues>& toTupleKeyValuesList) const override;
 
 private:
   std::map<Id, Table> m_tables;
@@ -128,12 +47,12 @@ private:
 
   std::pair<Id, Id> verifyRelationshipPrimaryKeysAndGetTableIds(
     bool bIsOneToMany,
-    Schema::Id relationshipId,
+    Id relationshipId,
     const TupleValues& fromTupleKeyValues,
     const std::vector<TupleValues>& toTupleKeyValuesList) const;
 
-  static bool isTableIdsMatching(const Schema::Relationship& relationship, Schema::Id tableFromId,
-                                 Schema::Id tableToId, bool bIgnoreFromKeys);
+  static bool isTableIdsMatching(const Relationship& relationship, Id tableFromId,
+                                 Id tableToId, bool bIgnoreFromKeys);
 
 };
 

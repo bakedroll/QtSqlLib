@@ -15,7 +15,7 @@ void QuerySequence::addQuery(std::unique_ptr<API::IQueryElement> query)
   m_queryElements.emplace_back(std::move(query));
 }
 
-void QuerySequence::prepare(Schema& schema)
+void QuerySequence::prepare(API::ISchema& schema)
 {
 }
 

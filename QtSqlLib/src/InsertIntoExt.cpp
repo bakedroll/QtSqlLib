@@ -7,7 +7,7 @@
 namespace QtSqlLib::Query
 {
 
-InsertIntoExt::InsertIntoExt(Schema::Id tableId)
+InsertIntoExt::InsertIntoExt(API::ISchema::Id tableId)
   : QuerySequence()
   , m_tableId(tableId)
   , m_bIsReturningInsertedIds(false)
@@ -16,13 +16,13 @@ InsertIntoExt::InsertIntoExt(Schema::Id tableId)
 
 InsertIntoExt::~InsertIntoExt() = default;
 
-InsertIntoExt& InsertIntoExt::value(Schema::Id columnId, const QVariant& value)
+InsertIntoExt& InsertIntoExt::value(API::ISchema::Id columnId, const QVariant& value)
 {
   getOrCreateInsertQuery()->value(columnId, value);
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkToOneTuple(Schema::Id relationshipId, const Schema::TupleValues& tupleKeyValues)
+InsertIntoExt& InsertIntoExt::linkToOneTuple(API::ISchema::Id relationshipId, const API::ISchema::TupleValues& tupleKeyValues)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId);
   
@@ -30,8 +30,8 @@ InsertIntoExt& InsertIntoExt::linkToOneTuple(Schema::Id relationshipId, const Sc
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkToManyTuples(Schema::Id relationshipId,
-                                               const std::vector<Schema::TupleValues>& tupleKeyValuesList)
+InsertIntoExt& InsertIntoExt::linkToManyTuples(API::ISchema::Id relationshipId,
+                                               const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId);
 
@@ -51,7 +51,7 @@ InsertIntoExt& InsertIntoExt::returnIds()
   return *this;
 }
 
-void InsertIntoExt::prepare(Schema& schema)
+void InsertIntoExt::prepare(API::ISchema& schema)
 {
   getOrCreateInsertQuery();
 
@@ -59,7 +59,7 @@ void InsertIntoExt::prepare(Schema& schema)
 
   const auto& table = schema.getTables().at(m_tableId);
 
-  std::set<Schema::Id> specialInsertionRelationshipIds;
+  std::set<API::ISchema::Id> specialInsertionRelationshipIds;
 
   const auto& relationships = schema.getRelationships();
   for (const auto& linkedTuples : m_linkedTuplesMap)
@@ -104,7 +104,7 @@ void InsertIntoExt::prepare(Schema& schema)
   addLinkTuplesQueriesForRelationshipIds(specialInsertionRelationshipIds);
 }
 
-InsertIntoExt::InsertIntoReferences::InsertIntoReferences(Schema::Id tableId)
+InsertIntoExt::InsertIntoReferences::InsertIntoReferences(API::ISchema::Id tableId)
   : InsertInto(tableId)
 {
 }
@@ -126,7 +126,7 @@ void InsertIntoExt::InsertIntoReferences::bindQueryValues(QSqlQuery& query) cons
   }
 }
 
-InsertIntoExt::QueryInsertedIds::QueryInsertedIds(Schema::Id tableId)
+InsertIntoExt::QueryInsertedIds::QueryInsertedIds(API::ISchema::Id tableId)
   : Query()
   , m_tableId(tableId)
 {
@@ -134,7 +134,7 @@ InsertIntoExt::QueryInsertedIds::QueryInsertedIds(Schema::Id tableId)
 
 InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
 
-API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -151,7 +151,7 @@ API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDat
     db) };
 }
 
-API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schema& schema, QSqlQuery& query) const
+API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
 {
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -172,7 +172,7 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(Schem
   return { QueryResults::Validity::Valid, { { tuple } } };
 }
 
-void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const
+void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(API::ISchema::Id relationshipId) const
 {
   if (m_linkedTuplesMap.count(relationshipId) > 0)
   {
@@ -190,19 +190,19 @@ std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreate
   return m_insertQuery;
 }
 
-bool InsertIntoExt::isSeparateLinkTuplesQueryNeeded(const Schema::Relationship& relationship) const
+bool InsertIntoExt::isSeparateLinkTuplesQueryNeeded(const API::ISchema::Relationship& relationship) const
 {
-  return ((relationship.type == Schema::RelationshipType::ManyToMany) ||
-    ((relationship.type == Schema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
-    ((relationship.type == Schema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)));
+  return ((relationship.type == API::ISchema::RelationshipType::ManyToMany) ||
+    ((relationship.type == API::ISchema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
+    ((relationship.type == API::ISchema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)));
 }
 
-void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, Schema::Id relationshipId,
-                                                                const Schema::Relationship& relationship,
-                                                                const Schema::Table& childTable,
+void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::ISchema::Id relationshipId,
+                                                                const API::ISchema::Relationship& relationship,
+                                                                const API::ISchema::Table& childTable,
                                                                 const LinkedTuples& linkedTuples) const
 {
-  const auto parentTableId = (relationship.type == Schema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
+  const auto parentTableId = (relationship.type == API::ISchema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
   const auto& parentTable = schema.getTables().at(parentTableId);
   const auto& linkedPrimaryKeys = linkedTuples.linkedPrimaryKeys.at(0);
 
@@ -228,7 +228,7 @@ void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, 
   }
 }
 
-void InsertIntoExt::addLinkTuplesQueriesForRelationshipIds(const std::set<Schema::Id>& relationshipIds)
+void InsertIntoExt::addLinkTuplesQueriesForRelationshipIds(const std::set<API::ISchema::Id>& relationshipIds)
 {
   for (const auto& relationshipId : relationshipIds)
   {

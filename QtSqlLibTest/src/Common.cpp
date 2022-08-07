@@ -26,18 +26,18 @@ void Funcs::setupReplationshipTestsSchema(DatabaseDummy& db)
       .column(LecturesCols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
       .column(LecturesCols::Topic, "topic", DataType::Varchar, 128);
 
-    configurator.configureRelationship(Relationships::RelationshipStudentsProjects, TableIds::Students, TableIds::Projects,
-      Schema::RelationshipType::OneToMany).onDelete(Schema::ForeignKeyAction::Cascade);
+    configurator.configureRelationship(Relationships::StudentsProjects, TableIds::Students, TableIds::Projects,
+      ISchema::RelationshipType::OneToMany).onDelete(ISchema::ForeignKeyAction::Cascade);
 
-    configurator.configureRelationship(Relationships::RelationshipStudentsLectures, TableIds::Students, TableIds::Lectures,
-      Schema::RelationshipType::ManyToMany);
+    configurator.configureRelationship(Relationships::StudentsLectures, TableIds::Students, TableIds::Lectures,
+      ISchema::RelationshipType::ManyToMany);
   });
 }
 
-bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, Schema::Id tableId,
-                                     Schema::Id columnId, QVariant value)
+bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, ISchema::Id tableId,
+                                     ISchema::Id columnId, QVariant value)
 {
-  const Schema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId, columnId };
   for (const auto& result : results)
   {
     if (result.values.count(colId) == 0)
@@ -52,10 +52,10 @@ bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& res
   return false;
 }
 
-bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, Schema::Id tableId,
-                                     Schema::Id columnId, QVariant value)
+bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, ISchema::Id tableId,
+                                     ISchema::Id columnId, QVariant value)
 {
-  const Schema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId, columnId };
   for (const auto& result : results)
   {
     if (result.count(colId) == 0)
@@ -71,10 +71,10 @@ bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, Sch
 }
 
 IQuery::TupleValuesList& Funcs::getJoinedTuples(std::vector<IQuery::ResultTuple>& results,
-                                                               Schema::Id tableId, Schema::Id columnId, const QVariant& value,
-                                                               Schema::Id relationshipId)
+                                                               ISchema::Id tableId, ISchema::Id columnId, const QVariant& value,
+                                                               ISchema::Id relationshipId)
 {
-  const Schema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId, columnId };
   for (auto& result : results)
   {
     if (result.values.at(colId) == value)
@@ -85,8 +85,8 @@ IQuery::TupleValuesList& Funcs::getJoinedTuples(std::vector<IQuery::ResultTuple>
   return s_nullTupleValuesList;
 }
 
-void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, Schema::Id relationshipId,
-                            Schema::Id fromTableId, Schema::Id fromColId, Schema::Id toTableId, Schema::Id toColId,
+void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, ISchema::Id relationshipId,
+                            ISchema::Id fromTableId, ISchema::Id fromColId, ISchema::Id toTableId, ISchema::Id toColId,
                             const QVariant& fromValue, const QVariantList& toValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));

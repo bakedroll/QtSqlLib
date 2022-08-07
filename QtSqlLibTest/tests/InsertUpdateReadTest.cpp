@@ -305,20 +305,20 @@ TEST(InsertUpdateReadTest, fromTableExceptions)
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::RelationshipStudentsProjects, StudentsCols::Name)
-      .joinColumns(Relationships::RelationshipStudentsProjects, StudentsCols::Id),
+      .joinColumns(Relationships::StudentsProjects, StudentsCols::Name)
+      .joinColumns(Relationships::StudentsProjects, StudentsCols::Id),
     DatabaseException);
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::RelationshipStudentsProjects, StudentsCols::Name)
-      .joinAll(Relationships::RelationshipStudentsProjects),
+      .joinColumns(Relationships::StudentsProjects, StudentsCols::Name)
+      .joinAll(Relationships::StudentsProjects),
     DatabaseException);
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinAll(Relationships::RelationshipStudentsProjects)
-      .joinAll(Relationships::RelationshipStudentsProjects),
+      .joinAll(Relationships::StudentsProjects)
+      .joinAll(Relationships::StudentsProjects),
     DatabaseException);
 }
 

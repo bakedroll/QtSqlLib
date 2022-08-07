@@ -37,7 +37,7 @@ private:
   int  queryDatabaseVersion();
   void createOrMigrateTables(int currentVersion = 1);
 
-  API::IQuery::QueryResults execQueryForSchema(Schema& schema, API::IQueryElement& query) const;
+  API::IQuery::QueryResults execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const;
 
   bool isVersionTableExisting() const;
 

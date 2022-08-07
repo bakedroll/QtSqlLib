@@ -20,15 +20,15 @@ namespace QtSqlLib
 
 static const int s_defaultSchemaTargetVersion = 1;
 
-static const Schema::Id s_sqliteMasterTableId = 0;
-static const Schema::Id s_sqliteMasterTypeColId = 0;
-static const Schema::Id s_sqliteMasterNameColId = 1;
+static const API::ISchema::Id s_sqliteMasterTableId = 0;
+static const API::ISchema::Id s_sqliteMasterTypeColId = 0;
+static const API::ISchema::Id s_sqliteMasterNameColId = 1;
 
-static const Schema::Id s_versionColId = 0;
-static const Schema::Id s_versionTableid = std::numeric_limits<Schema::Id>::max();
+static const API::ISchema::Id s_versionColId = 0;
+static const API::ISchema::Id s_versionTableid = std::numeric_limits<API::ISchema::Id>::max();
 static const QString s_versionTableName = "database_version";
 
-static void verifyPrimaryKeys(const Schema::Table& table)
+static void verifyPrimaryKeys(const API::ISchema::Table& table)
 {
   for (const auto& key : table.primaryKeys)
   {
@@ -50,36 +50,36 @@ static void verifyPrimaryKeys(const Schema::Table& table)
   }
 }
 
-static QString getDataTypeName(Schema::DataType type, int varcharLength)
+static QString getDataTypeName(API::ISchema::DataType type, int varcharLength)
 {
   switch (type)
   {
-  case Schema::DataType::Integer:
+  case API::ISchema::DataType::Integer:
     return "INTEGER";
-  case Schema::DataType::Real:
+  case API::ISchema::DataType::Real:
     return "REAL";
-  case Schema::DataType::Varchar:
+  case API::ISchema::DataType::Varchar:
     return QString("VARCHAR(%1)").arg(varcharLength);
-  case Schema::DataType::Blob:
+  case API::ISchema::DataType::Blob:
     return "BLOB";
   default:
     throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
   }
 }
 
-static QString getActionString(Schema::ForeignKeyAction action)
+static QString getActionString(API::ISchema::ForeignKeyAction action)
 {
   switch (action)
   {
-  case Schema::ForeignKeyAction::NoAction:
+  case API::ISchema::ForeignKeyAction::NoAction:
     return "NO ACTION";
-  case Schema::ForeignKeyAction::Restrict:
+  case API::ISchema::ForeignKeyAction::Restrict:
     return "RESTRICT";
-  case Schema::ForeignKeyAction::SetNull:
+  case API::ISchema::ForeignKeyAction::SetNull:
     return "SET NULL";
-  case Schema::ForeignKeyAction::SetDefault:
+  case API::ISchema::ForeignKeyAction::SetDefault:
     return "SET DEFAULT";
-  case Schema::ForeignKeyAction::Cascade:
+  case API::ISchema::ForeignKeyAction::Cascade:
     return "CASCADE";
   default:
     break;
@@ -91,14 +91,14 @@ static QString getActionString(Schema::ForeignKeyAction action)
 class CreateTable : public Query::Query
 {
 public:
-  CreateTable(const Schema::Table& table)
+  CreateTable(const API::ISchema::Table& table)
     : Query()
     , m_table(table)
   {}
 
   ~CreateTable() override = default;
 
-  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override
+  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -160,13 +160,13 @@ public:
           cutTailingComma(parentKeyColNames);
 
           QString onDeleteStr;
-          if (foreignKeyRef.onDeleteAction != Schema::ForeignKeyAction::NoAction)
+          if (foreignKeyRef.onDeleteAction != API::ISchema::ForeignKeyAction::NoAction)
           {
             onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyRef.onDeleteAction));
           }
 
           QString onUpdateStr;
-          if (foreignKeyRef.onUpdateAction != Schema::ForeignKeyAction::NoAction)
+          if (foreignKeyRef.onUpdateAction != API::ISchema::ForeignKeyAction::NoAction)
           {
             onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyRef.onUpdateAction));
           }
@@ -194,7 +194,7 @@ public:
   }
 
 private:
-  const Schema::Table& m_table;
+  const API::ISchema::Table& m_table;
 
 };
 
@@ -220,7 +220,7 @@ void Database::initialize(const QString& fileName, const QString& databaseName)
 
   SchemaConfigurator configurator(m_schema);
   configurator.configureTable(s_versionTableid, s_versionTableName)
-    .column(s_versionColId, "version", Schema::DataType::Integer).primaryKey().notNull();
+    .column(s_versionColId, "version", API::ISchema::DataType::Integer).primaryKey().notNull();
 
   configureSchema(configurator);
   m_schema.configureRelationships();
@@ -318,7 +318,7 @@ void Database::createOrMigrateTables(int currentVersion)
   }
 }
 
-API::IQuery::QueryResults Database::execQueryForSchema(Schema& schema, API::IQueryElement& query) const
+API::IQuery::QueryResults Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
 {
   if (!m_db)
   {

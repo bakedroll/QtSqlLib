@@ -10,18 +10,18 @@ namespace QtSqlLib::Query
 class UpdateTable : public Query
 {
 public:
-  UpdateTable(Schema::Id tableId);
+  UpdateTable(API::ISchema::Id tableId);
   ~UpdateTable() override;
 
-  UpdateTable& set(Schema::Id columnId, const QVariant& newValue);
+  UpdateTable& set(API::ISchema::Id columnId, const QVariant& newValue);
   UpdateTable& where(Expr& expr);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
 private:
-  Schema::Id m_tableId;
+  API::ISchema::Id m_tableId;
 
-  std::map<Schema::Id, QVariant> m_colIdNewValueMap;
+  std::map<API::ISchema::Id, QVariant> m_colIdNewValueMap;
   std::unique_ptr<Expr> m_whereExpr;
 };
 

@@ -3,14 +3,14 @@
 namespace QtSqlLib::Query
 {
 
-InsertInto::InsertInto(Schema::Id tableId)
+InsertInto::InsertInto(API::ISchema::Id tableId)
   : BaseInsert(tableId)
 {
 }
 
 InsertInto::~InsertInto() = default;
 
-InsertInto& InsertInto::value(Schema::Id columnId, const QVariant& value)
+InsertInto& InsertInto::value(API::ISchema::Id columnId, const QVariant& value)
 {
   addColumnId(columnId);
   m_values.emplace_back(value);
@@ -25,7 +25,7 @@ void InsertInto::bindQueryValues(QSqlQuery& query) const
   }
 }
 
-API::IQuery::SqlQuery InsertInto::getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery InsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
 {
   return { getQSqlQuery(db, schema), QueryMode::Single };
 }

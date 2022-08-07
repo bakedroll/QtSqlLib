@@ -12,12 +12,12 @@ namespace QtSqlLib::Query
 class InsertInto : public BaseInsert
 {
 public:
-  InsertInto(Schema::Id tableId);
+  InsertInto(API::ISchema::Id tableId);
   ~InsertInto() override;
 
-  InsertInto& value(Schema::Id columnId, const QVariant& value);
+  InsertInto& value(API::ISchema::Id columnId, const QVariant& value);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

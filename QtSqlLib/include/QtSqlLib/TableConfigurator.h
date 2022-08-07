@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 #include <optional>
 
@@ -10,19 +10,19 @@ namespace QtSqlLib
 class TableConfigurator
 {
 public:
-  TableConfigurator(Schema::Table& table);
+  TableConfigurator(API::ISchema::Table& table);
   virtual ~TableConfigurator();
 
-  TableConfigurator& column(Schema::Id columnId, const QString& columnName, Schema::DataType type, int varcharLength = 64);
+  TableConfigurator& column(API::ISchema::Id columnId, const QString& columnName, API::ISchema::DataType type, int varcharLength = 64);
 
   TableConfigurator& primaryKey();
   TableConfigurator& autoIncrement();
   TableConfigurator& notNull();
 
-  TableConfigurator& primaryKeys(Schema::Id columnId);
+  TableConfigurator& primaryKeys(API::ISchema::Id columnId);
 
   template <typename... T>
-  TableConfigurator& primaryKeys(Schema::Id columnId, T... args)
+  TableConfigurator& primaryKeys(API::ISchema::Id columnId, T... args)
   {
     m_bIsConfiguringPrimaryKeys = true;
 
@@ -35,8 +35,8 @@ public:
   }
 
 private:
-  Schema::Table& m_table;
-  std::optional<Schema::Id> m_lastColumnId;
+  API::ISchema::Table& m_table;
+  std::optional<API::ISchema::Id> m_lastColumnId;
 
   bool m_bIsConfiguringPrimaryKeys;
   bool m_bIsPrimaryKeysConfigured;

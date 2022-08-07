@@ -5,7 +5,7 @@
 namespace QtSqlLibTest
 {
 
-class DummyQuery : public QtSqlLib::Query::Query
+class DummyQuery : public Query
 {
 public:
   DummyQuery(int num)
@@ -21,7 +21,7 @@ public:
     return m_num;
   }
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, QtSqlLib::Schema& schema, QueryResults& previousQueryResults) override
+  SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, QueryResults& previousQueryResults) override
   {
     return { QSqlQuery(db), QueryMode::Single };
   }

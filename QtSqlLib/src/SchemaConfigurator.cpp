@@ -5,14 +5,14 @@
 namespace QtSqlLib
 {
 
-SchemaConfigurator::SchemaConfigurator(Schema& schema)
+SchemaConfigurator::SchemaConfigurator(API::ISchema& schema)
   : m_schema(schema)
 {
 }
 
 SchemaConfigurator::~SchemaConfigurator() = default;
 
-TableConfigurator& SchemaConfigurator::configureTable(Schema::Id tableId, const QString& tableName)
+TableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tableId, const QString& tableName)
 {
   if (m_schema.getTables().count(tableId) > 0)
   {
@@ -38,7 +38,7 @@ TableConfigurator& SchemaConfigurator::configureTable(Schema::Id tableId, const 
       "Table name must not start with 'sqlite_'.");
   }
 
-  Schema::Table table;
+  API::ISchema::Table table;
   table.name = tableName;
 
   m_schema.getTables()[tableId] = table;
@@ -47,8 +47,8 @@ TableConfigurator& SchemaConfigurator::configureTable(Schema::Id tableId, const 
   return *m_tableConfigurators.at(tableId);
 }
 
-RelationshipConfigurator& SchemaConfigurator::configureRelationship(Schema::Id relationshipId, Schema::Id tableFromId,
-                                                                    Schema::Id tableToId, Schema::RelationshipType type)
+RelationshipConfigurator& SchemaConfigurator::configureRelationship(API::ISchema::Id relationshipId, API::ISchema::Id tableFromId,
+                                                                    API::ISchema::Id tableToId, API::ISchema::RelationshipType type)
 {
   if (m_schema.getRelationships().count(relationshipId) > 0)
   {
@@ -56,7 +56,7 @@ RelationshipConfigurator& SchemaConfigurator::configureRelationship(Schema::Id r
       QString("Relationship with id %1 already exists.").arg(relationshipId));
   }
 
-  const Schema::Relationship relationship{ tableFromId, tableToId, type };
+  const API::ISchema::Relationship relationship{ tableFromId, tableToId, type };
 
   m_schema.getRelationships()[relationshipId] = relationship;
   m_relationshipConfigurators[relationshipId] = std::make_unique<RelationshipConfigurator>(m_schema.getRelationships().at(relationshipId));

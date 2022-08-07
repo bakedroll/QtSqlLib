@@ -6,7 +6,7 @@
 namespace QtSqlLib::Query
 {
 
-LinkTuples::LinkTuples(Schema::Id relationshipId)
+LinkTuples::LinkTuples(API::ISchema::Id relationshipId)
   : QuerySequence()
   , m_relationshipId(relationshipId)
   , m_expectedCall(ExpectedCall::From)
@@ -17,7 +17,7 @@ LinkTuples::LinkTuples(Schema::Id relationshipId)
 
 LinkTuples::~LinkTuples() = default;
 
-LinkTuples& LinkTuples::fromOne(const Schema::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::fromOne(const API::ISchema::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::From)
   {
@@ -43,7 +43,7 @@ LinkTuples& LinkTuples::fromRemainingKey()
   return *this;
 }
 
-LinkTuples& LinkTuples::toOne(const Schema::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::toOne(const API::ISchema::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -57,7 +57,7 @@ LinkTuples& LinkTuples::toOne(const Schema::TupleValues& tupleKeyValues)
   return *this;
 }
 
-LinkTuples& LinkTuples::toMany(const std::vector<Schema::TupleValues>& tupleKeyValuesList)
+LinkTuples& LinkTuples::toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -71,7 +71,7 @@ LinkTuples& LinkTuples::toMany(const std::vector<Schema::TupleValues>& tupleKeyV
   return *this;
 }
 
-void LinkTuples::prepare(Schema& schema)
+void LinkTuples::prepare(API::ISchema& schema)
 {
   if (m_expectedCall != ExpectedCall::Complete)
   {
@@ -95,7 +95,7 @@ void LinkTuples::prepare(Schema& schema)
   const auto tableFromId = tableIds.first;
   const auto tableToId = tableIds.second;
 
-  if (relationship.type == Schema::RelationshipType::ManyToMany)
+  if (relationship.type == API::ISchema::RelationshipType::ManyToMany)
   {
     prepareToManyLinkQuery(schema, relationship, tableFromId, tableToId);
   }
@@ -106,8 +106,8 @@ void LinkTuples::prepare(Schema& schema)
 }
 
 LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
-  Schema::Id tableId,
-  const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
+  API::ISchema::Id tableId,
+  const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : UpdateTable(tableId)
   , m_mode(Mode::Default)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
@@ -121,7 +121,7 @@ void LinkTuples::UpdateTableForeignKeys::setMode(Mode mode)
   m_mode = mode;
 }
 
-void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const Schema::TupleValues& parentKeyValues)
+void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues)
 {
   for (const auto& parentKeyValue : parentKeyValues)
   {
@@ -130,7 +130,7 @@ void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const Schema::Tuple
   }
 }
 
-void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::TupleValues& affectedChildKeyValues)
+void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues)
 {
   Expr whereExpr;
   for (const auto& childKeyValue : affectedChildKeyValues)
@@ -145,7 +145,7 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const Schema::Tuple
   where(whereExpr);
 }
 
-API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, Schema& schema,
+API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
                                                                       QueryResults& previousQueryResults)
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
@@ -171,9 +171,9 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSql
   return UpdateTable::getSqlQuery(db, schema, previousQueryResults);
 }
 
-LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(Schema::Id tableId,
+LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::ISchema::Id tableId,
   int numRelations,
-  const Schema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
+  const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : BatchInsertInto(tableId)
   , m_numRelations(numRelations)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
@@ -182,7 +182,7 @@ LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(Schema::Id tableI
 
 LinkTuples::BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
 
-API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, Schema& schema,
+API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
                                                                         QueryResults& previousQueryResults)
 {
   if (previousQueryResults.validity != QueryResults::Validity::Valid || previousQueryResults.resultTuples.empty())
@@ -209,13 +209,13 @@ API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QS
   return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }
 
-void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationship& relationship,
-                                       Schema::Id fromTableId, Schema::Id toTableId)
+void LinkTuples::prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
+                                       API::ISchema::Id fromTableId, API::ISchema::Id toTableId)
 {
   auto parentTableId = relationship.tableFromId;
   auto childTableId = relationship.tableToId;
 
-  if (relationship.type == Schema::RelationshipType::ManyToOne)
+  if (relationship.type == API::ISchema::RelationshipType::ManyToOne)
   {
     std::swap(parentTableId, childTableId);
   }
@@ -224,7 +224,7 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
   const auto keyValuesToInsert = (isCorrectTableRelationDirection ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
   const auto affectedChildTupleKeys = (isCorrectTableRelationDirection
     ? m_toTupleKeyValuesList
-    : std::vector<Schema::TupleValues>{ m_fromTupleKeyValues });
+    : std::vector<API::ISchema::TupleValues>{ m_fromTupleKeyValues });
 
   const auto& childTable = schema.getTables().at(childTableId);
   const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
@@ -264,8 +264,8 @@ void LinkTuples::prepareToOneLinkQuery(Schema& schema, const Schema::Relationshi
   }
 }
 
-void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationship& relationship,
-                                        Schema::Id fromTableId, Schema::Id toTableId)
+void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
+                                        API::ISchema::Id fromTableId, API::ISchema::Id toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);
@@ -285,11 +285,11 @@ void LinkTuples::prepareToManyLinkQuery(Schema& schema, const Schema::Relationsh
   const auto& foreignKeyRefsFrom =  foreignKeyRefsFromList[0];
   const auto& foreignKeyRefsTo = (isSelfRelationship ? foreignKeyRefsToList[1] : foreignKeyRefsToList[0]);
 
-  std::map<Schema::Id, QVariantList> columnValuesMap;
+  std::map<API::ISchema::Id, QVariantList> columnValuesMap;
 
   const auto appendValues = [&columnValuesMap](
-    const Schema::TupleValues& values,
-    const Schema::ForeignKeyReference& foreignKeyRef)
+    const API::ISchema::TupleValues& values,
+    const API::ISchema::ForeignKeyReference& foreignKeyRef)
   {
     for (const auto& refColId : values)
     {

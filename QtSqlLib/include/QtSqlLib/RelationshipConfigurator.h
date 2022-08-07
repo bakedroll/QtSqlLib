@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 namespace QtSqlLib
 {
@@ -8,14 +8,14 @@ namespace QtSqlLib
 class RelationshipConfigurator
 {
 public:
-  RelationshipConfigurator(Schema::Relationship& relationship);
+  RelationshipConfigurator(API::ISchema::Relationship& relationship);
   virtual ~RelationshipConfigurator();
 
-  RelationshipConfigurator& onDelete(Schema::ForeignKeyAction action);
-  RelationshipConfigurator& onUpdate(Schema::ForeignKeyAction action);
+  RelationshipConfigurator& onDelete(API::ISchema::ForeignKeyAction action);
+  RelationshipConfigurator& onUpdate(API::ISchema::ForeignKeyAction action);
 
 private:
-  Schema::Relationship& m_relationship;
+  API::ISchema::Relationship& m_relationship;
 
   bool m_bOnDeleteCalled;
   bool m_bOnUpdateCalled;

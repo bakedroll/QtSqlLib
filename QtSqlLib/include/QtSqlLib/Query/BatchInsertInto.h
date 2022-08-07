@@ -12,12 +12,12 @@ namespace QtSqlLib::Query
 class BatchInsertInto : public BaseInsert
 {
 public:
-  BatchInsertInto(Schema::Id tableId);
+  BatchInsertInto(API::ISchema::Id tableId);
   ~BatchInsertInto() override;
 
-  BatchInsertInto& values(Schema::Id columnId, const QVariantList& values);
+  BatchInsertInto& values(API::ISchema::Id columnId, const QVariantList& values);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

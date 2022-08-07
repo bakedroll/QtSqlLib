@@ -13,22 +13,22 @@ namespace QtSqlLib::Query
 class InsertIntoExt : public QuerySequence
 {
 public:
-  InsertIntoExt(Schema::Id tableId);
+  InsertIntoExt(API::ISchema::Id tableId);
   ~InsertIntoExt() override;
 
-  InsertIntoExt& value(Schema::Id columnId, const QVariant& value);
-  InsertIntoExt& linkToOneTuple(Schema::Id relationshipId, const Schema::TupleValues& tupleKeyValues);
-  InsertIntoExt& linkToManyTuples(Schema::Id relationshipId, const std::vector<Schema::TupleValues>& tupleKeyValuesList);
+  InsertIntoExt& value(API::ISchema::Id columnId, const QVariant& value);
+  InsertIntoExt& linkToOneTuple(API::ISchema::Id relationshipId, const API::ISchema::TupleValues& tupleKeyValues);
+  InsertIntoExt& linkToManyTuples(API::ISchema::Id relationshipId, const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
 
   InsertIntoExt& returnIds();
 
-  void prepare(Schema& schema) override;
+  void prepare(API::ISchema& schema) override;
 
 private:
   class InsertIntoReferences : public InsertInto
   {
   public:
-    InsertIntoReferences(Schema::Id tableId);
+    InsertIntoReferences(API::ISchema::Id tableId);
     ~InsertIntoReferences() override;
 
     void addForeignKeyValue(const QVariant& value);
@@ -44,21 +44,21 @@ private:
   class QueryInsertedIds : public Query
   {
   public:
-    QueryInsertedIds(Schema::Id tableId);
+    QueryInsertedIds(API::ISchema::Id tableId);
     ~QueryInsertedIds() override;
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) override;
-    QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
+    QueryResults getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
   private:
-    Schema::Id m_tableId;
+    API::ISchema::Id m_tableId;
 
   };
 
-  void throwIdLinkedTupleAlreadyExisting(Schema::Id relationshipId) const;
+  void throwIdLinkedTupleAlreadyExisting(API::ISchema::Id relationshipId) const;
 
   std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();
-  bool isSeparateLinkTuplesQueryNeeded(const Schema::Relationship& relationship) const;
+  bool isSeparateLinkTuplesQueryNeeded(const API::ISchema::Relationship& relationship) const;
 
   std::unique_ptr<InsertIntoReferences> m_insertQuery;
 
@@ -71,19 +71,19 @@ private:
   struct LinkedTuples
   {
     LinkType linkType;
-    std::vector<Schema::TupleValues> linkedPrimaryKeys;
+    std::vector<API::ISchema::TupleValues> linkedPrimaryKeys;
   };
 
-  Schema::Id m_tableId;
+  API::ISchema::Id m_tableId;
   bool m_bIsReturningInsertedIds;
-  std::map<Schema::Id, LinkedTuples> m_linkedTuplesMap;
+  std::map<API::ISchema::Id, LinkedTuples> m_linkedTuplesMap;
 
-  void addUpdateForeignKeyColumnsToInsertIntoQuery(Schema& schema, Schema::Id relationshipId,
-                                                   const Schema::Relationship& relationship,
-                                                   const Schema::Table& childTable,
+  void addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::ISchema::Id relationshipId,
+                                                   const API::ISchema::Relationship& relationship,
+                                                   const API::ISchema::Table& childTable,
                                                    const LinkedTuples& linkedTuples) const;
 
-  void addLinkTuplesQueriesForRelationshipIds(const std::set<Schema::Id>& relationshipIds);
+  void addLinkTuplesQueriesForRelationshipIds(const std::set<API::ISchema::Id>& relationshipIds);
 
 };
 

@@ -18,7 +18,7 @@ public:
 
   void addQuery(std::unique_ptr<API::IQueryElement> query) override;
 
-  void prepare(Schema& schema) override;
+  void prepare(API::ISchema& schema) override;
   void traverse(API::IQueryVisitor& visitor) override;
 
   int getNumQueries() const;

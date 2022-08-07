@@ -3,7 +3,7 @@
 #include <QtSqlLib/API/IQueryVisitor.h>
 
 #include <QtSqlLib/API/IQuery.h>
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
 #include <QSqlDatabase>
 
@@ -13,7 +13,7 @@ namespace QtSqlLib
 class QueryExecuteVisitor : public API::IQueryVisitor
 {
 public:
-  QueryExecuteVisitor(const QSqlDatabase& sqlDb, Schema& schema);
+  QueryExecuteVisitor(const QSqlDatabase& sqlDb, API::ISchema& schema);
   ~QueryExecuteVisitor() override;
 
   void visit(API::IQuery& query) override;
@@ -23,7 +23,7 @@ public:
 
 private:
   const QSqlDatabase& m_sqlDb;
-  Schema& m_schema;
+  API::ISchema& m_schema;
 
   API::IQuery::QueryResults m_lastResults;
 

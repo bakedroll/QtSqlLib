@@ -1,8 +1,7 @@
 #pragma once
 
-#include <QtSqlLib/Schema.h>
+#include <QtSqlLib/API/ISchema.h>
 
-#include <QSqlDatabase>
 #include <QSqlQuery>
 
 namespace QtSqlLib::API
@@ -11,12 +10,12 @@ namespace QtSqlLib::API
 class IQuery
 {
 public:
-  using TupleValuesList = std::vector<Schema::TupleValues>;
+  using TupleValuesList = std::vector<ISchema::TupleValues>;
 
   struct ResultTuple
   {
-    Schema::TupleValues values;
-    std::map<Schema::Id, TupleValuesList> joinedTuples;
+    ISchema::TupleValues values;
+    std::map<ISchema::Id, TupleValuesList> joinedTuples;
   };
 
   struct QueryResults
@@ -51,8 +50,8 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, Schema& schema, QueryResults& previousQueryResults) = 0;
-  virtual QueryResults getQueryResults(Schema& schema, QSqlQuery& query) const { return {}; }
+  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, QueryResults& previousQueryResults) = 0;
+  virtual QueryResults getQueryResults(ISchema& schema, QSqlQuery& query) const { return {}; }
 
 };
 
