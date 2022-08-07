@@ -8,8 +8,6 @@
 #include "QtSqlLib/Query/Query.h"
 #include "QtSqlLib/Query/QuerySequence.h"
 
-#include <utilsLib/Utils.h>
-
 #include <QSqlQuery>
 #include <QVariant>
 
@@ -184,11 +182,8 @@ public:
     }
     columns = columns.simplified();
 
-    const auto queryString = QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns);
-    UTILS_LOG_DEBUG(queryString.toStdString().c_str());
-
     QSqlQuery query;
-    query.prepare(queryString);
+    query.prepare(QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns));
 
     return { query };
   }
@@ -198,10 +193,7 @@ private:
 
 };
 
-Database::Database() :
-  m_isInitialized(false)
-{
-}
+Database::Database() = default;
 
 Database::~Database()
 {
@@ -210,10 +202,9 @@ Database::~Database()
 
 void Database::initialize(const QString& fileName, const QString& databaseName)
 {
-  if (m_isInitialized)
+  if (m_db)
   {
-    UTILS_LOG_WARN("Database is already initialized.");
-    return;
+    throw DatabaseException(DatabaseException::Type::UnableToLoad, "Database is already initialized.");
   }
 
   m_databaseName = databaseName;
@@ -226,8 +217,6 @@ void Database::initialize(const QString& fileName, const QString& databaseName)
   m_schema.configureRelationships();
 
   loadDatabaseFile(fileName);
-
-  m_isInitialized = true;
 }
 
 void Database::close()

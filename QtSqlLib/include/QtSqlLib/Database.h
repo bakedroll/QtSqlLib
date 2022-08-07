@@ -29,8 +29,6 @@ private:
   std::unique_ptr<QSqlDatabase> m_db;
 
   Schema m_schema;
-
-  bool m_isInitialized;
   QString m_databaseName;
 
   void loadDatabaseFile(const QString& filename);

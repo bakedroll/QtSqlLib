@@ -2,8 +2,6 @@
 
 #include "QtSqlLib/DatabaseException.h"
 
-#include <utilsLib/Utils.h>
-
 namespace QtSqlLib::Query
 {
 
@@ -53,11 +51,8 @@ QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema)
   columnsString = columnsString.left(columnsString.length() - 2);
   valuesString = valuesString.left(valuesString.length() - 2);
 
-  const auto queryString = QString("INSERT INTO '%1' (%2) VALUES (%3);").arg(table.name).arg(columnsString).arg(valuesString);
-  UTILS_LOG_DEBUG(queryString.toStdString().c_str());
-
   QSqlQuery query(db);
-  query.prepare(queryString);
+  query.prepare(QString("INSERT INTO '%1' (%2) VALUES (%3);").arg(table.name).arg(columnsString).arg(valuesString));
 
   bindQueryValues(query);
 

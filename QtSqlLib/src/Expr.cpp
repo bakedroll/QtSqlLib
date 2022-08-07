@@ -2,8 +2,6 @@
 
 #include "QtSqlLib/DatabaseException.h"
 
-#include <utilsLib/Utils.h>
-
 namespace QtSqlLib
 {
 
