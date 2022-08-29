@@ -643,73 +643,6 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
-/*
-// (1)
-db.execQuery(LinkTuples(Relationships::Special1)
-.fromOne(student1)
-.toOne(project1));
-
-// (2)
-db.execQuery(LinkTuples(Relationships::Special1)
-.fromOne(project2)
-.toOne({ student1 }));
-
-// (3)
-db.execQuery(LinkTuples(Relationships::Special2)
-.fromOne(student1)
-.toMany({ project1, project2 }));
-
-// (4)
-db.execQuery(LinkTuples(Relationships::Special2)
-.fromOne(project3)
-.toOne({ student2 }));
-
-// (5)
-db.execQuery(LinkTuples(Relationships::Special3)
-.fromOne(project1)
-.toMany ({ student2, student3 }));
-
-// (6)
-db.execQuery(LinkTuples(Relationships::Special3)
-.fromOne(student1)
-.toMany ({ project1, project3 }));
-
-// (7)
-db.execQuery(LinkTuples(Relationships::Special3)
-.fromOne(project2)
-.toMany ({ student1, student3 }));
-
-// (8)
-db.execQuery(LinkTuples(Relationships::Special4)
-.fromOne(project3)
-.toMany ({ student1 }));
-
-// (9)
-db.execQuery(LinkTuples(Relationships::Special4)
-.fromOne(student3)
-.toMany ({ project1, project2, project3 }));
-
-// (10)
-db.execQuery(LinkTuples(Relationships::Special5)
-.fromOne(student1)
-.toMany ({ student1, student2 }));
-
-// (11)
-db.execQuery(LinkTuples(Relationships::Special5)
-.fromOne(student2)
-.toMany ({ student3 }));
-
-// (12)
-db.execQuery(LinkTuples(Relationships::Special6)
-.fromOne(student1)
-.toMany ({ student2, student3 }));
-
-// (13)
-db.execQuery(LinkTuples(Relationships::Special6)
-.fromOne(student2)
-.toOne ({ student3 }));
-  */
-
 /**
  * @steps:
  * Create two tables with 3 tuples respectively:
@@ -752,10 +685,10 @@ db.execQuery(LinkTuples(Relationships::Special6)
  *   (5)  Link for relationship (c) from one project [M] to many students [N]
  *   (6)  Link for relationship (c) from one student [N] to many projects [M]
  *   (7)  Link for relationship (c) from one project [M] to many students [N]
- *   (8)  Link for relationship (d) from one project [M] to many students [N]
+ *   (8)  Link for relationship (d) from one project [M] to one student [N]
  *   (9)  Link for relationship (d) from one student [N] to many projects [M]
  *   (10) Link for relationship (e) from one student [1] to many students [N]
- *   (11) Link for relationship (e) from one student [1] to many students [N]
+ *   (11) Link for relationship (e) from one student [1] to one student [N]
  *   (12) Link for relationship (f) from one student [N] to many students [M]
  *   (13) Link for relationship (f) from one student [N] to one student [M]
  *
@@ -834,7 +767,7 @@ TEST(RelationshipTest, specialRelationships)
   // (2)
   db.execQuery(LinkTuples(Relationships::Special1)
     .fromOne(project2)
-    .toOne({ student1 }));
+    .toOne(student1));
 
   // (3)
   db.execQuery(LinkTuples(Relationships::Special2)
@@ -844,12 +777,12 @@ TEST(RelationshipTest, specialRelationships)
   // (4)
   db.execQuery(LinkTuples(Relationships::Special2)
     .fromOne(project3)
-    .toOne({ student2 }));
+    .toOne(student2));
 
   // (5)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(project1)
-    .toMany ({ student2, student3 }));
+    .toMany({ student2, student3 }));
 
   // (6)
   db.execQuery(LinkTuples(Relationships::Special3)
@@ -864,7 +797,7 @@ TEST(RelationshipTest, specialRelationships)
   // (8)
   db.execQuery(LinkTuples(Relationships::Special4)
     .fromOne(project3)
-    .toMany({ student1 }));
+    .toOne(student1));
 
   // (9)
   db.execQuery(LinkTuples(Relationships::Special4)
@@ -879,7 +812,7 @@ TEST(RelationshipTest, specialRelationships)
   // (11)
   db.execQuery(LinkTuples(Relationships::Special5)
     .fromOne(student2)
-    .toMany({ student3 }));
+    .toOne(student3));
 
   // (12)
   db.execQuery(LinkTuples(Relationships::Special6)
@@ -889,7 +822,7 @@ TEST(RelationshipTest, specialRelationships)
   // (13)
   db.execQuery(LinkTuples(Relationships::Special6)
     .fromOne(student2)
-    .toOne({ student3 }));
+    .toOne(student3));
 
   // (14)
   auto results = db.execQuery(FromTable(TableIds::Students)
