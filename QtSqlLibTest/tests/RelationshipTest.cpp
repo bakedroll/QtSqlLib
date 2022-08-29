@@ -598,6 +598,68 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
+/**
+ * @steps:
+ * Create two tables with 3 tuples respectively:
+ *   - Table students, containing tuples: [ Student1, Student2, Student3 ]
+ *   - Table projects, containing tuples: [ Project1, Project2, Project3 ]
+ *
+ * Create 6 relationships and link tuples as follows:
+ *   (a) Students 1<---->N Projects
+ *       [ Student1 ] 1<-->N [ Project1, Project2 ]
+ *   (b) Students 1<---->N Projects
+ *       [ Student1 ] 1<-->N [ Project1, Project2 ]
+ *       [ Student2 ] 1<-->N [ Project3 ]
+ *   (c) Students N<---->M Projects
+ *       [ Student1 ] 1<-->M [ Project1, Project2,  Project3 ]
+ *       [ Student2 ] 1<-->M [ Project1 ]
+ *       [ Student3 ] 1<-->M [ Project1, Project2 ]
+ *   (d) Students N<---->M Projects
+ *       [ Student1 ] 1<-->M [ Project3 ]
+ *       [ Student3 ] 1<-->M [ Project1, Project2,  Project3 ]
+ *   (e) Students 1<---->N Students
+ *       [ Student1 ] 1<-->N [ Student1, Student2 ]
+ *       [ Student2 ] 1<-->N [ Student3 ]
+ *   (f) Students N<---->M Students
+ *       [ Student1 ] 1<-->M [ Student2, Student3 ]
+ *       [ Student2 ] 1<-->M [ Student3 ]
+ *
+ * We want to check if it is possible to have multiple relationships of the same type
+ * linking the exact same tables - so we have two One-To-Many relationships (a), (b) linking students and
+ * projects and we have two Many-to-Many relationships (c), (d) also linking students and projects.
+ * Addditionally we have two relationahips linking the table students with itself, a One-To-Many relationship (e) and
+ * a Many-To-Many relationship.
+ *
+ * @expected:W
+ *   First off, we perform verious LinkTuple queries to create links for each of the six relationships.
+ *   No exception must be thrown at any time.
+ *   (1)  Link for relationship (a) from one student [1] to one project [N]
+ *   (2)  Link for relationship (a) from one project [N] to one student [1]
+ *   (3)  Link for relationship (b) from one student [1] to many projects [N]
+ *   (4)  Link for relationship (b) from one project [N] to one student [1]
+ *   (5)  Link for relationship (c) from one project [M] to many students [N]
+ *   (6)  Link for relationship (c) from one student [N] to many projects [M]
+ *   (7)  Link for relationship (c) from one project [M] to many students [N]
+ *   (8)  Link for relationship (d) from one project [M] to many students [N]
+ *   (9)  Link for relationship (d) from one student [N] to many projects [M]
+ *   (10) Link for relationship (e) from one student [1] to many students [N]
+ *   (11) Link for relationship (e) from one student [1] to many students [N]
+ *   (12) Link for relationship (f) from one student [N] to many students [M]
+ *   (13) Link for relationship (f) from one student [N] to one student [M]
+ *
+ *   Then we query the data and check if the result tuples including joined tuples meet
+ *   our expectations.
+ *   (14) Query students and related projects for relationship (a)
+ *   (15) Query projects and related students for relationship (b)
+ *   (16) Query students and related projects for relationships (a) and (b)
+ *   (17) Query students and related projects for relationship (c)
+ *   (18) Query students and related projects for relationship (d)
+ *   (19) Query students and related projects for relationships (c) and (d)
+ *   (20) Query students and related projects for relationships (a), (b), (c) and (d)
+ *   (21) Query students and related students for relationship (e)
+ *   (22) Query students and related students for relationship (f)
+ *   (23) Query students and related projects and students for all relationships
+ */
 TEST(RelationshipTest, specialRelationships)
 {
   SchemaConfigurator configurator;
@@ -645,70 +707,86 @@ TEST(RelationshipTest, specialRelationships)
     .value(ProjectsCols::Title, "Project3")
     .returnIds()).resultTuples[0].values;
 
+  // (1)
   db.execQuery(LinkTuples(Relationships::Special1)
     .fromOne(student1)
     .toOne(project1));
 
-  db.execQuery(LinkTuples(Relationships::Special2)
-    .fromOne(student1)
-    .toMany({ project1, project2 }));
-
+  // (2)
   db.execQuery(LinkTuples(Relationships::Special1)
     .fromOne(project2)
     .toOne({ student1 }));
 
+  // (3)
+  db.execQuery(LinkTuples(Relationships::Special2)
+    .fromOne(student1)
+    .toMany({ project1, project2 }));
+
+  // (4)
   db.execQuery(LinkTuples(Relationships::Special2)
     .fromOne(project3)
     .toOne({ student2 }));
 
+  // (5)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(project1)
     .toMany ({ student2, student3 }));
 
+  // (6)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(student1)
     .toMany ({ project1, project3 }));
 
+  // (7)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(project2)
     .toMany ({ student1, student3 }));
 
+  // (8)
   db.execQuery(LinkTuples(Relationships::Special4)
     .fromOne(project3)
     .toMany ({ student1 }));
 
+  // (9)
   db.execQuery(LinkTuples(Relationships::Special4)
     .fromOne(student3)
     .toMany ({ project1, project2, project3 }));
 
+  // (10)
   db.execQuery(LinkTuples(Relationships::Special5)
     .fromOne(student1)
     .toMany ({ student1, student2 }));
 
+  // (11)
   db.execQuery(LinkTuples(Relationships::Special5)
     .fromOne(student2)
     .toMany ({ student3 }));
 
+  // (12)
   db.execQuery(LinkTuples(Relationships::Special6)
     .fromOne(student1)
     .toMany ({ student2, student3 }));
 
+  // (13)
   db.execQuery(LinkTuples(Relationships::Special6)
     .fromOne(student2)
     .toOne ({ student3 }));
 
+  // (14)
   auto results = db.execQuery(FromTable(TableIds::Students)
     .select({ StudentsCols::Name })
     .joinColumns(Relationships::Special1, { ProjectsCols::Title }));
 
   expectSpecialRelation1Students(results.resultTuples);
 
+  // (15)
   results = db.execQuery(FromTable(TableIds::Projects)
     .selectAll()
     .joinAll(Relationships::Special2));
 
   expectSpecialRelation2Projects(results.resultTuples);
-  
+
+  // (16)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
@@ -717,18 +795,21 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation1Students(results.resultTuples);
   expectSpecialRelation2Students(results.resultTuples);
 
+  // (17)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special3));
 
   expectSpecialRelation3Students(results.resultTuples);
 
+  // (18)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special4));
 
   expectSpecialRelation4Students(results.resultTuples);
 
+  // (19)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special3)
@@ -737,6 +818,7 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation3Students(results.resultTuples);
   expectSpecialRelation4Students(results.resultTuples);
 
+  // (20)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
@@ -749,18 +831,21 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation3Students(results.resultTuples);
   expectSpecialRelation4Students(results.resultTuples);
 
+  // (21)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special5));
 
   expectSpecialRelation5Students(results.resultTuples);
 
+  // (22)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special6));
 
   expectSpecialRelation6Students(results.resultTuples);
 
+  // (23)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
