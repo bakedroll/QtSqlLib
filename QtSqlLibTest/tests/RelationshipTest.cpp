@@ -20,19 +20,19 @@ static void expectSpecialRelation1Students(IQuery::QueryResults::ResultTuples& t
     "Student3", QVariantList());
 }
 
-static void expectSpecialRelation2Projects(IQuery::QueryResults::ResultTuples& tuples)
+static void expectSpecialRelation1Projects(IQuery::QueryResults::ResultTuples& tuples)
 {
-  Funcs::expectRelations(tuples, Relationships::Special2,
+  Funcs::expectRelations(tuples, Relationships::Special1,
     TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
     "Project1", QVariantList() << "Student1");
 
-  Funcs::expectRelations(tuples, Relationships::Special2,
+  Funcs::expectRelations(tuples, Relationships::Special1,
     TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
     "Project2", QVariantList() << "Student1");
 
-  Funcs::expectRelations(tuples, Relationships::Special2,
+  Funcs::expectRelations(tuples, Relationships::Special1,
     TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
-    "Project3", QVariantList() << "Student2");
+    "Project3", QVariantList());
 }
 
 static void expectSpecialRelation2Students(IQuery::QueryResults::ResultTuples& tuples)
@@ -50,6 +50,21 @@ static void expectSpecialRelation2Students(IQuery::QueryResults::ResultTuples& t
     "Student3", QVariantList());
 }
 
+static void expectSpecialRelation2Projects(IQuery::QueryResults::ResultTuples& tuples)
+{
+  Funcs::expectRelations(tuples, Relationships::Special2,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project1", QVariantList() << "Student1");
+
+  Funcs::expectRelations(tuples, Relationships::Special2,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project2", QVariantList() << "Student1");
+
+  Funcs::expectRelations(tuples, Relationships::Special2,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project3", QVariantList() << "Student2");
+}
+
 static void expectSpecialRelation3Students(IQuery::QueryResults::ResultTuples& tuples)
 {
   Funcs::expectRelations(tuples, Relationships::Special3,
@@ -65,6 +80,21 @@ static void expectSpecialRelation3Students(IQuery::QueryResults::ResultTuples& t
     "Student3", QVariantList() << "Project1" << "Project2");
 }
 
+static void expectSpecialRelation3Projects(IQuery::QueryResults::ResultTuples& tuples)
+{
+  Funcs::expectRelations(tuples, Relationships::Special3,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project1", QVariantList() << "Student1" << "Student2" << "Student3");
+
+  Funcs::expectRelations(tuples, Relationships::Special3,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project2", QVariantList() << "Student1" << "Student3");
+
+  Funcs::expectRelations(tuples, Relationships::Special3,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project3", QVariantList() << "Student1");
+}
+
 static void expectSpecialRelation4Students(IQuery::QueryResults::ResultTuples& tuples)
 {
   Funcs::expectRelations(tuples, Relationships::Special4,
@@ -78,6 +108,21 @@ static void expectSpecialRelation4Students(IQuery::QueryResults::ResultTuples& t
   Funcs::expectRelations(tuples, Relationships::Special4,
     TableIds::Students, StudentsCols::Name, TableIds::Projects, ProjectsCols::Title,
     "Student3", QVariantList() << "Project1" << "Project2" << "Project3");
+}
+
+static void expectSpecialRelation4Projects(IQuery::QueryResults::ResultTuples& tuples)
+{
+  Funcs::expectRelations(tuples, Relationships::Special4,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project1", QVariantList() << "Student3");
+
+  Funcs::expectRelations(tuples, Relationships::Special4,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project2", QVariantList() << "Student3");
+
+  Funcs::expectRelations(tuples, Relationships::Special4,
+    TableIds::Projects, ProjectsCols::Title, TableIds::Students, StudentsCols::Name,
+    "Project3", QVariantList() << "Student1" << "Student3");
 }
 
 static void expectSpecialRelation5Students(IQuery::QueryResults::ResultTuples& tuples)
@@ -598,6 +643,73 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     "Paul", QVariantList() << "Modeling" << "Machine Learning");
 }
 
+/*
+// (1)
+db.execQuery(LinkTuples(Relationships::Special1)
+.fromOne(student1)
+.toOne(project1));
+
+// (2)
+db.execQuery(LinkTuples(Relationships::Special1)
+.fromOne(project2)
+.toOne({ student1 }));
+
+// (3)
+db.execQuery(LinkTuples(Relationships::Special2)
+.fromOne(student1)
+.toMany({ project1, project2 }));
+
+// (4)
+db.execQuery(LinkTuples(Relationships::Special2)
+.fromOne(project3)
+.toOne({ student2 }));
+
+// (5)
+db.execQuery(LinkTuples(Relationships::Special3)
+.fromOne(project1)
+.toMany ({ student2, student3 }));
+
+// (6)
+db.execQuery(LinkTuples(Relationships::Special3)
+.fromOne(student1)
+.toMany ({ project1, project3 }));
+
+// (7)
+db.execQuery(LinkTuples(Relationships::Special3)
+.fromOne(project2)
+.toMany ({ student1, student3 }));
+
+// (8)
+db.execQuery(LinkTuples(Relationships::Special4)
+.fromOne(project3)
+.toMany ({ student1 }));
+
+// (9)
+db.execQuery(LinkTuples(Relationships::Special4)
+.fromOne(student3)
+.toMany ({ project1, project2, project3 }));
+
+// (10)
+db.execQuery(LinkTuples(Relationships::Special5)
+.fromOne(student1)
+.toMany ({ student1, student2 }));
+
+// (11)
+db.execQuery(LinkTuples(Relationships::Special5)
+.fromOne(student2)
+.toMany ({ student3 }));
+
+// (12)
+db.execQuery(LinkTuples(Relationships::Special6)
+.fromOne(student1)
+.toMany ({ student2, student3 }));
+
+// (13)
+db.execQuery(LinkTuples(Relationships::Special6)
+.fromOne(student2)
+.toOne ({ student3 }));
+  */
+
 /**
  * @steps:
  * Create two tables with 3 tuples respectively:
@@ -650,15 +762,22 @@ TEST(RelationshipTest, linkTuplesQueryTest)
  *   Then we query the data and check if the result tuples including joined tuples meet
  *   our expectations.
  *   (14) Query students and related projects for relationship (a)
- *   (15) Query projects and related students for relationship (b)
- *   (16) Query students and related projects for relationships (a) and (b)
- *   (17) Query students and related projects for relationship (c)
- *   (18) Query students and related projects for relationship (d)
- *   (19) Query students and related projects for relationships (c) and (d)
- *   (20) Query students and related projects for relationships (a), (b), (c) and (d)
- *   (21) Query students and related students for relationship (e)
- *   (22) Query students and related students for relationship (f)
- *   (23) Query students and related projects and students for all relationships
+ *   (15) Query projects and related students for relationship (a)
+ *   (16) Query students and related projects for relationship (b)
+ *   (17) Query projects and related students for relationship (b)
+ *   (18) Query students and related projects for relationships (a) and (b)
+ *   (19) Query projects and related students for relationships (a) and (b)
+ *   (20) Query students and related projects for relationship (c)
+ *   (21) Query projects and related students for relationship (c)
+ *   (22) Query students and related projects for relationship (d)
+ *   (23) Query projects and related students for relationship (d)
+ *   (24) Query students and related projects for relationships (c) and (d)
+ *   (25) Query projects and related students for relationships (c) and (d)
+ *   (26) Query students and related projects for relationships (a), (b), (c) and (d)
+ *   (27) Query projects and related students for relationships (a), (b), (c) and (d)
+ *   (28) Query students and related students for relationship (e)
+ *   (29) Query students and related students for relationship (f)
+ *   (30) Query students and related projects and students for all relationships
  */
 TEST(RelationshipTest, specialRelationships)
 {
@@ -735,42 +854,42 @@ TEST(RelationshipTest, specialRelationships)
   // (6)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(student1)
-    .toMany ({ project1, project3 }));
+    .toMany({ project1, project3 }));
 
   // (7)
   db.execQuery(LinkTuples(Relationships::Special3)
     .fromOne(project2)
-    .toMany ({ student1, student3 }));
+    .toMany({ student1, student3 }));
 
   // (8)
   db.execQuery(LinkTuples(Relationships::Special4)
     .fromOne(project3)
-    .toMany ({ student1 }));
+    .toMany({ student1 }));
 
   // (9)
   db.execQuery(LinkTuples(Relationships::Special4)
     .fromOne(student3)
-    .toMany ({ project1, project2, project3 }));
+    .toMany({ project1, project2, project3 }));
 
   // (10)
   db.execQuery(LinkTuples(Relationships::Special5)
     .fromOne(student1)
-    .toMany ({ student1, student2 }));
+    .toMany({ student1, student2 }));
 
   // (11)
   db.execQuery(LinkTuples(Relationships::Special5)
     .fromOne(student2)
-    .toMany ({ student3 }));
+    .toMany({ student3 }));
 
   // (12)
   db.execQuery(LinkTuples(Relationships::Special6)
     .fromOne(student1)
-    .toMany ({ student2, student3 }));
+    .toMany({ student2, student3 }));
 
   // (13)
   db.execQuery(LinkTuples(Relationships::Special6)
     .fromOne(student2)
-    .toOne ({ student3 }));
+    .toOne({ student3 }));
 
   // (14)
   auto results = db.execQuery(FromTable(TableIds::Students)
@@ -782,11 +901,25 @@ TEST(RelationshipTest, specialRelationships)
   // (15)
   results = db.execQuery(FromTable(TableIds::Projects)
     .selectAll()
+    .joinAll(Relationships::Special1));
+
+  expectSpecialRelation1Projects(results.resultTuples);
+
+  // (16)
+  results = db.execQuery(FromTable(TableIds::Students)
+    .selectAll()
+    .joinAll(Relationships::Special2));
+
+  expectSpecialRelation2Students(results.resultTuples);
+
+  // (17)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
     .joinAll(Relationships::Special2));
 
   expectSpecialRelation2Projects(results.resultTuples);
 
-  // (16)
+  // (18)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
@@ -795,21 +928,44 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation1Students(results.resultTuples);
   expectSpecialRelation2Students(results.resultTuples);
 
-  // (17)
+  // (19)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
+    .joinAll(Relationships::Special1)
+    .joinAll(Relationships::Special2));
+
+  expectSpecialRelation1Projects(results.resultTuples);
+  expectSpecialRelation2Projects(results.resultTuples);
+
+  // (20)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special3));
 
   expectSpecialRelation3Students(results.resultTuples);
 
-  // (18)
+  // (21)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
+    .joinAll(Relationships::Special3));
+
+  expectSpecialRelation3Projects(results.resultTuples);
+
+  // (22)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special4));
 
   expectSpecialRelation4Students(results.resultTuples);
 
-  // (19)
+  // (23)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
+    .joinAll(Relationships::Special4));
+
+  expectSpecialRelation4Projects(results.resultTuples);
+
+  // (24)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special3)
@@ -818,7 +974,16 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation3Students(results.resultTuples);
   expectSpecialRelation4Students(results.resultTuples);
 
-  // (20)
+  // (25)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
+    .joinAll(Relationships::Special3)
+    .joinAll(Relationships::Special4));
+
+  expectSpecialRelation3Projects(results.resultTuples);
+  expectSpecialRelation4Projects(results.resultTuples);
+
+  // (26)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
@@ -831,21 +996,34 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation3Students(results.resultTuples);
   expectSpecialRelation4Students(results.resultTuples);
 
-  // (21)
+  // (27)
+  results = db.execQuery(FromTable(TableIds::Projects)
+    .selectAll()
+    .joinAll(Relationships::Special1)
+    .joinAll(Relationships::Special2)
+    .joinAll(Relationships::Special3)
+    .joinAll(Relationships::Special4));
+
+  expectSpecialRelation1Projects(results.resultTuples);
+  expectSpecialRelation2Projects(results.resultTuples);
+  expectSpecialRelation3Projects(results.resultTuples);
+  expectSpecialRelation4Projects(results.resultTuples);
+
+  // (28)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special5));
 
   expectSpecialRelation5Students(results.resultTuples);
 
-  // (22)
+  // (29)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special6));
 
   expectSpecialRelation6Students(results.resultTuples);
 
-  // (23)
+  // (30)
   results = db.execQuery(FromTable(TableIds::Students)
     .selectAll()
     .joinAll(Relationships::Special1)
