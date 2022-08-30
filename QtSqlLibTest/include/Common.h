@@ -44,7 +44,7 @@ enum
   Table1,
   Table2,
   Students,
-  Projects,
+  Professors,
   Lectures
 };
 }
@@ -79,12 +79,12 @@ enum
 };
 }
 
-namespace ProjectsCols
+namespace ProfessorsCols
 {
 enum
 {
   Id = 5U,
-  Title = 6U
+  Name = 6U
 };
 }
 
@@ -101,8 +101,9 @@ namespace Relationships
 {
 enum
 {
-  StudentsProjects,
-  StudentsLectures,
+  StudentsConfidant,
+  LectureParticipant,
+  Lecturer,
   Special1,
   Special2,
   Special3,

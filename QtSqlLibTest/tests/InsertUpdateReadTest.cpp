@@ -333,20 +333,20 @@ TEST(InsertUpdateReadTest, fromTableExceptions)
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Name })
-      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Id }),
+      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Name })
+      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Id }),
     DatabaseException);
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsProjects, { StudentsCols::Name })
-      .joinAll(Relationships::StudentsProjects),
+      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Name })
+      .joinAll(Relationships::StudentsConfidant),
     DatabaseException);
 
   EXPECT_THROW(
     FromTable(TableIds::Students)
-      .joinAll(Relationships::StudentsProjects)
-      .joinAll(Relationships::StudentsProjects),
+      .joinAll(Relationships::StudentsConfidant)
+      .joinAll(Relationships::StudentsConfidant),
     DatabaseException);
 }
 

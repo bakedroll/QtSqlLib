@@ -404,8 +404,9 @@ QString FromTable::processJoinsAndCreateQuerySubstring(API::ISchema& schema, con
     }
     else
     {
-      const auto needToSwapParentChild = (relationship.type == API::ISchema::RelationshipType::OneToMany
-        && relationship.tableFromId == m_columnSelectionInfo.tableId);
+      const auto needToSwapParentChild = (
+        (relationship.type == API::ISchema::RelationshipType::OneToMany && relationship.tableFromId == m_columnSelectionInfo.tableId) ||
+        (relationship.type == API::ISchema::RelationshipType::ManyToOne && relationship.tableToId == m_columnSelectionInfo.tableId));
 
       const auto& foreignKeyReferences = (needToSwapParentChild
         ? joinTable.relationshipToForeignKeyReferencesMap

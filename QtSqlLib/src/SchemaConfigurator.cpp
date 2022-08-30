@@ -60,6 +60,13 @@ API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(API::I
       QString("Relationship with id %1 already exists.").arg(relationshipId));
   }
 
+  if ((tableFromId == tableToId) && type == API::ISchema::RelationshipType::ManyToOne)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "The relationship type ManyToOne is not allowed for a relationship of a table that references itself due to possible ambiguity. " \
+      "Please use OneToMany instead.");
+  }
+
   const API::ISchema::Relationship relationship{ tableFromId, tableToId, type };
 
   m_schema->getRelationships()[relationshipId] = relationship;
