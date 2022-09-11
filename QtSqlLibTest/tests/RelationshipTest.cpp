@@ -315,6 +315,92 @@ static void setupReplationshipTestsDatabase(TestDatabase& db)
 
 /**
  * @description:
+ * Checks the correctness of the relations between tuples by querying the data and
+ * compare the result tuples (including joined tuples) against our expectations.
+ *   (1) Query students and related professors (a)
+ *   (2) Query professors and related students (a)
+ *   (3) Query professors and related lectures (b)
+ *   (4) Query lectures and related professors (b)
+ *   (5) Query lectures and related students (c)
+ *   (6) Query students and related lectures (c)
+ *   (7) Query students, related professors (a) and related lectures (c)
+ *   (8) Query professors, related students (a) and related lectures (b)
+ *   (9) Query lectures, related professors (b) and related students (a)
+ */
+static void expectCorrectRelations(TestDatabase& db)
+{
+  // (1)
+  auto results = db.execQuery(FromTable(TableIds::Students)
+    .selectAll()
+    .joinAll(Relationships::StudentsConfidant));
+
+  expectStudentsConfidantStudents(results.resultTuples);
+
+  // (2)
+  results = db.execQuery(FromTable(TableIds::Professors)
+    .selectAll()
+    .joinAll(Relationships::StudentsConfidant));
+
+  expectStudentsConfidantProfessors(results.resultTuples);
+
+  // (3)
+  results = db.execQuery(FromTable(TableIds::Professors)
+    .selectAll()
+    .joinAll(Relationships::Lecturer));
+
+  expectLecturerProfessors(results.resultTuples);
+
+  // (4)
+  results = db.execQuery(FromTable(TableIds::Lectures)
+    .selectAll()
+    .joinAll(Relationships::Lecturer));
+
+  expectLecturerLectures(results.resultTuples);
+
+  // (5)
+  results = db.execQuery(FromTable(TableIds::Lectures)
+    .selectAll()
+    .joinAll(Relationships::LectureParticipant));
+
+  expectLectureParticipantLectures(results.resultTuples);
+
+  // (6)
+  results = db.execQuery(FromTable(TableIds::Students)
+    .selectAll()
+    .joinAll(Relationships::LectureParticipant));
+
+  expectLectureParticipantStudents(results.resultTuples);
+
+  // (7)
+  results = db.execQuery(FromTable(TableIds::Students)
+    .selectAll()
+    .joinAll(Relationships::StudentsConfidant)
+    .joinAll(Relationships::LectureParticipant));;
+
+  expectStudentsConfidantStudents(results.resultTuples);
+  expectLectureParticipantStudents(results.resultTuples);
+
+  // (8)
+  results = db.execQuery(FromTable(TableIds::Professors)
+    .selectAll()
+    .joinAll(Relationships::StudentsConfidant)
+    .joinAll(Relationships::Lecturer));;
+
+  expectStudentsConfidantProfessors(results.resultTuples);
+  expectLecturerProfessors(results.resultTuples);
+
+  // (9)
+  results = db.execQuery(FromTable(TableIds::Lectures)
+    .selectAll()
+    .joinAll(Relationships::Lecturer)
+    .joinAll(Relationships::LectureParticipant));;
+
+  expectLecturerLectures(results.resultTuples);
+  expectLectureParticipantLectures(results.resultTuples);
+}
+
+/**
+ * @description:
  * This test adds links between tuples of related tables directly on data insertion
  * whithin the #InsertIntoExt query.
  * For more information about the created tables and relationships, see #setupReplationshipTestsDatabase().
@@ -344,17 +430,7 @@ static void setupReplationshipTestsDatabase(TestDatabase& db)
  *         Link toOne  [ Sarah ] (a)
  *         Link toMany [ Operating systems, Database systems ] (b)
  *
- * Check the correctness of the inserted relations between tuples by querying the data and
- * compare the result tuples (including joined tuples) against our expectations.
- *   (10) Query students and related professors (a)
- *   (11) Query professors and related students (a)
- *   (12) Query professors and related lectures (b)
- *   (13) Query lectures and related professors (b)
- *   (14) Query lectures and related students (c)
- *   (15) Query students and related lectures (c)
- *   (16) Query students, related professors (a) and related lectures (c)
- *   (17) Query professors, related students (a) and related lectures (b)
- *   (18) Query lectures, related professors (b) and related students (a)
+ *   (10) Finally check the correctness of the inserted relations
  */
 TEST(RelationshipTest, linkTuplesOnInsertTest)
 {
@@ -427,122 +503,50 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
     .returnIds()).resultTuples[0].values;
 
   // (10)
-  auto results = db.execQuery(FromTable(TableIds::Students)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant));
-
-  expectStudentsConfidantStudents(results.resultTuples);
-
-  // (11)
-  results = db.execQuery(FromTable(TableIds::Professors)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant));
-
-  expectStudentsConfidantProfessors(results.resultTuples);
-
-  // (12)
-  results = db.execQuery(FromTable(TableIds::Professors)
-    .selectAll()
-    .joinAll(Relationships::Lecturer));
-
-  expectLecturerProfessors(results.resultTuples);
-
-  // (13)
-  results = db.execQuery(FromTable(TableIds::Lectures)
-    .selectAll()
-    .joinAll(Relationships::Lecturer));
-
-  expectLecturerLectures(results.resultTuples);
-
-  // (14)
-  results = db.execQuery(FromTable(TableIds::Lectures)
-    .selectAll()
-    .joinAll(Relationships::LectureParticipant));
-
-  expectLectureParticipantLectures(results.resultTuples);
-
-  // (15)
-  results = db.execQuery(FromTable(TableIds::Students)
-    .selectAll()
-    .joinAll(Relationships::LectureParticipant));
-
-  expectLectureParticipantStudents(results.resultTuples);
-
-  // (16)
-  results = db.execQuery(FromTable(TableIds::Students)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant)
-    .joinAll(Relationships::LectureParticipant));;
-
-  expectStudentsConfidantStudents(results.resultTuples);
-  expectLectureParticipantStudents(results.resultTuples);
-
-  // (17)
-  results = db.execQuery(FromTable(TableIds::Professors)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant)
-    .joinAll(Relationships::Lecturer));;
-
-  expectStudentsConfidantProfessors(results.resultTuples);
-  expectLecturerProfessors(results.resultTuples);
-
-  // (18)
-  results = db.execQuery(FromTable(TableIds::Lectures)
-    .selectAll()
-    .joinAll(Relationships::Lecturer)
-    .joinAll(Relationships::LectureParticipant));;
-
-  expectLecturerLectures(results.resultTuples);
-  expectLectureParticipantLectures(results.resultTuples);
+  expectCorrectRelations(db);
 }
 
 /**
- *             students
- *               N  N
- *              /    \
- *             /      \
- *            1        M
- * professors 1 <----> N lectures
+ * @description:
+ * This test inserts all necessary tuples first and then links them
+ * according to the description in #setupReplationshipTestsDatabase().
  *
- * @steps:
- * (1) Link student to ONE lectures
- * (2) Link student to MANY lectures
- * (3) Link lectures to ONE student
- * (4) Link lectures to MANY students
- * (5) Link student to ONE Project
- * (6) Link student to MANY professors
- * (7) Link Project to ONE student
+ * Create tuples:
+ *   (1) Insert students
+ *   (2) Insert professors
+ *   (3) Insert lectures
+ *
+ * Link the tuples:
+ *   (4)  Link [ Prof. Smith ]      toMany [ John, Mary ] (a)
+ *   (5)  Link [ Dr. Evans ]        toOne  [ Paul ] (a)
+ *   (6)  Link [ Sarah ]            toOne  [ Prof. Adams ] (a)
+ *   (7)  Link [ Prof. Smith ]      toOne  [ Programming ] (b)
+ *   (8)  Link [ Math ]             toOne  [ Dr. Evans ] (b)
+ *   (9)  Link [ Prof. Adams ]      toMany [ Operating systems, Database systems ] (b)
+ *   (10) Link [ John ]             toMany [ Math, Programming ] (c)
+ *   (11) Link [ Programming ]      toMany [ Mary, Sarah ] (c)
+ *   (12) Link [ Mary ]             toOne  [ Math ] (c)
+ *   (13) Link [ Paul ]             toMany [  Database systems, Math ] (c)
+ *   (14) Link [ Sarah ]            toOne  [ Operating systems ] (c)
+ *   (15) Link [ Database systems ] toOne  [ Sarah ] (c)
+ *
+ *   (16) Check the correctness of the inserted relations
  *
  * Exception handling tests:
- * (8) Link Project to MANY students
- * (9) Use invalid relationship ID
- * (10) Use InsertIntoExt::linkToOneTuple() with invalid tuple Key
- * (11) Use InsertIntoExt::linkToManyTuple() with invalid tuple Key
- * (12) Use LinkTuples::fromOne() with invalid tuple key
- * (13) Use LinkTuples::toOne() with invalid tuple key
- * (14) Use LinkTuples::fromOne() with invalid tuple key
- *
- * @expected:
- * Relations students-lectures:
- * John    <-->    Math
- *            >    Database Systems
- * Mary    <-->    Programming
- *            >    Database Systems
- * Paul    <-->    Math
- *            >    Programming
- *
- * Relations students-professors:
- * John    <-->    Prof. Smith
- * Mary    <-->    Game Programming
- * Paul    <-->    Modeling
- *            >    Dr. Evans
+ *   (17) Link student to MANY professors
+ *   (18) Use invalid relationship ID
+ *   (19) Use InsertIntoExt::linkToOneTuple() with invalid tuple Key
+ *   (20) Use InsertIntoExt::linkToManyTuple() with invalid tuple Key
+ *   (21) Use LinkTuples::fromOne() with invalid tuple key
+ *   (22) Use LinkTuples::toOne() with invalid tuple key
+ *   (23) Use LinkTuples::toMany() with an invalid tuple key
  */
 TEST(RelationshipTest, linkTuplesQueryTest)
 {
-  /*TestDatabase db;
+  TestDatabase db;
   setupReplationshipTestsDatabase(db);
 
-  // Insert tuples
+  // (1)
   const auto studentJohn = db.execQuery(InsertIntoExt(TableIds::Students)
     .value(StudentsCols::Name, "John")
     .returnIds()).resultTuples[0].values;
@@ -555,6 +559,32 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     .value(StudentsCols::Name, "Paul")
     .returnIds()).resultTuples[0].values;
 
+  const auto studentSarah = db.execQuery(InsertIntoExt(TableIds::Students)
+    .value(StudentsCols::Name, "Sarah")
+    .returnIds()).resultTuples[0].values;
+
+  // (2)
+  const auto profSmith = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Name, "Prof. Smith")
+    .returnIds()).resultTuples[0].values;
+
+  const auto profEvans = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Name, "Dr. Evans")
+    .returnIds()).resultTuples[0].values;
+
+  const auto profAdams = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Name, "Prof. Adams")
+    .returnIds()).resultTuples[0].values;
+
+  // (3)
+  const auto lectureOs = db.execQuery(InsertIntoExt(TableIds::Lectures)
+    .value(LecturesCols::Topic, "Operating systems")
+    .returnIds()).resultTuples[0].values;
+
+  const auto lectureDbs = db.execQuery(InsertIntoExt(TableIds::Lectures)
+    .value(LecturesCols::Topic, "Database systems")
+    .returnIds()).resultTuples[0].values;
+
   const auto lectureMath = db.execQuery(InsertIntoExt(TableIds::Lectures)
     .value(LecturesCols::Topic, "Math")
     .returnIds()).resultTuples[0].values;
@@ -563,65 +593,73 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     .value(LecturesCols::Topic, "Programming")
     .returnIds()).resultTuples[0].values;
 
-  const auto lectureDbSystems = db.execQuery(InsertIntoExt(TableIds::Lectures)
-    .value(LecturesCols::Topic, "Database Systems")
-    .returnIds()).resultTuples[0].values;
-
-  const auto projectGameProgramming = db.execQuery(InsertIntoExt(TableIds::Professors)
-    .value(ProfessorsCols::Name, "Game Programming")
-    .returnIds()).resultTuples[0].values;
-
-  const auto projectModeling = db.execQuery(InsertIntoExt(TableIds::Professors)
-    .value(ProfessorsCols::Name, "Modeling")
-    .returnIds()).resultTuples[0].values;
-
-  const auto projectMachineLearning = db.execQuery(InsertIntoExt(TableIds::Professors)
-    .value(ProfessorsCols::Name, "Dr. Evans")
-    .returnIds()).resultTuples[0].values;
-
-  const auto projectComputerVision = db.execQuery(InsertIntoExt(TableIds::Professors)
-    .value(ProfessorsCols::Name, "Prof. Smith")
-    .returnIds()).resultTuples[0].values;
-
-  // (1)
-  db.execQuery(LinkTuples(Relationships::LectureParticipant)
-    .fromOne(studentMary)
-    .toOne(lectureProgramming));
-
-  // (2)
-  db.execQuery(LinkTuples(Relationships::LectureParticipant)
-    .fromOne(studentPaul)
-    .toMany({ lectureMath, lectureProgramming }));
-
-  // (3)
-  db.execQuery(LinkTuples(Relationships::LectureParticipant)
-    .fromOne(lectureMath)
-    .toOne(studentJohn));
-
   // (4)
-  db.execQuery(LinkTuples(Relationships::LectureParticipant)
-    .fromOne(lectureDbSystems)
+  db.execQuery(LinkTuples(Relationships::StudentsConfidant)
+    .fromOne(profSmith)
     .toMany({ studentJohn, studentMary }));
 
   // (5)
   db.execQuery(LinkTuples(Relationships::StudentsConfidant)
-    .fromOne(studentMary)
-    .toOne(projectGameProgramming));
+    .fromOne(profEvans)
+    .toOne(studentPaul));
 
   // (6)
   db.execQuery(LinkTuples(Relationships::StudentsConfidant)
-    .fromOne(studentPaul)
-    .toMany({ projectModeling, projectMachineLearning }));
+    .fromOne(studentSarah)
+    .toOne(profAdams));
 
   // (7)
-  db.execQuery(LinkTuples(Relationships::StudentsConfidant)
-    .fromOne(projectComputerVision)
-    .toOne(studentJohn));
+  db.execQuery(LinkTuples(Relationships::Lecturer)
+    .fromOne(profSmith)
+    .toOne(lectureProgramming));
 
   // (8)
+  db.execQuery(LinkTuples(Relationships::Lecturer)
+    .fromOne(lectureMath)
+    .toOne(profEvans));
+
+  // (9)
+  db.execQuery(LinkTuples(Relationships::Lecturer)
+    .fromOne(profAdams)
+    .toMany({ lectureOs, lectureDbs }));
+
+  // (10)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(studentJohn)
+    .toMany({ lectureMath, lectureProgramming }));
+
+  // (11)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(lectureProgramming)
+    .toMany({ studentMary, studentSarah }));
+
+  // (12)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(studentMary)
+    .toOne(lectureMath));
+
+  // (13)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(studentPaul)
+    .toMany({ lectureDbs, lectureMath }));
+
+  // (14)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(studentSarah)
+    .toOne(lectureOs));
+
+  // (15)
+  db.execQuery(LinkTuples(Relationships::LectureParticipant)
+    .fromOne(lectureDbs)
+    .toOne(studentSarah));
+
+  // (16)
+  expectCorrectRelations(db);
+
+  // (17)
   EXPECT_THROW(db.execQuery(LinkTuples(Relationships::StudentsConfidant)
-    .fromOne(projectComputerVision)
-    .toMany({ studentJohn, studentMary }))
+    .fromOne(studentSarah)
+    .toMany({ profSmith, profEvans }))
     , DatabaseException);
 
   EXPECT_THROW(db.execQuery(InsertIntoExt(TableIds::Professors)
@@ -629,139 +667,41 @@ TEST(RelationshipTest, linkTuplesQueryTest)
     .linkToManyTuples(Relationships::StudentsConfidant, { studentJohn, studentMary }))
     , DatabaseException);
 
-  // (9)
+  // (18)
   EXPECT_THROW(db.execQuery(InsertIntoExt(TableIds::Professors)
     .value(ProfessorsCols::Name, "Dummy")
     .linkToOneTuple(Relationships::LectureParticipant, studentJohn))
     , DatabaseException);
 
-  // (10)
+  // (19)
   EXPECT_THROW(db.execQuery(InsertIntoExt(TableIds::Students)
     .value(StudentsCols::Name, "Dummy")
-    .linkToOneTuple(Relationships::LectureParticipant, projectMachineLearning))
+    .linkToOneTuple(Relationships::LectureParticipant, profSmith))
     , DatabaseException);
 
-  // (11)
+  // (20)
   EXPECT_THROW(db.execQuery(InsertIntoExt(TableIds::Students)
     .value(StudentsCols::Name, "Dummy")
-    .linkToManyTuples(Relationships::LectureParticipant, { projectMachineLearning, lectureDbSystems }))
+    .linkToManyTuples(Relationships::LectureParticipant, { profSmith, profEvans }))
     , DatabaseException);
 
-  // (12)
+  // (21)
   EXPECT_THROW(db.execQuery(LinkTuples(Relationships::LectureParticipant)
-    .fromOne(projectComputerVision)
+    .fromOne(profSmith)
     .toOne(lectureProgramming))
     , DatabaseException);
 
-  // (13)
+  // (22)
   EXPECT_THROW(db.execQuery(LinkTuples(Relationships::LectureParticipant)
     .fromOne(studentMary)
-    .toOne(projectComputerVision))
+    .toOne(profSmith))
     , DatabaseException);
 
-  // (14)
+  // (23)
   EXPECT_THROW(db.execQuery(LinkTuples(Relationships::LectureParticipant)
     .fromOne(studentMary)
-    .toMany({ projectComputerVision, lectureProgramming }))
+    .toMany({ lectureMath, profSmith }))
     , DatabaseException);
-
-  // Expectations:
-  auto results = db.execQuery(FromTable(TableIds::Students)
-    .select({ StudentsCols::Name })
-    .joinColumns(Relationships::LectureParticipant, { LecturesCols::Topic }));
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "John", QVariantList() << "Math" << "Database Systems");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "Mary", QVariantList() << "Programming" << "Database Systems");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "Paul", QVariantList() << "Math" << "Programming");
-
-  results = db.execQuery(FromTable(TableIds::Lectures)
-    .selectAll()
-    .joinColumns(Relationships::LectureParticipant, { StudentsCols::Name }));
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
-    "Math", QVariantList() << "John" << "Paul");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
-    "Programming", QVariantList() << "Mary" << "Paul");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
-    "Database Systems", QVariantList() << "John" << "Mary");
-
-  results = db.execQuery(FromTable(TableIds::Students)
-    .select({ StudentsCols::Name })
-    .joinAll(Relationships::StudentsConfidant));
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "John", QVariantList() << "Prof. Smith");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "Mary", QVariantList() << "Game Programming");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "Paul", QVariantList() << "Modeling" << "Dr. Evans");
-
-  results = db.execQuery(FromTable(TableIds::Professors)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant));
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Professors, ProfessorsCols::Name,TableIds::Students, StudentsCols::Name,
-    "Prof. Smith", QVariantList() << "John");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Professors, ProfessorsCols::Name,TableIds::Students, StudentsCols::Name,
-    "Game Programming", QVariantList() << "Mary");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Professors, ProfessorsCols::Name,TableIds::Students, StudentsCols::Name,
-    "Modeling", QVariantList() << "Paul");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Professors, ProfessorsCols::Name,TableIds::Students, StudentsCols::Name,
-    "Dr. Evans", QVariantList() << "Paul");
-
-  results = db.execQuery(FromTable(TableIds::Students)
-    .selectAll()
-    .joinAll(Relationships::StudentsConfidant)
-    .joinAll(Relationships::LectureParticipant));
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "John", QVariantList() << "Math" << "Database Systems");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "Mary", QVariantList() << "Programming" << "Database Systems");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::LectureParticipant,
-    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
-    "Paul", QVariantList() << "Math" << "Programming");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "John", QVariantList() << "Prof. Smith");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "Mary", QVariantList() << "Game Programming");
-
-  Funcs::expectRelations(results.resultTuples, Relationships::StudentsConfidant,
-    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
-    "Paul", QVariantList() << "Modeling" << "Dr. Evans");*/
 }
 
 /**
@@ -1093,6 +1033,5 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation5Students(results.resultTuples);
   expectSpecialRelation6Students(results.resultTuples);
 }
-
 
 }
