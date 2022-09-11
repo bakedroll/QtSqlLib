@@ -33,7 +33,7 @@ TEST(ExpressionTest, validity)
   Expr expr3;
   expr3.LESS_COL(Table1Cols::Id, Table1Cols::Number);
 
-  EXPECT_EQ(expr2.toQString(schema, tid), "'test'.'id' != 'test'.'number'");
+  EXPECT_EQ(expr3.toQString(schema, tid), "'test'.'id' < 'test'.'number'");
 }
 
 /**

@@ -275,9 +275,7 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  ID versionColId(s_versionColId);
-
-  const auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select({ std::reference_wrapper<const API::IID>(versionColId) }));
+  const auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select({ s_versionColId }));
   if (results.resultTuples.empty())
   {
     return -1;
@@ -348,11 +346,9 @@ bool Database::isVersionTableExisting() const
   table.columns[s_sqliteMasterTypeColId].name = "type";
   table.columns[s_sqliteMasterNameColId].name = "name";
 
-  ID sqliteMasterNameColId(s_sqliteMasterNameColId);
-
   const auto results = execQueryForSchema(sqliteMasterSchema,
     Query::FromTable(ID(s_sqliteMasterTableId))
-    .select({ std::reference_wrapper<const API::IID>(sqliteMasterNameColId) })
+    .select({ s_sqliteMasterNameColId })
     .where(Expr()
       .equal(ID(s_sqliteMasterTypeColId), "table")
       .and()
