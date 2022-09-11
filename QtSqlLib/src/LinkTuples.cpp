@@ -297,7 +297,6 @@ void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema
       {
         const auto& colId = foreignKeyRef.primaryForeignKeyColIdMap.at(refColId.first);
         columnValuesMap[colId].append(refColId.second);
-        break;
       }
     }
   };

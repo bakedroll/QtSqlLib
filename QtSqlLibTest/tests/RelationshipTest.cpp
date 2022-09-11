@@ -709,6 +709,7 @@ TEST(RelationshipTest, linkTuplesQueryTest)
  * Create two tables with three tuples respectively:
  *   - Table students, containing tuples: [ student1, student2, student3 ]
  *   - Table professors, containing tuples: [ professor1, professor2, professor3 ]
+ *   - Each table has two primary keys
  *
  * Create 6 relationships and link tuples as follows:
  *   (a) students 1<---->N professors
@@ -776,14 +777,14 @@ TEST(RelationshipTest, specialRelationships)
 {
   SchemaConfigurator configurator;
   configurator.configureTable(TableIds::Students, "students")
-    .column(StudentsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
+    .column(StudentsCols::Id, "id", DataType::Integer).notNull()
     .column(StudentsCols::Name, "name", DataType::Varchar, 128)
-    .primaryKeys({ StudentsCols::Id });
+    .primaryKeys({ StudentsCols::Id, StudentsCols::Name });
 
   configurator.configureTable(TableIds::Professors, "professors")
-    .column(ProfessorsCols::Id, "id", DataType::Integer).autoIncrement().notNull()
+    .column(ProfessorsCols::Id, "id", DataType::Integer).notNull()
     .column(ProfessorsCols::Name, "name", DataType::Varchar, 128)
-    .primaryKeys({ ProfessorsCols::Id });
+    .primaryKeys({ ProfessorsCols::Id, ProfessorsCols::Name });
 
   configurator.configureRelationship(Relationships::Special1, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::OneToMany);
   configurator.configureRelationship(Relationships::Special2, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::OneToMany);
@@ -796,26 +797,32 @@ TEST(RelationshipTest, specialRelationships)
   db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
   const auto student1 = db.execQuery(InsertIntoExt(TableIds::Students)
+    .value(StudentsCols::Id, 0)
     .value(StudentsCols::Name, "student1")
     .returnIds()).resultTuples[0].values;
 
   const auto student2 = db.execQuery(InsertIntoExt(TableIds::Students)
+    .value(StudentsCols::Id, 1)
     .value(StudentsCols::Name, "student2")
     .returnIds()).resultTuples[0].values;
 
   const auto student3 = db.execQuery(InsertIntoExt(TableIds::Students)
+    .value(StudentsCols::Id, 2)
     .value(StudentsCols::Name, "student3")
     .returnIds()).resultTuples[0].values;
 
   const auto professor1 = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Id, 0)
     .value(ProfessorsCols::Name, "professor1")
     .returnIds()).resultTuples[0].values;
 
   const auto professor2 = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Id, 1)
     .value(ProfessorsCols::Name, "professor2")
     .returnIds()).resultTuples[0].values;
 
   const auto professor3 = db.execQuery(InsertIntoExt(TableIds::Professors)
+    .value(ProfessorsCols::Id, 2)
     .value(ProfessorsCols::Name, "professor3")
     .returnIds()).resultTuples[0].values;
 
