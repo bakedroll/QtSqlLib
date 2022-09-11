@@ -41,9 +41,7 @@ using Schema = QtSqlLib::Schema;
 using SchemaConfigurator = QtSqlLib::SchemaConfigurator;
 using UpdateTable = QtSqlLib::Query::UpdateTable;
 
-namespace TableIds
-{
-enum
+enum class TableIds
 {
   Table1,
   Table2,
@@ -51,59 +49,41 @@ enum
   Professors,
   Lectures
 };
-}
 
-namespace Table1Cols
-{
-enum
+enum class Table1Cols
 {
   Id,
   Text,
   Number,
   Mandatory
 };
-}
 
-namespace Table2Cols
-{
-enum
+enum Table2Cols
 {
   Id = 0U,
   Text = 1U,
   Mandatory = 2U
 };
-}
 
-namespace StudentsCols
-{
-enum
+enum class StudentsCols
 {
   Id = 3U,
   Name = 4U
 };
-}
 
-namespace ProfessorsCols
-{
-enum
+enum class ProfessorsCols
 {
   Id = 5U,
   Name = 6U
 };
-}
 
-namespace LecturesCols
-{
-enum
+enum class LecturesCols
 {
   Id = 7U,
   Topic = 8U
 };
-}
 
-namespace Relationships
-{
-enum
+enum class Relationships
 {
   StudentsConfidant,
   LectureParticipant,
@@ -115,7 +95,6 @@ enum
   Special5,
   Special6
 };
-}
 
 class Funcs
 {

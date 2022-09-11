@@ -41,8 +41,8 @@ TEST(InsertUpdateReadTest, insertAndRead)
   EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test2"));
   EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test3"));
 
-  auto resultColText = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Text });
-  auto resultColNr = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Number });
+  auto resultColText = results.resultTuples[0].values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Text) });
+  auto resultColNr = results.resultTuples[0].values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Number) });
 
   EXPECT_EQ(resultColText.userType(), QMetaType::QString);
   EXPECT_EQ(resultColNr.userType(), QMetaType::Double);
@@ -62,9 +62,9 @@ TEST(InsertUpdateReadTest, insertAndRead)
 
   for (const auto& result : results.resultTuples)
   {
-    const auto resultColId = result.values.at({ TableIds::Table1, Table1Cols::Id });
-    resultColText = result.values.at({ TableIds::Table1, Table1Cols::Text });
-    resultColNr = result.values.at({ TableIds::Table1, Table1Cols::Number });
+    const auto resultColId = result.values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Id) });
+    resultColText = result.values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Text) });
+    resultColNr = result.values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Number) });
 
     EXPECT_EQ(resultColId.userType(), QMetaType::LongLong);
     EXPECT_EQ(resultColText.userType(), QMetaType::QString);
@@ -131,8 +131,8 @@ TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
 
   EXPECT_EQ(results.resultTuples.size(), 1);
 
-  const auto resultId = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Id });
-  const auto resultText = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Text });
+  const auto resultId = results.resultTuples[0].values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Id) });
+  const auto resultText = results.resultTuples[0].values.at({ static_cast<int>(TableIds::Table1), static_cast<int>(Table1Cols::Text) });
 
   EXPECT_EQ(resultId.userType(), QMetaType::LongLong);
   EXPECT_EQ(resultText.userType(), QMetaType::QString);

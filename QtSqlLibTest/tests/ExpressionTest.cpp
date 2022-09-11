@@ -13,11 +13,11 @@ TEST(ExpressionTest, validity)
 {
   Schema schema;
 
-  auto& table = schema.getTables()[TableIds::Table1];
+  auto& table = schema.getTables()[static_cast<int>(TableIds::Table1)];
   table.name = "test";
-  table.columns[Table1Cols::Id].name = "id";
-  table.columns[Table1Cols::Text].name = "test";
-  table.columns[Table1Cols::Number].name = "number";
+  table.columns[static_cast<int>(Table1Cols::Id)].name = "id";
+  table.columns[static_cast<int>(Table1Cols::Text)].name = "test";
+  table.columns[static_cast<int>(Table1Cols::Number)].name = "number";
 
   Expr expr1;
   expr1.LESS(Table1Cols::Id, 2).AND.EQUAL(Table1Cols::Text, "test1");
@@ -44,10 +44,10 @@ TEST(ExpressionTest, exceptions)
 {
   Schema schema;
 
-  auto& table = schema.getTables()[TableIds::Table1];
+  auto& table = schema.getTables()[static_cast<int>(TableIds::Table1)];
   table.name = "test";
-  table.columns[Table1Cols::Id].name = "id";
-  table.columns[Table1Cols::Text].name = "test";
+  table.columns[static_cast<int>(Table1Cols::Id)].name = "id";
+  table.columns[static_cast<int>(Table1Cols::Text)].name = "test";
 
   const auto assembleExpr1 = []()
   {
