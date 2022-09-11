@@ -15,7 +15,7 @@ public:
   struct ResultTuple
   {
     ISchema::TupleValues values;
-    std::map<ISchema::Id, TupleValuesList> joinedTuples;
+    std::map<API::IID::Type, TupleValuesList> joinedTuples;
   };
 
   struct QueryResults

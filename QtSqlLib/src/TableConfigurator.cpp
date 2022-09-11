@@ -13,13 +13,14 @@ TableConfigurator::TableConfigurator(API::ISchema::Table& table)
 
 TableConfigurator::~TableConfigurator() = default;
 
-API::ITableConfigurator& TableConfigurator::column(API::ISchema::Id columnId, const QString& columnName,
+API::ITableConfigurator& TableConfigurator::column(const API::IID& columnId, const QString& columnName,
                                                    API::ISchema::DataType type, int varcharLength)
 {
-  if (m_table.columns.count(columnId) > 0)
+  const auto cid = columnId.get();
+  if (m_table.columns.count(cid) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("Column with id %1 already exists for table '%2'.").arg(columnId).arg(m_table.name));
+      QString("Column with id %1 already exists for table '%2'.").arg(cid).arg(m_table.name));
   }
 
   if (columnName.isEmpty())
@@ -47,8 +48,8 @@ API::ITableConfigurator& TableConfigurator::column(API::ISchema::Id columnId, co
   column.bIsAutoIncrement = false;
   column.bIsNotNull = false;
 
-  m_table.columns[columnId] = column;
-  m_lastColumnId = columnId;
+  m_table.columns[cid] = column;
+  m_lastColumnId = cid;
 
   return *this;
 }
@@ -106,7 +107,7 @@ API::ITableConfigurator& TableConfigurator::notNull()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const std::set<API::ISchema::Id>& columnIds)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::IID::Type>& columnIds)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -120,7 +121,10 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const std::set<API::ISch
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  m_table.primaryKeys = columnIds;
+  for (const auto& id : columnIds)
+  {
+    m_table.primaryKeys.emplace(id);
+  }
   m_bIsPrimaryKeysConfigured = true;
   return *this;
 }

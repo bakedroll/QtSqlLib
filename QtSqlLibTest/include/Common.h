@@ -2,9 +2,12 @@
 
 #include <TestDatabase.h>
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>
+#include <QtSqlLib/ID.h>
+#include <QtSqlLib/IDList.h>
 #include <QtSqlLib/Query/BatchInsertInto.h>
 #include <QtSqlLib/Query/FromTable.h>
 #include <QtSqlLib/Query/InsertInto.h>
@@ -24,6 +27,7 @@ using DatabaseException = QtSqlLib::DatabaseException;
 using DataType = QtSqlLib::API::ISchema::DataType;
 using Expr = QtSqlLib::Expr;
 using FromTable = QtSqlLib::Query::FromTable;
+using IID = QtSqlLib::API::IID;
 using InsertInto = QtSqlLib::Query::InsertInto;
 using InsertIntoExt = QtSqlLib::Query::InsertIntoExt;
 using IQuery = QtSqlLib::API::IQuery;
@@ -122,18 +126,18 @@ public:
 
   static bool isResultTuplesContaining(
     const std::vector<IQuery::ResultTuple>& results,
-    ISchema::Id tableId, ISchema::Id columnId, QVariant value);
+    const IID& tableId, const IID& columnId, QVariant value);
 
   static bool isResultTuplesContaining(
     const IQuery::TupleValuesList& results,
-    ISchema::Id tableId, ISchema::Id columnId, QVariant value);
+    const IID& tableId, const IID& columnId, QVariant value);
 
   static IQuery::TupleValuesList& getJoinedTuples(std::vector<IQuery::ResultTuple>& results,
-    ISchema::Id tableId, ISchema::Id columnId, const QVariant& value, ISchema::Id relationshipId);
+    const IID& tableId, const IID& columnId, const QVariant& value, const IID& relationshipId);
 
   static void expectRelations(std::vector<IQuery::ResultTuple>& results,
-    ISchema::Id relationshipId,
-    ISchema::Id fromTableId, ISchema::Id fromColId, ISchema::Id toTableId, ISchema::Id toColId,
+    const IID& relationshipId,
+    const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
     const QVariant& fromValue, const QVariantList& toValues);
 
 private:

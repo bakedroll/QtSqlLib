@@ -1,10 +1,14 @@
 #pragma once
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Query/BaseInsert.h>
 
 #include <QVariant>
 
 #include <vector>
+
+#define BATCH_INSERT_INTO(X) QtSqlLib::Query::BatchInsertInto(QtSqlLib::ID(X))
+#define VALUES(X, Y) values(QtSqlLib::ID(X), Y)
 
 namespace QtSqlLib::Query
 {
@@ -12,10 +16,10 @@ namespace QtSqlLib::Query
 class BatchInsertInto : public BaseInsert
 {
 public:
-  BatchInsertInto(API::ISchema::Id tableId);
+  BatchInsertInto(const API::IID& tableId);
   ~BatchInsertInto() override;
 
-  BatchInsertInto& values(API::ISchema::Id columnId, const QVariantList& values);
+  BatchInsertInto& values(const API::IID& columnId, const QVariantList& values);
 
   SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 

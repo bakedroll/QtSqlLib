@@ -1,14 +1,15 @@
 #include "QtSqlLib/Query/LinkTuples.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
 
 namespace QtSqlLib::Query
 {
 
-LinkTuples::LinkTuples(API::ISchema::Id relationshipId)
+LinkTuples::LinkTuples(const API::IID& relationshipId)
   : QuerySequence()
-  , m_relationshipId(relationshipId)
+  , m_relationshipId(relationshipId.get())
   , m_expectedCall(ExpectedCall::From)
   , m_type(RelationshipType::ToOne)
   , m_bRemainingFromKeys(false)
@@ -106,9 +107,9 @@ void LinkTuples::prepare(API::ISchema& schema)
 }
 
 LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
-  API::ISchema::Id tableId,
+  API::IID::Type tableId,
   const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
-  : UpdateTable(tableId)
+  : UpdateTable(ID(tableId))
   , m_mode(Mode::Default)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
 {
@@ -126,7 +127,7 @@ void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::ISchema:
   for (const auto& parentKeyValue : parentKeyValues)
   {
     const auto childColId = m_primaryForeignKeyColIdMap.at(parentKeyValue.first);
-    set(childColId, parentKeyValue.second);
+    set(ID(childColId), parentKeyValue.second);
   }
 }
 
@@ -139,7 +140,7 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::ISchema:
     {
       whereExpr.and();
     }
-    whereExpr.equal(childKeyValue.first.columnId, childKeyValue.second);
+    whereExpr.equal(ID(childKeyValue.first.columnId), childKeyValue.second);
   }
 
   where(whereExpr);
@@ -171,10 +172,10 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSql
   return UpdateTable::getSqlQuery(db, schema, previousQueryResults);
 }
 
-LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::ISchema::Id tableId,
+LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type tableId,
   int numRelations,
   const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
-  : BatchInsertInto(tableId)
+  : BatchInsertInto(ID(tableId))
   , m_numRelations(numRelations)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
 {
@@ -203,14 +204,14 @@ API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QS
       list << value.second;
     }
 
-    values(m_primaryForeignKeyColIdMap.at(value.first), list);
+    values(ID(m_primaryForeignKeyColIdMap.at(value.first)), list);
   }
 
   return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }
 
 void LinkTuples::prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                       API::ISchema::Id fromTableId, API::ISchema::Id toTableId)
+                                       API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   auto parentTableId = relationship.tableFromId;
   auto childTableId = relationship.tableToId;
@@ -265,7 +266,7 @@ void LinkTuples::prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema:
 }
 
 void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                        API::ISchema::Id fromTableId, API::ISchema::Id toTableId)
+                                        API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);
@@ -285,7 +286,7 @@ void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema
   const auto& foreignKeyRefsFrom =  foreignKeyRefsFromList[0];
   const auto& foreignKeyRefsTo = (isSelfRelationship ? foreignKeyRefsToList[1] : foreignKeyRefsToList[0]);
 
-  std::map<API::ISchema::Id, QVariantList> columnValuesMap;
+  std::map<API::IID::Type, QVariantList> columnValuesMap;
 
   const auto appendValues = [&columnValuesMap](
     const API::ISchema::TupleValues& values,
@@ -310,11 +311,11 @@ void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema
   auto batchInsertQuery = m_bRemainingFromKeys
     ? std::make_unique<BatchInsertRemainingKeys>(linkTableId, static_cast<int>(m_toTupleKeyValuesList.size()),
       foreignKeyRefsFrom.primaryForeignKeyColIdMap)
-    : std::make_unique<BatchInsertInto>(linkTableId);
+    : std::make_unique<BatchInsertInto>(ID(linkTableId));
 
   for (const auto& values : columnValuesMap)
   {
-    batchInsertQuery->values(values.first, values.second);
+    batchInsertQuery->values(ID(values.first), values.second);
   }
 
   addQuery(std::move(batchInsertQuery));

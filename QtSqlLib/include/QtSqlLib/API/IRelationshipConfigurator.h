@@ -2,6 +2,9 @@
 
 #include <QtSqlLib/API/ISchema.h>
 
+#define ON_DELETE(X) onDelete(X)
+#define ON_UPDATE(X) onUpdate(X)
+
 namespace QtSqlLib::API
 {
 

@@ -15,31 +15,31 @@ namespace QtSqlLibTest
 TEST(InsertUpdateReadTest, insertAndRead)
 {
   SchemaConfigurator configurator;
-  configurator.configureTable(TableIds::Table1, "table1")
-    .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-    .column(Table1Cols::Text, "text", DataType::Varchar, 128)
-    .column(Table1Cols::Number, "number", DataType::Real).notNull();
+  configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+    .COLUMN(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
+    .COLUMN_VARCHAR(Table1Cols::Text, "text", 128)
+    .COLUMN(Table1Cols::Number, "number", DataType::Real).notNull();
 
   TestDatabase db;
   db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  db.execQuery(InsertInto(TableIds::Table1)
-    .value(Table1Cols::Text, "test")
-    .value(Table1Cols::Number, 0.5));
+  db.execQuery(INSERT_INTO(TableIds::Table1)
+    .VALUE(Table1Cols::Text, "test")
+    .VALUE(Table1Cols::Number, 0.5));
 
-  db.execQuery(BatchInsertInto(TableIds::Table1)
-    .values(Table1Cols::Text, QVariantList() << "test1" << "test2" << "test3")
-    .values(Table1Cols::Number, QVariantList() << 0.6 << 0.7 << 0.8));
+  db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
+    .VALUES(Table1Cols::Text, QVariantList() << "test1" << "test2" << "test3")
+    .VALUES(Table1Cols::Number, QVariantList() << 0.6 << 0.7 << 0.8));
 
-  auto results = db.execQuery(FromTable(TableIds::Table1)
-    .select({ Table1Cols::Text, Table1Cols::Number }));
+  auto results = db.execQuery(FROM_TABLE(TableIds::Table1)
+    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
 
   EXPECT_EQ(results.resultTuples.size(), 4);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test2"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test3"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test2"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test3"));
 
   auto resultColText = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Text });
   auto resultColNr = results.resultTuples[0].values.at({ TableIds::Table1, Table1Cols::Number });
@@ -50,15 +50,15 @@ TEST(InsertUpdateReadTest, insertAndRead)
   EXPECT_EQ(resultColText.toString(), "test");
   EXPECT_DOUBLE_EQ(resultColNr.toDouble(), 0.5);
 
-  results = db.execQuery(FromTable(TableIds::Table1)
-    .select({ Table1Cols::Id, Table1Cols::Text, Table1Cols::Number })
-    .where(Expr().less(Table1Cols::Number, QVariant(0.75))));
+  results = db.execQuery(FROM_TABLE(TableIds::Table1)
+    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number)))
+    .WHERE(LESS(Table1Cols::Number, 0.75)));
 
   EXPECT_EQ(results.resultTuples.size(), 3);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "test2"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test2"));
 
   for (const auto& result : results.resultTuples)
   {
@@ -82,30 +82,30 @@ TEST(InsertUpdateReadTest, insertAndRead)
 TEST(InsertUpdateReadTest, insertUpdateAndRead)
 {
   SchemaConfigurator configurator;
-  configurator.configureTable(TableIds::Table1, "table1")
-    .column(Table1Cols::Id, "id", DataType::Integer).primaryKey().autoIncrement().notNull()
-    .column(Table1Cols::Text, "text", DataType::Varchar, 128)
-    .column(Table1Cols::Number, "number", DataType::Integer);
+  configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+    .COLUMN(Table1Cols::Id, "id", DataType::Integer).PRIMARY_KEY.AUTO_INCREMENT.NOT_NULL
+    .COLUMN_VARCHAR(Table1Cols::Text, "text", 128)
+    .COLUMN(Table1Cols::Number, "number", DataType::Integer);
 
   TestDatabase db;
   db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  db.execQuery(BatchInsertInto(TableIds::Table1)
-    .values(Table1Cols::Text, QVariantList() << "value1" << "value2" << "value3")
-    .values(Table1Cols::Number, QVariantList() << 1 << 2 << 3));
+  db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
+    .VALUES(Table1Cols::Text, QVariantList() << "value1" << "value2" << "value3")
+    .VALUES(Table1Cols::Number, QVariantList() << 1 << 2 << 3));
 
-  db.execQuery(UpdateTable(TableIds::Table1)
-    .set(Table1Cols::Text, "value2_updated")
-    .where(Expr().equal(Table1Cols::Number, QVariant(2))));
+  db.execQuery(UPDATE_TABLE(TableIds::Table1)
+    .SET(Table1Cols::Text, "value2_updated")
+    .WHERE(EQUAL(Table1Cols::Number, 2)));
 
-  const auto results = db.execQuery(FromTable(TableIds::Table1)
-    .select({ Table1Cols::Text, Table1Cols::Number }));
+  const auto results = db.execQuery(FROM_TABLE(TableIds::Table1)
+    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
 
   EXPECT_EQ(results.resultTuples.size(), 3);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "value1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "value2_updated"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, TableIds::Table1, Table1Cols::Text, "value3"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value2_updated"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value3"));
 }
 
 /**
@@ -116,18 +116,18 @@ TEST(InsertUpdateReadTest, insertUpdateAndRead)
 TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
 {
   SchemaConfigurator configurator;
-  configurator.configureTable(TableIds::Table1, "table1")
-    .column(Table1Cols::Id, "id", DataType::Integer).notNull()
-    .column(Table1Cols::Text, "text", DataType::Varchar, 128).notNull()
-    .primaryKeys({ Table1Cols::Id, Table1Cols::Text });
+  configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+    .COLUMN(Table1Cols::Id, "id", DataType::Integer).NOT_NULL
+    .COLUMN_VARCHAR(Table1Cols::Text, "text", 128).NOT_NULL
+    .PRIMARY_KEYS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text)));
 
   TestDatabase db;
   db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  const auto results = db.execQuery(InsertIntoExt(TableIds::Table1)
-    .value(Table1Cols::Id, 1)
-    .value(Table1Cols::Text, "text")
-    .returnIds());
+  const auto results = db.execQuery(INSERT_INTO_EXT(TableIds::Table1)
+    .VALUE(Table1Cols::Id, 1)
+    .VALUE(Table1Cols::Text, "text")
+    .RETURN_IDS);
 
   EXPECT_EQ(results.resultTuples.size(), 1);
 
@@ -151,11 +151,11 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case1 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "id", DataType::Integer);
 
-    configurator.configureTable(TableIds::Table1, "table2")
-      .column(Table2Cols::Id, "id", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table2")
+      .COLUMN(Table2Cols::Id, "id", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -165,11 +165,11 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case2 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "id", DataType::Integer);
 
-    configurator.configureTable(TableIds::Table2, "table1")
-      .column(Table2Cols::Id, "id", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table2, "table1")
+      .COLUMN(Table2Cols::Id, "id", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -179,8 +179,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case3 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "sqlite_table")
-      .column(Table1Cols::Id, "id", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "sqlite_table")
+      .COLUMN(Table1Cols::Id, "id", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -190,9 +190,9 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case4 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "id1", DataType::Integer)
-      .column(Table1Cols::Id, "id2", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "id1", DataType::Integer)
+      .COLUMN(Table1Cols::Id, "id2", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -202,9 +202,9 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case5 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "col", DataType::Integer)
-      .column(Table1Cols::Text, "col", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "col", DataType::Integer)
+      .COLUMN(Table1Cols::Text, "col", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -214,8 +214,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case6 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Text, "text", DataType::Varchar, 0);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN_VARCHAR(Table1Cols::Text, "text", 0);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -225,9 +225,9 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case7 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "Id", DataType::Integer).primaryKey()
-      .column(Table1Cols::Text, "text", DataType::Varchar).primaryKey();
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "Id", DataType::Integer).PRIMARY_KEY
+      .COLUMN(Table1Cols::Text, "text", DataType::Varchar).PRIMARY_KEY;
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -237,8 +237,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case8 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "Id", DataType::Integer).primaryKey().primaryKey();
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "Id", DataType::Integer).primaryKey().PRIMARY_KEY;
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -248,8 +248,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case9 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "Id", DataType::Integer).autoIncrement().autoIncrement();
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "Id", DataType::Integer).AUTO_INCREMENT.AUTO_INCREMENT;
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -259,8 +259,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case10 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
-      .column(Table1Cols::Id, "Id", DataType::Integer).notNull().notNull();
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+      .COLUMN(Table1Cols::Id, "Id", DataType::Integer).NOT_NULL.NOT_NULL;
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -270,7 +270,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case11 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1")
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .primaryKey();
 
     TestDatabase db;
@@ -281,8 +281,8 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case12 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "table1").
-      column(Table1Cols::Id, "", DataType::Integer);
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "table1").
+      COLUMN(Table1Cols::Id, "", DataType::Integer);
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -292,7 +292,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
   const auto case13 = []()
   {
     SchemaConfigurator configurator;
-    configurator.configureTable(TableIds::Table1, "");
+    configurator.CONFIGURE_TABLE(TableIds::Table1, "");
 
     TestDatabase db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
@@ -320,33 +320,33 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
 TEST(InsertUpdateReadTest, fromTableExceptions)
 {
   EXPECT_THROW(
-    FromTable(TableIds::Students).select({ StudentsCols::Name }).select({ StudentsCols::Id }),
+    FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT(IDS(QtSqlLib::ID(StudentsCols::Id))),
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students).select({ StudentsCols::Name }).selectAll(),
+    FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT_ALL,
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students).selectAll().selectAll(),
+    FROM_TABLE(TableIds::Students).SELECT_ALL.SELECT_ALL,
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Name })
-      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Id }),
+    FROM_TABLE(TableIds::Students)
+      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Name)))
+      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Id))),
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students)
-      .joinColumns(Relationships::StudentsConfidant, { StudentsCols::Name })
-      .joinAll(Relationships::StudentsConfidant),
+    FROM_TABLE(TableIds::Students)
+      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Name)))
+      .JOIN_ALL(Relationships::StudentsConfidant),
     DatabaseException);
 
   EXPECT_THROW(
-    FromTable(TableIds::Students)
-      .joinAll(Relationships::StudentsConfidant)
-      .joinAll(Relationships::StudentsConfidant),
+    FROM_TABLE(TableIds::Students)
+      .JOIN_ALL(Relationships::StudentsConfidant)
+      .JOIN_ALL(Relationships::StudentsConfidant),
     DatabaseException);
 }
 

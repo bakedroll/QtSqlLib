@@ -34,17 +34,17 @@ Schema::Schema() = default;
 
 Schema::~Schema() = default;
 
-std::map<API::ISchema::Id, API::ISchema::Table>& Schema::getTables()
+std::map<API::IID::Type, API::ISchema::Table>& Schema::getTables()
 {
   return m_tables;
 }
 
-std::map<API::ISchema::Id, Schema::Relationship>& Schema::getRelationships()
+std::map<API::IID::Type, Schema::Relationship>& Schema::getRelationships()
 {
   return m_relationships;
 }
 
-API::ISchema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
+API::IID::Type Schema::getManyToManyLinkTableId(API::IID::Type relationshipId) const
 {
   throwIfRelationshipIsNotExisting(relationshipId);
   return m_mapManyToManyRelationshipToLinkTableId.at(relationshipId);
@@ -52,7 +52,7 @@ API::ISchema::Id Schema::getManyToManyLinkTableId(Id relationshipId) const
 
 void Schema::configureRelationships()
 {
-  const auto checkTableIdExisting = [this](Id relId, Id tableId)
+  const auto checkTableIdExisting = [this](API::IID::Type relId, API::IID::Type tableId)
   {
     if (m_tables.count(tableId) == 0)
     {
@@ -121,7 +121,7 @@ void Schema::configureRelationships()
 
       auto currentColId = 0U;
 
-      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](Id refTableId, const Table& refTable)
+      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](API::IID::Type refTableId, const Table& refTable)
       {
         ForeignKeyReference foreignKeyReference { refTableId,
           relationship.second.onUpdateAction,
@@ -160,7 +160,7 @@ void Schema::configureRelationships()
   }
 }
 
-void Schema::throwIfTableIdNotExisting(Id tableId) const
+void Schema::throwIfTableIdNotExisting(API::IID::Type tableId) const
 {
   if (m_tables.count(tableId) == 0)
   {
@@ -169,7 +169,7 @@ void Schema::throwIfTableIdNotExisting(Id tableId) const
   }
 }
 
-void Schema::throwIfRelationshipIsNotExisting(Id relationshipId) const
+void Schema::throwIfRelationshipIsNotExisting(API::IID::Type relationshipId) const
 {
   if (m_relationships.count(relationshipId) == 0)
   {
@@ -178,7 +178,7 @@ void Schema::throwIfRelationshipIsNotExisting(Id relationshipId) const
   }
 }
 
-void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
+void Schema::throwIfColumnIdNotExisting(const Table& table, API::IID::Type colId) const
 {
   if (table.columns.count(colId) == 0)
   {
@@ -187,7 +187,7 @@ void Schema::throwIfColumnIdNotExisting(const Table& table, Id colId) const
   }
 }
 
-API::ISchema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
+API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
 {
   if (tupleKeyValues.empty())
   {
@@ -196,8 +196,8 @@ API::ISchema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tup
   }
 
   auto firstTableIdSet = false;
-  Id tableId = 0;
-  std::set<Id> colIds;
+  API::IID::Type tableId = 0;
+  std::set<API::IID::Type> colIds;
 
   for (const auto& value : tupleKeyValues)
   {
@@ -236,7 +236,7 @@ API::ISchema::Id Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tup
   return tableId;
 }
 
-API::ISchema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
+API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
 {
   if (tupleKeyValuesList.empty())
   {
@@ -245,7 +245,7 @@ API::ISchema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<
   }
 
   auto firstTableIdSet = false;
-  API::ISchema::Id tableId = 0;
+  API::IID::Type tableId = 0;
   for (const auto& tupleKeyValues : tupleKeyValuesList)
   {
     if (!firstTableIdSet)
@@ -267,25 +267,25 @@ API::ISchema::Id Schema::validatePrimaryKeysListAndGetTableId(const std::vector<
   return tableId;
 }
 
-std::pair<API::ISchema::Id, Schema::Id> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
-  Id relationshipId,
+std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
+  API::IID::Type relationshipId,
   const TupleValues& fromTupleKeyValues,
   const TupleValues& toTupleKeyValues) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
-std::pair<API::ISchema::Id, API::ISchema::Id> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
-  Id relationshipId,
+std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
+  API::IID::Type relationshipId,
   const TupleValues& fromTupleKeyValues,
   const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
 
-std::pair<API::ISchema::Id, API::ISchema::Id> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
+std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
-  Id relationshipId,
+  API::IID::Type relationshipId,
   const TupleValues& fromTupleKeyValues,
   const std::vector<TupleValues>& toTupleKeyValuesList) const
 {
@@ -327,8 +327,8 @@ std::pair<API::ISchema::Id, API::ISchema::Id> Schema::verifyRelationshipPrimaryK
 
 bool Schema::isTableIdsMatching(
   const Relationship& relationship,
-  Id tableFromId,
-  Id tableToId,
+  API::IID::Type tableFromId,
+  API::IID::Type tableToId,
   bool bIgnoreFromKeys)
 {
   if (bIgnoreFromKeys)

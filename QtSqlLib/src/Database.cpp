@@ -1,6 +1,7 @@
 #include "QtSqlLib/Database.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/ID.h"
 #include "QtSqlLib/QueryPrepareVisitor.h"
 #include "QtSqlLib/QueryExecuteVisitor.h"
 #include "QtSqlLib/Query/FromTable.h"
@@ -18,12 +19,12 @@ namespace QtSqlLib
 
 static const int s_defaultSchemaTargetVersion = 1;
 
-static const API::ISchema::Id s_sqliteMasterTableId = 0;
-static const API::ISchema::Id s_sqliteMasterTypeColId = 0;
-static const API::ISchema::Id s_sqliteMasterNameColId = 1;
+static const API::IID::Type s_sqliteMasterTableId = 0;
+static const API::IID::Type s_sqliteMasterTypeColId = 0;
+static const API::IID::Type s_sqliteMasterNameColId = 1;
 
-static const API::ISchema::Id s_versionColId = 0;
-static const API::ISchema::Id s_versionTableid = std::numeric_limits<API::ISchema::Id>::max();
+static const API::IID::Type s_versionColId = 0;
+static const API::IID::Type s_versionTableid = std::numeric_limits<API::IID::Type>::max();
 static const QString s_versionTableName = "database_version";
 
 static void verifyPrimaryKeys(const API::ISchema::Table& table)
@@ -210,8 +211,8 @@ void Database::initialize(API::ISchemaConfigurator& schemaConfigurator, const QS
 
   m_databaseName = databaseName;
 
-  schemaConfigurator.configureTable(s_versionTableid, s_versionTableName)
-    .column(s_versionColId, "version", API::ISchema::DataType::Integer).primaryKey().notNull();
+  schemaConfigurator.configureTable(ID(s_versionTableid), s_versionTableName)
+    .column(ID(s_versionColId), "version", API::ISchema::DataType::Integer).primaryKey().notNull();
 
   m_schema = schemaConfigurator.getSchema();
   m_schema->configureRelationships();
@@ -274,7 +275,9 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  const auto results = execQuery(Query::FromTable(s_versionTableid).select({ s_versionColId }));
+  ID versionColId(s_versionColId);
+
+  const auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select({ std::reference_wrapper<const API::IID>(versionColId) }));
   if (results.resultTuples.empty())
   {
     return -1;
@@ -297,8 +300,8 @@ void Database::createOrMigrateTables(int currentVersion)
         sequence.addQuery(std::make_unique<CreateTable>(table.second));
       }
 
-      auto query = std::make_unique<Query::InsertInto>(s_versionTableid);
-      query->value(s_versionColId, targetVersion);
+      auto query = std::make_unique<Query::InsertInto>(ID(s_versionTableid));
+      query->value(ID(s_versionColId), targetVersion);
 
       sequence.addQuery(std::move(query));
 
@@ -345,13 +348,15 @@ bool Database::isVersionTableExisting() const
   table.columns[s_sqliteMasterTypeColId].name = "type";
   table.columns[s_sqliteMasterNameColId].name = "name";
 
+  ID sqliteMasterNameColId(s_sqliteMasterNameColId);
+
   const auto results = execQueryForSchema(sqliteMasterSchema,
-    Query::FromTable(s_sqliteMasterTableId)
-    .select({ s_sqliteMasterNameColId })
+    Query::FromTable(ID(s_sqliteMasterTableId))
+    .select({ std::reference_wrapper<const API::IID>(sqliteMasterNameColId) })
     .where(Expr()
-      .equal(s_sqliteMasterTypeColId, "table")
+      .equal(ID(s_sqliteMasterTypeColId), "table")
       .and()
-      .equal(s_sqliteMasterNameColId, s_versionTableName)));
+      .equal(ID(s_sqliteMasterNameColId), s_versionTableName)));
 
   return !results.resultTuples.empty();
 }

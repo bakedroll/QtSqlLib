@@ -10,10 +10,10 @@ QString Funcs::getDefaultDatabaseFilename()
   return "test.db";
 }
 
-bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, ISchema::Id tableId,
-                                     ISchema::Id columnId, QVariant value)
+bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, const IID& tableId,
+                                     const IID& columnId, QVariant value)
 {
-  const ISchema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
   for (const auto& result : results)
   {
     if (result.values.count(colId) == 0)
@@ -28,10 +28,10 @@ bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& res
   return false;
 }
 
-bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, ISchema::Id tableId,
-                                     ISchema::Id columnId, QVariant value)
+bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, const IID& tableId,
+                                     const IID& columnId, QVariant value)
 {
-  const ISchema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
   for (const auto& result : results)
   {
     if (result.count(colId) == 0)
@@ -47,22 +47,22 @@ bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, ISc
 }
 
 IQuery::TupleValuesList& Funcs::getJoinedTuples(std::vector<IQuery::ResultTuple>& results,
-                                                               ISchema::Id tableId, ISchema::Id columnId, const QVariant& value,
-                                                               ISchema::Id relationshipId)
+                                                               const IID& tableId, const IID& columnId, const QVariant& value,
+                                                               const IID& relationshipId)
 {
-  const ISchema::TableColumnId colId{ tableId, columnId };
+  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
   for (auto& result : results)
   {
     if (result.values.at(colId) == value)
     {
-      return result.joinedTuples.at(relationshipId);
+      return result.joinedTuples.at(relationshipId.get());
     }
   }
   return s_nullTupleValuesList;
 }
 
-void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, ISchema::Id relationshipId,
-                            ISchema::Id fromTableId, ISchema::Id fromColId, ISchema::Id toTableId, ISchema::Id toColId,
+void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, const IID& relationshipId,
+                            const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
                             const QVariant& fromValue, const QVariantList& toValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));

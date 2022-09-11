@@ -15,43 +15,43 @@ public:
   Schema();
   ~Schema() override;
 
-  std::map<Id, Table>& getTables() override;
-  std::map<Id, Relationship>& getRelationships() override;
+  std::map<API::IID::Type, Table>& getTables() override;
+  std::map<API::IID::Type, Relationship>& getRelationships() override;
 
-  Id getManyToManyLinkTableId(Id relationshipId) const override;
+  API::IID::Type getManyToManyLinkTableId(API::IID::Type relationshipId) const override;
 
   void configureRelationships() override;
 
-  void throwIfTableIdNotExisting(Id tableId) const override;
-  void throwIfRelationshipIsNotExisting(Id relationshipId) const override;
-  void throwIfColumnIdNotExisting(const Table& table, Id colId) const override;
+  void throwIfTableIdNotExisting(API::IID::Type tableId) const override;
+  void throwIfRelationshipIsNotExisting(API::IID::Type relationshipId) const override;
+  void throwIfColumnIdNotExisting(const Table& table, API::IID::Type colId) const override;
 
-  Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const override;
-  Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const override;
+  API::IID::Type validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const override;
+  API::IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const override;
 
-  std::pair<Id, Id> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
-    Id relationshipId,
+  std::pair<API::IID::Type, API::IID::Type> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
+    API::IID::Type relationshipId,
     const TupleValues& fromTupleKeyValues,
     const TupleValues& toTupleKeyValues) const override;
 
-  std::pair<Id, Id> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
-    Id relationshipId,
+  std::pair<API::IID::Type, API::IID::Type> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
+    API::IID::Type relationshipId,
     const TupleValues& fromTupleKeyValues,
     const std::vector<TupleValues>& toTupleKeyValuesList) const override;
 
 private:
-  std::map<Id, Table> m_tables;
-  std::map<Id, Relationship> m_relationships;
-  std::map<Id, Id> m_mapManyToManyRelationshipToLinkTableId;
+  std::map<API::IID::Type, Table> m_tables;
+  std::map<API::IID::Type, Relationship> m_relationships;
+  std::map<API::IID::Type, API::IID::Type> m_mapManyToManyRelationshipToLinkTableId;
 
-  std::pair<Id, Id> verifyRelationshipPrimaryKeysAndGetTableIds(
+  std::pair<API::IID::Type, API::IID::Type> verifyRelationshipPrimaryKeysAndGetTableIds(
     bool bIsOneToMany,
-    Id relationshipId,
+    API::IID::Type relationshipId,
     const TupleValues& fromTupleKeyValues,
     const std::vector<TupleValues>& toTupleKeyValuesList) const;
 
-  static bool isTableIdsMatching(const Relationship& relationship, Id tableFromId,
-                                 Id tableToId, bool bIgnoreFromKeys);
+  static bool isTableIdsMatching(const Relationship& relationship, API::IID::Type tableFromId,
+                                 API::IID::Type tableToId, bool bIgnoreFromKeys);
 
 };
 

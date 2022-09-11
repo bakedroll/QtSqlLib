@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Query/QuerySequence.h>
 #include "QtSqlLib/Query/InsertInto.h"
 
@@ -7,18 +8,25 @@
 
 #include <vector>
 
+#define INSERT_INTO_EXT(X) QtSqlLib::Query::InsertIntoExt(QtSqlLib::ID(X))
+
+#define VALUE(X, Y) value(QtSqlLib::ID(X), Y)
+#define LINK_TO_ONE_TUPLE(X, Y) linkToOneTuple(QtSqlLib::ID(X), Y)
+#define LINK_TO_MANY_TUPLES(X, Y) linkToManyTuples(QtSqlLib::ID(X), Y)
+#define RETURN_IDS returnIds()
+
 namespace QtSqlLib::Query
 {
 
 class InsertIntoExt : public QuerySequence
 {
 public:
-  InsertIntoExt(API::ISchema::Id tableId);
+  InsertIntoExt(const API::IID& tableId);
   ~InsertIntoExt() override;
 
-  InsertIntoExt& value(API::ISchema::Id columnId, const QVariant& value);
-  InsertIntoExt& linkToOneTuple(API::ISchema::Id relationshipId, const API::ISchema::TupleValues& tupleKeyValues);
-  InsertIntoExt& linkToManyTuples(API::ISchema::Id relationshipId, const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
+  InsertIntoExt& value(const API::IID& columnId, const QVariant& value);
+  InsertIntoExt& linkToOneTuple(const API::IID& relationshipId, const API::ISchema::TupleValues& tupleKeyValues);
+  InsertIntoExt& linkToManyTuples(const API::IID& relationshipId, const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
 
   InsertIntoExt& returnIds();
 
@@ -28,7 +36,7 @@ private:
   class InsertIntoReferences : public InsertInto
   {
   public:
-    InsertIntoReferences(API::ISchema::Id tableId);
+    InsertIntoReferences(API::IID::Type tableId);
     ~InsertIntoReferences() override;
 
     void addForeignKeyValue(const QVariant& value);
@@ -44,18 +52,18 @@ private:
   class QueryInsertedIds : public Query
   {
   public:
-    QueryInsertedIds(API::ISchema::Id tableId);
+    QueryInsertedIds(API::IID::Type tableId);
     ~QueryInsertedIds() override;
 
     SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
     QueryResults getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
   private:
-    API::ISchema::Id m_tableId;
+    API::IID::Type m_tableId;
 
   };
 
-  void throwIdLinkedTupleAlreadyExisting(API::ISchema::Id relationshipId) const;
+  void throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshipId) const;
 
   std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();
   bool isSeparateLinkTuplesQueryNeeded(const API::ISchema::Relationship& relationship) const;
@@ -74,16 +82,16 @@ private:
     std::vector<API::ISchema::TupleValues> linkedPrimaryKeys;
   };
 
-  API::ISchema::Id m_tableId;
+  API::IID::Type m_tableId;
   bool m_bIsReturningInsertedIds;
-  std::map<API::ISchema::Id, LinkedTuples> m_linkedTuplesMap;
+  std::map<API::IID::Type, LinkedTuples> m_linkedTuplesMap;
 
-  void addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::ISchema::Id relationshipId,
+  void addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::IID::Type relationshipId,
                                                    const API::ISchema::Relationship& relationship,
                                                    const API::ISchema::Table& childTable,
                                                    const LinkedTuples& linkedTuples) const;
 
-  void addLinkTuplesQueriesForRelationshipIds(const std::set<API::ISchema::Id>& relationshipIds);
+  void addLinkTuplesQueriesForRelationshipIds(const std::set<API::IID::Type>& relationshipIds);
 
 };
 

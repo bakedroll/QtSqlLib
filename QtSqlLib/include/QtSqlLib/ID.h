@@ -15,11 +15,11 @@ public:
     "TEnum must be an enum type");
 
   ID(TEnum id)
-    : m_id(static_cast<int>(static_cast<typename std::underlying_type<TEnum>::type>(id)))
+    : m_id(static_cast<Type>(static_cast<typename std::underlying_type<TEnum>::type>(id)))
   {
   }
 
-  int get() const override
+  Type get() const override
   {
     return m_id;
   }
@@ -30,20 +30,20 @@ public:
   }
 
 private:
-  int m_id;
+  Type m_id;
 
 };
 
 template <>
-class ID<int> : public API::IID
+class ID<API::IID::Type> : public API::IID
 {
 public:
-  ID(int id)
+  ID(Type id)
     : m_id(id)
   {
   }
 
-  int get() const override
+  Type get() const override
   {
     return m_id;
   }
@@ -54,7 +54,7 @@ public:
   }
 
 private:
-  int m_id;
+  Type m_id;
 
 };
 

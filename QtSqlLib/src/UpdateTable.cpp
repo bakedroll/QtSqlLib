@@ -1,25 +1,26 @@
 #include "QtSqlLib/Query/UpdateTable.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/ID.h"
 
 namespace QtSqlLib::Query
 {
-UpdateTable::UpdateTable(API::ISchema::Id tableId)
-  : m_tableId(tableId)
+UpdateTable::UpdateTable(const API::IID& tableId)
+  : m_tableId(tableId.get())
 {
 }
 
 UpdateTable::~UpdateTable() = default;
 
-UpdateTable& UpdateTable::set(API::ISchema::Id columnId, const QVariant& newValue)
+UpdateTable& UpdateTable::set(const API::IID& columnId, const QVariant& newValue)
 {
-  if (m_colIdNewValueMap.count(columnId) > 0)
+  if (m_colIdNewValueMap.count(columnId.get()) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "set() can only be called once per column id");
   }
 
-  m_colIdNewValueMap[columnId] = newValue;
+  m_colIdNewValueMap[columnId.get()] = newValue;
   return *this;
 }
 
@@ -64,7 +65,8 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISch
 
   if (m_whereExpr)
   {
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, m_tableId)));
+    ID tid(m_tableId);
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, tid)));
   }
 
   queryStr.append(";");

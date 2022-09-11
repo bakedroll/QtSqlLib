@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ITableConfigurator.h>
 
 #include <optional>
@@ -13,18 +14,18 @@ public:
   TableConfigurator(API::ISchema::Table& table);
   virtual ~TableConfigurator();
 
-  ITableConfigurator& column(API::ISchema::Id columnId, const QString& columnName,
+  ITableConfigurator& column(const API::IID& columnId, const QString& columnName,
                              API::ISchema::DataType type, int varcharLength) override;
 
   ITableConfigurator& primaryKey() override;
   ITableConfigurator& autoIncrement() override;
   ITableConfigurator& notNull() override;
 
-  ITableConfigurator& primaryKeys(const std::set<API::ISchema::Id>& columnIds) override;
+  ITableConfigurator& primaryKeys(const std::vector<API::IID::Type>& columnIds) override;
 
 private:
   API::ISchema::Table& m_table;
-  std::optional<API::ISchema::Id> m_lastColumnId;
+  std::optional<API::IID::Type> m_lastColumnId;
 
   bool m_bIsPrimaryKeysConfigured;
 

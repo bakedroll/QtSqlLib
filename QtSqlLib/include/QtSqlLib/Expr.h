@@ -1,11 +1,37 @@
 #pragma once
 
 #include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/ID.h>
 
 #include <QVariant>
 #include <QMetaType>
 
 #include <optional>
+
+#define EQUAL(A, B) equal(QtSqlLib::ID(A), QVariant(B))
+#define EQUAL_COL(A, B) equal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define UNEQUAL(A, B) unequal(QtSqlLib::ID(A), QVariant(B))
+#define UNEQUAL_COL(A, B) unequal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define LESSEQUAL(A, B) lessEqual(QtSqlLib::ID(A), QVariant(B))
+#define LESSEQUAL_COL(A, B) lessEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define LESS(A, B) less(QtSqlLib::ID(A), QVariant(B))
+#define LESS_COL(A, B) less(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define GREATEREQUAL(A, B) greaterEqual(QtSqlLib::ID(A), QVariant(B))
+#define GREATEREQUAL_COL(A, B) greaterEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define GREATER(A, B) greater(QtSqlLib::ID(A), QVariant(B))
+#define GREATER_COL(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ID(B)))
+
+#define ISNULL(A, B) greater(QtSqlLib::ID(A))
+
+#define OR or()
+#define AND and()
+
+#define _(A) braces(QtSqlLib::Expr().A)
 
 namespace QtSqlLib
 {
@@ -13,12 +39,14 @@ namespace QtSqlLib
 class Expr
 {
 public:
+  using OptionalIID = std::optional<std::reference_wrapper<const API::IID>>;
+
   class ColumnId
   {
   public:
     ColumnId();
     ColumnId(const API::ISchema::TableColumnId& tableColumnId);
-    ColumnId(API::ISchema::Id columnId);
+    ColumnId(const API::IID& columnId);
     ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId);
     virtual ~ColumnId();
 
@@ -44,22 +72,11 @@ public:
   virtual ~Expr();
 
   Expr& equal(const ColumnId& columnId, const QVariant& value);
-  Expr& equal(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
-
   Expr& unequal(const ColumnId& columnId, const QVariant& value);
-  Expr& unequal(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
-
   Expr& lessEqual(const ColumnId& columnId, const QVariant& value);
-  Expr& lessEqual(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
-
   Expr& less(const ColumnId& columnId, const QVariant& value);
-  Expr& less(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
-
   Expr& greaterEqual(const ColumnId& columnId, const QVariant& value);
-  Expr& greaterEqual(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
-
   Expr& greater(const ColumnId& columnId, const QVariant& value);
-  Expr& greater(const ColumnId& colIdLhs, const ColumnId& colIdRhs);
 
   Expr& isNull(const ColumnId& columnId);
 
@@ -68,7 +85,7 @@ public:
 
   Expr& braces(Expr& nestedExpr);
 
-  QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId = std::nullopt) const;
+  QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId = std::nullopt) const;
 
 private:
   enum class ComparisonOperator
@@ -105,7 +122,7 @@ private:
   public:
     ITermElement() = default;
     virtual ~ITermElement() = default;
-    virtual QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId = std::nullopt) const = 0;
+    virtual QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId = std::nullopt) const = 0;
 
   };
 
@@ -115,7 +132,7 @@ private:
     Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs);
     ~Comparison() override;
 
-    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
 
   private:
     ComparisonOperator m_operator;
@@ -130,7 +147,7 @@ private:
     explicit NestedExpression(Expr& expr);
     ~NestedExpression() override;
 
-    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
 
   private:
     std::unique_ptr<Expr> m_nestedExpr;
@@ -143,7 +160,7 @@ private:
     explicit Logic(LogicalOperator op);
     ~Logic() override;
 
-    QString toQString(API::ISchema& schema, const std::optional<API::ISchema::Id>& defaultTableId) const override;
+    QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
 
   private:
     LogicalOperator m_operator;
@@ -156,9 +173,7 @@ private:
     LogicalOperator
   };
 
-  Expr& addComparison(ComparisonOperator op, const ColumnId& colIdLhs, const ColumnId& colIdRhs);
   Expr& addComparison(ComparisonOperator op, const ColumnId& colIdLhs, const QVariant& value);
-
   Expr& addComparison(std::unique_ptr<Comparison>&& comparison);
 
   Expr& addLogic(std::unique_ptr<Logic>&& logic);

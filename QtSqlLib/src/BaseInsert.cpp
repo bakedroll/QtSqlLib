@@ -5,21 +5,21 @@
 namespace QtSqlLib::Query
 {
 
-BaseInsert::BaseInsert(API::ISchema::Id tableId)
+BaseInsert::BaseInsert(const API::IID& tableId)
   : Query()
-  , m_tableId(tableId)
+  , m_tableId(tableId.get())
 {
 }
 
 BaseInsert::~BaseInsert() = default;
 
-void BaseInsert::addColumnId(API::ISchema::Id id)
+void BaseInsert::addColumnId(const API::IID& id)
 {
-  throwIfColumnIdAlreadyExisting(id);
-  m_columnIds.emplace_back(id);
+  throwIfColumnIdAlreadyExisting(id.get());
+  m_columnIds.emplace_back(id.get());
 }
 
-void BaseInsert::throwIfColumnIdAlreadyExisting(API::ISchema::Id id) const
+void BaseInsert::throwIfColumnIdAlreadyExisting(API::IID::Type id) const
 {
   for (const auto& cid : m_columnIds)
   {

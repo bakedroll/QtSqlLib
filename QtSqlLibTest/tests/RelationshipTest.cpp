@@ -894,7 +894,7 @@ TEST(RelationshipTest, specialRelationships)
   // (14)
   auto results = db.execQuery(FromTable(TableIds::Students)
     .select({ StudentsCols::Name })
-    .joinColumns(Relationships::Special1, { ProfessorsCols::Name }));
+    .join(Relationships::Special1, { ProfessorsCols::Name }));
 
   expectSpecialRelation1Students(results.resultTuples);
 

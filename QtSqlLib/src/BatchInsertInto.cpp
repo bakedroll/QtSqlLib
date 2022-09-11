@@ -2,14 +2,14 @@
 
 namespace QtSqlLib::Query
 {
-BatchInsertInto::BatchInsertInto(API::ISchema::Id tableId)
+BatchInsertInto::BatchInsertInto(const API::IID& tableId)
   : BaseInsert(tableId)
 {
 }
 
 BatchInsertInto::~BatchInsertInto() = default;
 
-BatchInsertInto& BatchInsertInto::values(API::ISchema::Id columnId, const QVariantList& value)
+BatchInsertInto& BatchInsertInto::values(const API::IID& columnId, const QVariantList& value)
 {
   addColumnId(columnId);
   m_values.emplace_back(value);

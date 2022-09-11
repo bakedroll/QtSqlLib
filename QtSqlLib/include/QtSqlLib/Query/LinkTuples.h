@@ -1,10 +1,18 @@
 #pragma once
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ISchema.h>
 
 #include <QtSqlLib/Query/QuerySequence.h>
 #include "QtSqlLib/Query/UpdateTable.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
+
+#define LINK_TUPLES(X) QtSqlLib::Query::LinkTuples(QtSqlLib::ID(X))
+
+#define FROM_ONE(X) fromOne(X)
+#define FROM_REMAINING_KEY fromRemainingKey()
+#define TO_ONE(X) toOne(X)
+#define TO_MANY(X) toMany(X)
 
 namespace QtSqlLib::Query
 {
@@ -12,7 +20,7 @@ namespace QtSqlLib::Query
 class LinkTuples : public QuerySequence
 {
 public:
-  LinkTuples(API::ISchema::Id relationshipId);
+  LinkTuples(const API::IID& relationshipId);
   ~LinkTuples() override;
 
   LinkTuples& fromOne(const API::ISchema::TupleValues& tupleKeyValues);
@@ -35,7 +43,7 @@ private:
     };
 
     UpdateTableForeignKeys(
-      API::ISchema::Id tableId,
+      API::IID::Type tableId,
       const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
@@ -55,7 +63,7 @@ private:
   {
   public:
     BatchInsertRemainingKeys(
-      API::ISchema::Id tableId,
+      API::IID::Type tableId,
       int numRelations,
       const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~BatchInsertRemainingKeys() override;
@@ -81,7 +89,7 @@ private:
     ToMany
   };
 
-  API::ISchema::Id m_relationshipId;
+  API::IID::Type m_relationshipId;
   ExpectedCall m_expectedCall;
 
   RelationshipType m_type;
@@ -91,9 +99,9 @@ private:
   std::vector<API::ISchema::TupleValues> m_toTupleKeyValuesList;
 
   void prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                 API::ISchema::Id fromTableId, API::ISchema::Id toTableId);
+                             API::IID::Type fromTableId, API::IID::Type toTableId);
   void prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                  API::ISchema::Id fromTableId, API::ISchema::Id toTableId);
+                              API::IID::Type fromTableId, API::IID::Type toTableId);
 
 };
 

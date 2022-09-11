@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ISchema.h>
 #include <QtSqlLib/API/ISchemaConfigurator.h>
 
@@ -15,17 +16,17 @@ public:
   SchemaConfigurator();
   virtual ~SchemaConfigurator();
 
-  API::ITableConfigurator& configureTable(API::ISchema::Id tableId, const QString& tableName) override;
-  API::IRelationshipConfigurator& configureRelationship(API::ISchema::Id relationshipId, API::ISchema::Id tableFromId,
-                                                        API::ISchema::Id tableToId, API::ISchema::RelationshipType type) override;
+  API::ITableConfigurator& configureTable(const API::IID& tableId, const QString& tableName) override;
+  API::IRelationshipConfigurator& configureRelationship(const API::IID& relationshipId, const API::IID& tableFromId,
+                                                        const API::IID& tableToId, API::ISchema::RelationshipType type) override;
 
   std::unique_ptr<API::ISchema> getSchema() override;
 
 private:
   std::unique_ptr<API::ISchema> m_schema;
 
-  std::map<API::ISchema::Id, std::unique_ptr<API::ITableConfigurator>> m_tableConfigurators;
-  std::map<API::ISchema::Id, std::unique_ptr<API::IRelationshipConfigurator>> m_relationshipConfigurators;
+  std::map<API::IID::Type, std::unique_ptr<API::ITableConfigurator>> m_tableConfigurators;
+  std::map<API::IID::Type, std::unique_ptr<API::IRelationshipConfigurator>> m_relationshipConfigurators;
 
   bool isTableNameExisting(const QString& name) const;
 

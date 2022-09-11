@@ -17,22 +17,23 @@ TEST(ExpressionTest, validity)
   table.name = "test";
   table.columns[Table1Cols::Id].name = "id";
   table.columns[Table1Cols::Text].name = "test";
+  table.columns[Table1Cols::Number].name = "number";
 
   Expr expr1;
-  expr1
-    .less(Table1Cols::Id, QVariant(2))
-    .and()
-    .equal(Table1Cols::Text, "test1");
+  expr1.LESS(Table1Cols::Id, 2).AND.EQUAL(Table1Cols::Text, "test1");
 
-  EXPECT_EQ(expr1.toQString(schema, TableIds::Table1), "'test'.'id' < 2 AND 'test'.'test' == 'test1'");
+  QtSqlLib::ID tid(TableIds::Table1);
+  EXPECT_EQ(expr1.toQString(schema, tid), "'test'.'id' < 2 AND 'test'.'test' == 'test1'");
 
   Expr expr2;
-  expr2
-    .braces(Expr().unequal(Table1Cols::Id, QVariant(2)).and().unequal(Table1Cols::Text, "test1"))
-    .or()
-    .braces(Expr().greater(Table1Cols::Id, QVariant(3)));
+  expr2._(UNEQUAL(Table1Cols::Id, 2).AND.UNEQUAL(Table1Cols::Text, "test1")).OR._(GREATER(Table1Cols::Id, 3));
 
-  EXPECT_EQ(expr2.toQString(schema, TableIds::Table1), "('test'.'id' != 2 AND 'test'.'test' != 'test1') OR ('test'.'id' > 3)");
+  EXPECT_EQ(expr2.toQString(schema, tid), "('test'.'id' != 2 AND 'test'.'test' != 'test1') OR ('test'.'id' > 3)");
+
+  Expr expr3;
+  expr3.LESS_COL(Table1Cols::Id, Table1Cols::Number);
+
+  EXPECT_EQ(expr2.toQString(schema, tid), "'test'.'id' != 'test'.'number'");
 }
 
 /**
@@ -52,36 +53,32 @@ TEST(ExpressionTest, exceptions)
   {
     // Conditions must not be consecutive
     Expr expr;
-    expr
-      .less(Table1Cols::Id, QVariant(2))
-      .equal(Table1Cols::Text, "test1");
+    expr.LESS(Table1Cols::Id, 2).EQUAL(Table1Cols::Text, "test1");
   };
 
   const auto assembleExpr2 = []()
   {
     // Expression must not begin with a logical operator
     Expr expr;
-    expr
-      .or()
-      .less(Table1Cols::Id, QVariant(2));
+    expr.OR.LESS(Table1Cols::Id, 2);
   };
 
   const auto assembleExpr3 = [&schema]()
   {
     // Expressions must not end with a logical operator
     Expr expr;
-    expr
-      .less(Table1Cols::Id, QVariant(2))
-      .and();
+    expr.LESS(Table1Cols::Id, 2).AND;
 
-    expr.toQString(schema, TableIds::Table1);
+    QtSqlLib::ID tid(TableIds::Table1);
+    expr.toQString(schema, tid);
   };
 
   const auto assembleExpr4 = [&schema]()
   {
     // Expressions must not be empty
     const Expr expr;
-    expr.toQString(schema, TableIds::Table1);
+    QtSqlLib::ID tid(TableIds::Table1);
+    expr.toQString(schema, tid);
   };
 
   EXPECT_THROW(assembleExpr1(), DatabaseException);

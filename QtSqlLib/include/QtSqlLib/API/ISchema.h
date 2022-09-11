@@ -5,18 +5,18 @@
 
 #include <QVariant>
 
+#include <QtSqlLib/API/IID.h>
+
 namespace QtSqlLib::API
 {
 
 class ISchema
 {
 public:
-  using Id = unsigned int;
-
   struct TableColumnId
   {
-    Id tableId = 0U;
-    Id columnId = 0U;
+    IID::Type tableId = 0;
+    IID::Type columnId = 0;
 
     bool operator<(const TableColumnId& rhs) const;
     bool operator!=(const TableColumnId& rhs) const;
@@ -24,14 +24,14 @@ public:
 
   struct RelationshipTableId
   {
-    Id relationshipId = 0U;
-    Id tableId = 0U;
+    IID::Type relationshipId = 0;
+    IID::Type tableId = 0;
 
     bool operator<(const RelationshipTableId& rhs) const;
   };
 
   using TupleValues = std::map<TableColumnId, QVariant>;
-  using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, Id>;
+  using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, IID::Type>;
 
   enum class ForeignKeyAction
   {
@@ -62,7 +62,7 @@ public:
 
   struct ForeignKeyReference
   {
-    Id referenceTableId = 0;
+    IID::Type referenceTableId = 0;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
     PrimaryForeignKeyColumnIdMap primaryForeignKeyColIdMap;
@@ -73,9 +73,9 @@ public:
   struct Table
   {
     QString name;
-    std::map<Id, Column> columns;
+    std::map<IID::Type, Column> columns;
     RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
-    std::set<Id> primaryKeys;
+    std::set<IID::Type> primaryKeys;
   };
 
   enum class RelationshipType
@@ -87,8 +87,8 @@ public:
 
   struct Relationship
   {
-    Id tableFromId = 0;
-    Id tableToId = 0;
+    IID::Type tableFromId = 0;
+    IID::Type tableToId = 0;
     RelationshipType type = RelationshipType::OneToMany;
     ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
     ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
@@ -97,27 +97,27 @@ public:
   ISchema() = default;
   virtual ~ISchema() = default;
 
-  virtual std::map<Id, Table>& getTables() = 0;
-  virtual std::map<Id, Relationship>& getRelationships() = 0;
+  virtual std::map<IID::Type, Table>& getTables() = 0;
+  virtual std::map<IID::Type, Relationship>& getRelationships() = 0;
 
-  virtual Id getManyToManyLinkTableId(Id relationshipId) const = 0;
+  virtual IID::Type getManyToManyLinkTableId(IID::Type relationshipId) const = 0;
 
   virtual void configureRelationships() = 0;
 
-  virtual void throwIfTableIdNotExisting(Id tableId) const = 0;
-  virtual void throwIfRelationshipIsNotExisting(Id relationshipId) const = 0;
-  virtual void throwIfColumnIdNotExisting(const Table& table, Id colId) const = 0;
+  virtual void throwIfTableIdNotExisting(IID::Type tableId) const = 0;
+  virtual void throwIfRelationshipIsNotExisting(IID::Type relationshipId) const = 0;
+  virtual void throwIfColumnIdNotExisting(const Table& table, IID::Type colId) const = 0;
 
-  virtual Id validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const = 0;
-  virtual Id validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const = 0;
+  virtual IID::Type validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const = 0;
+  virtual IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const = 0;
 
-  virtual std::pair<Id, Id> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
-    Id relationshipId,
+  virtual std::pair<IID::Type, IID::Type> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
+    IID::Type relationshipId,
     const TupleValues& fromTupleKeyValues,
     const TupleValues& toTupleKeyValues) const = 0;
 
-  virtual std::pair<Id, Id> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
-    Id relationshipId,
+  virtual std::pair<IID::Type, IID::Type> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
+    IID::Type relationshipId,
     const TupleValues& fromTupleKeyValues,
     const std::vector<TupleValues>& toTupleKeyValuesList) const = 0;
 

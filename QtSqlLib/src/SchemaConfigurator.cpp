@@ -16,18 +16,19 @@ SchemaConfigurator::SchemaConfigurator() :
 
 SchemaConfigurator::~SchemaConfigurator() = default;
 
-API::ITableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tableId, const QString& tableName)
+API::ITableConfigurator& SchemaConfigurator::configureTable(const API::IID& tableId, const QString& tableName)
 {
-  if (m_schema->getTables().count(tableId) > 0)
+  const auto tid = tableId.get();
+  if (m_schema->getTables().count(tid) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("Table with id %1 already exists.").arg(tableId));
+      QString("Table with id %1 already exists.").arg(tid));
   }
 
   if (tableName.isEmpty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("Table name with id %1 must not be empty.").arg(tableId));
+      QString("Table name with id %1 must not be empty.").arg(tid));
   }
 
   if (isTableNameExisting(tableName))
@@ -45,35 +46,36 @@ API::ITableConfigurator& SchemaConfigurator::configureTable(API::ISchema::Id tab
   API::ISchema::Table table;
   table.name = tableName;
 
-  m_schema->getTables()[tableId] = table;
-  m_tableConfigurators[tableId] = std::make_unique<TableConfigurator>(m_schema->getTables().at(tableId));
+  m_schema->getTables()[tid] = table;
+  m_tableConfigurators[tid] = std::make_unique<TableConfigurator>(m_schema->getTables().at(tid));
 
-  return *m_tableConfigurators.at(tableId);
+  return *m_tableConfigurators.at(tid);
 }
 
-API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(API::ISchema::Id relationshipId, API::ISchema::Id tableFromId,
-                                                                          API::ISchema::Id tableToId, API::ISchema::RelationshipType type)
+API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const API::IID& relationshipId, const API::IID& tableFromId,
+                                                                          const API::IID& tableToId, API::ISchema::RelationshipType type)
 {
-  if (m_schema->getRelationships().count(relationshipId) > 0)
+  const auto relId = relationshipId.get();
+  if (m_schema->getRelationships().count(relId) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("Relationship with id %1 already exists.").arg(relationshipId));
+      QString("Relationship with id %1 already exists.").arg(relId));
   }
 
-  if ((tableFromId == tableToId) && type == API::ISchema::RelationshipType::ManyToOne)
+  if ((tableFromId.get() == tableToId.get()) && type == API::ISchema::RelationshipType::ManyToOne)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "The relationship type ManyToOne is not allowed for a relationship of a table that references itself due to possible ambiguity. " \
       "Please use OneToMany instead.");
   }
 
-  const API::ISchema::Relationship relationship{ tableFromId, tableToId, type };
+  const API::ISchema::Relationship relationship{ tableFromId.get(), tableToId.get(), type };
 
-  m_schema->getRelationships()[relationshipId] = relationship;
-  m_relationshipConfigurators[relationshipId] =
-    std::make_unique<RelationshipConfigurator>(m_schema->getRelationships().at(relationshipId));
+  m_schema->getRelationships()[relId] = relationship;
+  m_relationshipConfigurators[relId] =
+    std::make_unique<RelationshipConfigurator>(m_schema->getRelationships().at(relId));
 
-  return *m_relationshipConfigurators.at(relationshipId);
+  return *m_relationshipConfigurators.at(relId);
 }
 
 std::unique_ptr<API::ISchema> SchemaConfigurator::getSchema()
