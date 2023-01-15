@@ -2,8 +2,23 @@
 
 #include <Common.h>
 
+#include <QFile>
+
 namespace QtSqlLibTest
 {
+
+class TestRelationship : public testing::Test
+{
+public:
+  ~TestRelationship() override
+  {
+    m_db.close();
+    QFile::remove(Funcs::getDefaultDatabaseFilename());
+  }
+
+  QtSqlLib::Database m_db;
+
+};
 
 static void expectStudentsConfidantStudents(IQuery::QueryResults::ResultTuples& tuples)
 {
@@ -286,7 +301,7 @@ static void expectSpecialRelation6Students(IQuery::QueryResults::ResultTuples& t
  *       [ Paul ]        N<-->M [ Database systems, Math ]
  *       [ Sarah ]       N<-->M [ Operating systems, Database systems, Programming ]
  */
-static void setupReplationshipTestsDatabase(TestDatabase& db)
+static void setupReplationshipTestsDatabase(QtSqlLib::API::IDatabase& m_db)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Students, "students")
@@ -310,7 +325,7 @@ static void setupReplationshipTestsDatabase(TestDatabase& db)
   configurator.CONFIGURE_RELATIONSHIP(Relationships::LectureParticipant, TableIds::Students, TableIds::Lectures,
     ISchema::RelationshipType::ManyToMany);
 
-  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 }
 
 /**
@@ -327,52 +342,52 @@ static void setupReplationshipTestsDatabase(TestDatabase& db)
  *   (8) Query professors, related students (a) and related lectures (b)
  *   (9) Query lectures, related professors (b) and related students (a)
  */
-static void expectCorrectRelations(TestDatabase& db)
+static void expectCorrectRelations(QtSqlLib::API::IDatabase& m_db)
 {
   // (1)
-  auto results = db.execQuery(FROM_TABLE(TableIds::Students)
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant));
 
   expectStudentsConfidantStudents(results.resultTuples);
 
   // (2)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant));
 
   expectStudentsConfidantProfessors(results.resultTuples);
 
   // (3)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer));
 
   expectLecturerProfessors(results.resultTuples);
 
   // (4)
-  results = db.execQuery(FROM_TABLE(TableIds::Lectures)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer));
 
   expectLecturerLectures(results.resultTuples);
 
   // (5)
-  results = db.execQuery(FROM_TABLE(TableIds::Lectures)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
     .SELECT_ALL
     .JOIN_ALL(Relationships::LectureParticipant));
 
   expectLectureParticipantLectures(results.resultTuples);
 
   // (6)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::LectureParticipant));
 
   expectLectureParticipantStudents(results.resultTuples);
 
   // (7)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant)
     .JOIN_ALL(Relationships::LectureParticipant));;
@@ -381,7 +396,7 @@ static void expectCorrectRelations(TestDatabase& db)
   expectLectureParticipantStudents(results.resultTuples);
 
   // (8)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant)
     .JOIN_ALL(Relationships::Lecturer));;
@@ -390,7 +405,7 @@ static void expectCorrectRelations(TestDatabase& db)
   expectLecturerProfessors(results.resultTuples);
 
   // (9)
-  results = db.execQuery(FROM_TABLE(TableIds::Lectures)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer)
     .JOIN_ALL(Relationships::LectureParticipant));;
@@ -432,78 +447,77 @@ static void expectCorrectRelations(TestDatabase& db)
  *
  *   (10) Finally check the correctness of the inserted relations
  */
-TEST(RelationshipTest, linkTuplesOnInsertTest)
+TEST_F(TestRelationship, linkTuplesOnInsertTest)
 {
-  TestDatabase db;
-  setupReplationshipTestsDatabase(db);
+  setupReplationshipTestsDatabase(m_db);
 
   // (1)
-  const auto studentJohn = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentJohn = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "John")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto lectureOs = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureOs = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Operating systems")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto lectureDbs = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureDbs = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Database systems")
     .RETURN_IDS).resultTuples[0].values;
 
   // (2)
-  const auto profSmith = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profSmith = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Prof. Smith")
     .LINK_TO_ONE_TUPLE(Relationships::StudentsConfidant, studentJohn)
     .RETURN_IDS).resultTuples[0].values;
 
   // (3)
-  const auto lectureMath = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureMath = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Math")
     .LINK_TO_ONE_TUPLE(Relationships::LectureParticipant, studentJohn)
     .RETURN_IDS).resultTuples[0].values;
 
   // (4)
-  const auto studentMary = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentMary = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Mary")
     .LINK_TO_ONE_TUPLE(Relationships::StudentsConfidant, profSmith)
     .LINK_TO_ONE_TUPLE(Relationships::LectureParticipant, lectureMath)
     .RETURN_IDS).resultTuples[0].values;
 
   // (5)
-  const auto profEvans = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profEvans = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Dr. Evans")
     .LINK_TO_ONE_TUPLE(Relationships::Lecturer, lectureMath)
     .RETURN_IDS).resultTuples[0].values;
 
   // (6)
-  const auto lectureProgramming = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureProgramming = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Programming")
     .LINK_TO_MANY_TUPLES(Relationships::LectureParticipant, { studentJohn, studentMary })
     .LINK_TO_ONE_TUPLE(Relationships::Lecturer, profSmith)
     .RETURN_IDS).resultTuples[0].values;
 
   // (7)
-  const auto studentPaul = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentPaul = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Paul")
     .LINK_TO_ONE_TUPLE(Relationships::StudentsConfidant, profEvans)
     .LINK_TO_MANY_TUPLES(Relationships::LectureParticipant, { lectureDbs, lectureMath })
     .RETURN_IDS).resultTuples[0].values;
 
   // (8)
-  const auto studentSarah = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentSarah = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Sarah")
     .LINK_TO_MANY_TUPLES(Relationships::LectureParticipant, { lectureOs, lectureDbs, lectureProgramming })
     .RETURN_IDS).resultTuples[0].values;
 
   // (9)
-  const auto profAdams = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profAdams = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Prof. Adams")
     .LINK_TO_ONE_TUPLE(Relationships::StudentsConfidant, studentSarah)
     .LINK_TO_MANY_TUPLES(Relationships::Lecturer, { lectureOs, lectureDbs })
     .RETURN_IDS).resultTuples[0].values;
 
   // (10)
-  expectCorrectRelations(db);
+  expectCorrectRelations(m_db);
 }
 
 /**
@@ -541,164 +555,163 @@ TEST(RelationshipTest, linkTuplesOnInsertTest)
  *   (22) Use LINK_TUPLES::TO_ONE() with invalid tuple key
  *   (23) Use LINK_TUPLES::TO_MANY() with an invalid tuple key
  */
-TEST(RelationshipTest, linkTuplesQueryTest)
+TEST_F(TestRelationship, linkTuplesQueryTest)
 {
-  TestDatabase db;
-  setupReplationshipTestsDatabase(db);
+  setupReplationshipTestsDatabase(m_db);
 
   // (1)
-  const auto studentJohn = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentJohn = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "John")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto studentMary = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentMary = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Mary")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto studentPaul = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentPaul = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Paul")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto studentSarah = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto studentSarah = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Sarah")
     .RETURN_IDS).resultTuples[0].values;
 
   // (2)
-  const auto profSmith = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profSmith = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Prof. Smith")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto profEvans = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profEvans = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Dr. Evans")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto profAdams = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto profAdams = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Prof. Adams")
     .RETURN_IDS).resultTuples[0].values;
 
   // (3)
-  const auto lectureOs = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureOs = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Operating systems")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto lectureDbs = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureDbs = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Database systems")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto lectureMath = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureMath = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Math")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto lectureProgramming = db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
+  const auto lectureProgramming = m_db.execQuery(INSERT_INTO_EXT(TableIds::Lectures)
     .VALUE(LecturesCols::Topic, "Programming")
     .RETURN_IDS).resultTuples[0].values;
 
   // (4)
-  db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
+  m_db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
     .FROM_ONE(profSmith)
     .TO_MANY({ studentJohn, studentMary }));
 
   // (5)
-  db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
+  m_db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
     .FROM_ONE(profEvans)
     .TO_ONE(studentPaul));
 
   // (6)
-  db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
+  m_db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
     .FROM_ONE(studentSarah)
     .TO_ONE(profAdams));
 
   // (7)
-  db.execQuery(LINK_TUPLES(Relationships::Lecturer)
+  m_db.execQuery(LINK_TUPLES(Relationships::Lecturer)
     .FROM_ONE(profSmith)
     .TO_ONE(lectureProgramming));
 
   // (8)
-  db.execQuery(LINK_TUPLES(Relationships::Lecturer)
+  m_db.execQuery(LINK_TUPLES(Relationships::Lecturer)
     .FROM_ONE(lectureMath)
     .TO_ONE(profEvans));
 
   // (9)
-  db.execQuery(LINK_TUPLES(Relationships::Lecturer)
+  m_db.execQuery(LINK_TUPLES(Relationships::Lecturer)
     .FROM_ONE(profAdams)
     .TO_MANY({ lectureOs, lectureDbs }));
 
   // (10)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentJohn)
     .TO_MANY({ lectureMath, lectureProgramming }));
 
   // (11)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(lectureProgramming)
     .TO_MANY({ studentMary, studentSarah }));
 
   // (12)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentMary)
     .TO_ONE(lectureMath));
 
   // (13)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentPaul)
     .TO_MANY({ lectureDbs, lectureMath }));
 
   // (14)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentSarah)
     .TO_ONE(lectureOs));
 
   // (15)
-  db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(lectureDbs)
     .TO_ONE(studentSarah));
 
   // (16)
-  expectCorrectRelations(db);
+  expectCorrectRelations(m_db);
 
   // (17)
-  EXPECT_THROW(db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
+  EXPECT_THROW(m_db.execQuery(LINK_TUPLES(Relationships::StudentsConfidant)
     .FROM_ONE(studentSarah)
     .TO_MANY({ profSmith, profEvans }))
     , DatabaseException);
 
-  EXPECT_THROW(db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  EXPECT_THROW(m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Dummy")
     .LINK_TO_MANY_TUPLES(Relationships::StudentsConfidant, { studentJohn, studentMary }))
     , DatabaseException);
 
   // (18)
-  EXPECT_THROW(db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  EXPECT_THROW(m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Name, "Dummy")
     .LINK_TO_ONE_TUPLE(Relationships::LectureParticipant, studentJohn))
     , DatabaseException);
 
   // (19)
-  EXPECT_THROW(db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  EXPECT_THROW(m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Dummy")
     .LINK_TO_ONE_TUPLE(Relationships::LectureParticipant, profSmith))
     , DatabaseException);
 
   // (20)
-  EXPECT_THROW(db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  EXPECT_THROW(m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Name, "Dummy")
     .LINK_TO_MANY_TUPLES(Relationships::LectureParticipant, { profSmith, profEvans }))
     , DatabaseException);
 
   // (21)
-  EXPECT_THROW(db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  EXPECT_THROW(m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(profSmith)
     .TO_ONE(lectureProgramming))
     , DatabaseException);
 
   // (22)
-  EXPECT_THROW(db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  EXPECT_THROW(m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentMary)
     .TO_ONE(profSmith))
     , DatabaseException);
 
   // (23)
-  EXPECT_THROW(db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
+  EXPECT_THROW(m_db.execQuery(LINK_TUPLES(Relationships::LectureParticipant)
     .FROM_ONE(studentMary)
     .TO_MANY({ lectureMath, profSmith }))
     , DatabaseException);
@@ -773,7 +786,7 @@ TEST(RelationshipTest, linkTuplesQueryTest)
  *   (29) Query students and related students for relationship (f)
  *   (30) Query students and related professors and students for all relationships
  */
-TEST(RelationshipTest, specialRelationships)
+TEST_F(TestRelationship, specialRelationships)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Students, "students")
@@ -793,134 +806,133 @@ TEST(RelationshipTest, specialRelationships)
   configurator.CONFIGURE_RELATIONSHIP(Relationships::Special5, TableIds::Students, TableIds::Students, ISchema::RelationshipType::OneToMany);
   configurator.CONFIGURE_RELATIONSHIP(Relationships::Special6, TableIds::Students, TableIds::Students, ISchema::RelationshipType::ManyToMany);
 
-  TestDatabase db;
-  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  const auto student1 = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto student1 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Id, 0)
     .VALUE(StudentsCols::Name, "student1")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto student2 = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto student2 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Id, 1)
     .VALUE(StudentsCols::Name, "student2")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto student3 = db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+  const auto student3 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
     .VALUE(StudentsCols::Id, 2)
     .VALUE(StudentsCols::Name, "student3")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto professor1 = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto professor1 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Id, 0)
     .VALUE(ProfessorsCols::Name, "professor1")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto professor2 = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto professor2 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Id, 1)
     .VALUE(ProfessorsCols::Name, "professor2")
     .RETURN_IDS).resultTuples[0].values;
 
-  const auto professor3 = db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
+  const auto professor3 = m_db.execQuery(INSERT_INTO_EXT(TableIds::Professors)
     .VALUE(ProfessorsCols::Id, 2)
     .VALUE(ProfessorsCols::Name, "professor3")
     .RETURN_IDS).resultTuples[0].values;
 
   // (1)
-  db.execQuery(LINK_TUPLES(Relationships::Special1)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special1)
     .FROM_ONE(student1)
     .TO_ONE(professor1));
 
   // (2)
-  db.execQuery(LINK_TUPLES(Relationships::Special1)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special1)
     .FROM_ONE(professor2)
     .TO_ONE(student1));
 
   // (3)
-  db.execQuery(LINK_TUPLES(Relationships::Special2)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special2)
     .FROM_ONE(student1)
     .TO_MANY({ professor1, professor2 }));
 
   // (4)
-  db.execQuery(LINK_TUPLES(Relationships::Special2)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special2)
     .FROM_ONE(professor3)
     .TO_ONE(student2));
 
   // (5)
-  db.execQuery(LINK_TUPLES(Relationships::Special3)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special3)
     .FROM_ONE(professor1)
     .TO_MANY({ student2, student3 }));
 
   // (6)
-  db.execQuery(LINK_TUPLES(Relationships::Special3)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special3)
     .FROM_ONE(student1)
     .TO_MANY({ professor1, professor3 }));
 
   // (7)
-  db.execQuery(LINK_TUPLES(Relationships::Special3)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special3)
     .FROM_ONE(professor2)
     .TO_MANY({ student1, student3 }));
 
   // (8)
-  db.execQuery(LINK_TUPLES(Relationships::Special4)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special4)
     .FROM_ONE(professor3)
     .TO_ONE(student1));
 
   // (9)
-  db.execQuery(LINK_TUPLES(Relationships::Special4)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special4)
     .FROM_ONE(student3)
     .TO_MANY({ professor1, professor2, professor3 }));
 
   // (10)
-  db.execQuery(LINK_TUPLES(Relationships::Special5)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special5)
     .FROM_ONE(student1)
     .TO_MANY({ student1, student2 }));
 
   // (11)
-  db.execQuery(LINK_TUPLES(Relationships::Special5)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special5)
     .FROM_ONE(student2)
     .TO_ONE(student3));
 
   // (12)
-  db.execQuery(LINK_TUPLES(Relationships::Special6)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special6)
     .FROM_ONE(student1)
     .TO_MANY({ student2, student3 }));
 
   // (13)
-  db.execQuery(LINK_TUPLES(Relationships::Special6)
+  m_db.execQuery(LINK_TUPLES(Relationships::Special6)
     .FROM_ONE(student2)
     .TO_ONE(student3));
 
   // (14)
-  auto results = db.execQuery(FROM_TABLE(TableIds::Students)
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT(IDS(QtSqlLib::ID(StudentsCols::Name)))
     .JOIN(Relationships::Special1, IDS(QtSqlLib::ID(ProfessorsCols::Name))));
 
   expectSpecialRelation1Students(results.resultTuples);
 
   // (15)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1));
 
   expectSpecialRelation1Professors(results.resultTuples);
 
   // (16)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special2));
 
   expectSpecialRelation2Students(results.resultTuples);
 
   // (17)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special2));
 
   expectSpecialRelation2Professors(results.resultTuples);
 
   // (18)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1)
     .JOIN_ALL(Relationships::Special2));
@@ -929,7 +941,7 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation2Students(results.resultTuples);
 
   // (19)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1)
     .JOIN_ALL(Relationships::Special2));
@@ -938,35 +950,35 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation2Professors(results.resultTuples);
 
   // (20)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special3));
 
   expectSpecialRelation3Students(results.resultTuples);
 
   // (21)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special3));
 
   expectSpecialRelation3Professors(results.resultTuples);
 
   // (22)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special4));
 
   expectSpecialRelation4Students(results.resultTuples);
 
   // (23)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special4));
 
   expectSpecialRelation4Professors(results.resultTuples);
 
   // (24)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special3)
     .JOIN_ALL(Relationships::Special4));
@@ -975,7 +987,7 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation4Students(results.resultTuples);
 
   // (25)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special3)
     .JOIN_ALL(Relationships::Special4));
@@ -984,7 +996,7 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation4Professors(results.resultTuples);
 
   // (26)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1)
     .JOIN_ALL(Relationships::Special2)
@@ -997,7 +1009,7 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation4Students(results.resultTuples);
 
   // (27)
-  results = db.execQuery(FROM_TABLE(TableIds::Professors)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1)
     .JOIN_ALL(Relationships::Special2)
@@ -1010,21 +1022,21 @@ TEST(RelationshipTest, specialRelationships)
   expectSpecialRelation4Professors(results.resultTuples);
 
   // (28)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special5));
 
   expectSpecialRelation5Students(results.resultTuples);
 
   // (29)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special6));
 
   expectSpecialRelation6Students(results.resultTuples);
 
   // (30)
-  results = db.execQuery(FROM_TABLE(TableIds::Students)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Special1)
     .JOIN_ALL(Relationships::Special2)

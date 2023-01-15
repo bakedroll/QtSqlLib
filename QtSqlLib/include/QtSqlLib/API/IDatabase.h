@@ -15,7 +15,7 @@ public:
   virtual ~IDatabase() = default;
 
   virtual void initialize(ISchemaConfigurator& schemaConfigurator, const QString& fileName,
-                          const QString& databaseName) = 0;
+                          const QString& databaseName = QSqlDatabase::defaultConnection) = 0;
   virtual void close() = 0;
 
   virtual IQuery::QueryResults execQuery(IQueryElement& query) = 0;

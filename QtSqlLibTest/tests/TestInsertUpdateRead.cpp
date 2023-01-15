@@ -2,8 +2,23 @@
 
 #include <Common.h>
 
+#include <QFile>
+
 namespace QtSqlLibTest
 {
+
+class TestInsertUpdateRead : public testing::Test
+{
+public:
+  ~TestInsertUpdateRead() override
+  {
+    m_db.close();
+    QFile::remove(Funcs::getDefaultDatabaseFilename());
+  }
+
+  QtSqlLib::Database m_db;
+
+};
 
 /**
  * @test: Creates a single table and executes each of the insert queries InsertInto and BatchInsertInto to insert four tuples.
@@ -12,7 +27,7 @@ namespace QtSqlLibTest
  *            The first FromTable query delivers four results with correct values.
  *            The second FromTable query delivers three results with correct values.
  */
-TEST(InsertUpdateReadTest, insertAndRead)
+TEST_F(TestInsertUpdateRead, insertAndRead)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -20,18 +35,17 @@ TEST(InsertUpdateReadTest, insertAndRead)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128)
     .COLUMN(Table1Cols::Number, "number", DataType::Real).notNull();
 
-  TestDatabase db;
-  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  db.execQuery(INSERT_INTO(TableIds::Table1)
+  m_db.execQuery(INSERT_INTO(TableIds::Table1)
     .VALUE(Table1Cols::Text, "test")
     .VALUE(Table1Cols::Number, 0.5));
 
-  db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
+  m_db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
     .VALUES(Table1Cols::Text, QVariantList() << "test1" << "test2" << "test3")
     .VALUES(Table1Cols::Number, QVariantList() << 0.6 << 0.7 << 0.8));
 
-  auto results = db.execQuery(FROM_TABLE(TableIds::Table1)
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
     .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
 
   EXPECT_EQ(results.resultTuples.size(), 4);
@@ -50,7 +64,7 @@ TEST(InsertUpdateReadTest, insertAndRead)
   EXPECT_EQ(resultColText.toString(), "test");
   EXPECT_DOUBLE_EQ(resultColNr.toDouble(), 0.5);
 
-  results = db.execQuery(FROM_TABLE(TableIds::Table1)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
     .SELECT(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number)))
     .WHERE(LESS(Table1Cols::Number, 0.75)));
 
@@ -79,7 +93,7 @@ TEST(InsertUpdateReadTest, insertAndRead)
  * @expected: No exceptions occur.
  *            The table contains the updated value.
  */
-TEST(InsertUpdateReadTest, insertUpdateAndRead)
+TEST_F(TestInsertUpdateRead, insertUpdateAndRead)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -87,18 +101,17 @@ TEST(InsertUpdateReadTest, insertUpdateAndRead)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128)
     .COLUMN(Table1Cols::Number, "number", DataType::Integer);
 
-  TestDatabase db;
-  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
+  m_db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
     .VALUES(Table1Cols::Text, QVariantList() << "value1" << "value2" << "value3")
     .VALUES(Table1Cols::Number, QVariantList() << 1 << 2 << 3));
 
-  db.execQuery(UPDATE_TABLE(TableIds::Table1)
+  m_db.execQuery(UPDATE_TABLE(TableIds::Table1)
     .SET(Table1Cols::Text, "value2_updated")
     .WHERE(EQUAL(Table1Cols::Number, 2)));
 
-  const auto results = db.execQuery(FROM_TABLE(TableIds::Table1)
+  const auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
     .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
 
   EXPECT_EQ(results.resultTuples.size(), 3);
@@ -113,7 +126,7 @@ TEST(InsertUpdateReadTest, insertUpdateAndRead)
  * @expected: No exceptions occur.
  *            The resulting tuple key after the insert query operation is valid.
  */
-TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
+TEST_F(TestInsertUpdateRead, multiplePrimaryKeysTable)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -121,10 +134,9 @@ TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128).NOT_NULL
     .PRIMARY_KEYS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text)));
 
-  TestDatabase db;
-  db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
-  const auto results = db.execQuery(INSERT_INTO_EXT(TableIds::Table1)
+  const auto results = m_db.execQuery(INSERT_INTO_EXT(TableIds::Table1)
     .VALUE(Table1Cols::Id, 1)
     .VALUE(Table1Cols::Text, "text")
     .RETURN_IDS);
@@ -145,7 +157,7 @@ TEST(InsertUpdateReadTest, multiplePrimaryKeysTable)
  * @test: Initializes some databases with invalid schema configurations
  * @expected: Exceptions will be thrown.
  */
-TEST(InsertUpdateReadTest, databaseImitializationExceptions)
+TEST_F(TestInsertUpdateRead, databaseImitializationExceptions)
 {
   // Two different tables must not have the same id
   const auto case1 = []()
@@ -157,7 +169,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table2")
       .COLUMN(Table2Cols::Id, "id", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -171,7 +183,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table2, "table1")
       .COLUMN(Table2Cols::Id, "id", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -182,7 +194,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "sqlite_table")
       .COLUMN(Table1Cols::Id, "id", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -194,7 +206,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
       .COLUMN(Table1Cols::Id, "id1", DataType::Integer)
       .COLUMN(Table1Cols::Id, "id2", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -206,7 +218,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
       .COLUMN(Table1Cols::Id, "col", DataType::Integer)
       .COLUMN(Table1Cols::Text, "col", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -217,7 +229,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .COLUMN_VARCHAR(Table1Cols::Text, "text", 0);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -229,7 +241,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
       .COLUMN(Table1Cols::Id, "Id", DataType::Integer).PRIMARY_KEY
       .COLUMN(Table1Cols::Text, "text", DataType::Varchar).PRIMARY_KEY;
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -240,7 +252,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .COLUMN(Table1Cols::Id, "Id", DataType::Integer).primaryKey().PRIMARY_KEY;
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -251,7 +263,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .COLUMN(Table1Cols::Id, "Id", DataType::Integer).AUTO_INCREMENT.AUTO_INCREMENT;
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -262,7 +274,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .COLUMN(Table1Cols::Id, "Id", DataType::Integer).NOT_NULL.NOT_NULL;
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -273,7 +285,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
       .primaryKey();
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -284,7 +296,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     configurator.CONFIGURE_TABLE(TableIds::Table1, "table1").
       COLUMN(Table1Cols::Id, "", DataType::Integer);
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -294,7 +306,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
     SchemaConfigurator configurator;
     configurator.CONFIGURE_TABLE(TableIds::Table1, "");
 
-    TestDatabase db;
+    QtSqlLib::Database db;
     db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
   };
 
@@ -317,7 +329,7 @@ TEST(InsertUpdateReadTest, databaseImitializationExceptions)
  * @test: Creates some invalid FromTable queries.
  * @expected: Exceptions will be thrown.
  */
-TEST(InsertUpdateReadTest, fromTableExceptions)
+TEST_F(TestInsertUpdateRead, fromTableExceptions)
 {
   EXPECT_THROW(
     FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT(IDS(QtSqlLib::ID(StudentsCols::Id))),

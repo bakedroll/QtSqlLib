@@ -1,9 +1,8 @@
 #pragma once
 
-#include <TestDatabase.h>
-
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/IQueryVisitor.h>
+#include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>
 #include <QtSqlLib/ID.h>
