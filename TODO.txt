@@ -1,0 +1,16 @@
+Schema::throw* Methoden auslagern
+UpdateTable umbenennen (UpdateTuple?)
+UnlinkTuples
+RemoveTuples
+Container-Type für ResultSet
+
+Mehr exception tests
+private class declarations hpp => cpp?
+
+SQL-Indices
+
+Expr interfaces auslagern
+
+Anfragezeiten messen (Profiling/Optimierung)
+
+Migrations-Feature
