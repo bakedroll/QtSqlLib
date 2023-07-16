@@ -1,8 +1,7 @@
 Schema::throw* Methoden auslagern
-UpdateTable umbenennen (UpdateTuple?)
-UnlinkTuples
-RemoveTuples
 Container-Type für ResultSet
+
+MAKROS zentral definieren
 
 Mehr exception tests
 private class declarations hpp => cpp?
@@ -10,6 +9,8 @@ private class declarations hpp => cpp?
 SQL-Indices
 
 Expr interfaces auslagern
+
+class forwarding
 
 Anfragezeiten messen (Profiling/Optimierung)
 

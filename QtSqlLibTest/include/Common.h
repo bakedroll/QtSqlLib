@@ -8,12 +8,14 @@
 #include <QtSqlLib/ID.h>
 #include <QtSqlLib/IDList.h>
 #include <QtSqlLib/Query/BatchInsertInto.h>
+#include <QtSqlLib/Query/DeleteFrom.h>
 #include <QtSqlLib/Query/FromTable.h>
 #include <QtSqlLib/Query/InsertInto.h>
 #include <QtSqlLib/Query/InsertIntoExt.h>
 #include <QtSqlLib/Query/LinkTuples.h>
 #include <QtSqlLib/Query/Query.h>
 #include <QtSqlLib/Query/QuerySequence.h>
+#include <QtSqlLib/Query/UnlinkTuples.h>
 #include <QtSqlLib/Query/UpdateTable.h>
 #include <QtSqlLib/Schema.h>
 #include <QtSqlLib/SchemaConfigurator.h>
@@ -24,6 +26,7 @@ namespace QtSqlLibTest
 using BatchInsertInto = QtSqlLib::Query::BatchInsertInto;
 using DatabaseException = QtSqlLib::DatabaseException;
 using DataType = QtSqlLib::API::ISchema::DataType;
+using DeleteFrom = QtSqlLib::Query::DeleteFrom;
 using Expr = QtSqlLib::Expr;
 using FromTable = QtSqlLib::Query::FromTable;
 using IID = QtSqlLib::API::IID;
@@ -38,6 +41,7 @@ using Query = QtSqlLib::Query::Query;
 using QuerySequence = QtSqlLib::Query::QuerySequence;
 using Schema = QtSqlLib::Schema;
 using SchemaConfigurator = QtSqlLib::SchemaConfigurator;
+using UnlinkTuples = QtSqlLib::Query::UnlinkTuples;
 using UpdateTable = QtSqlLib::Query::UpdateTable;
 
 enum class TableIds

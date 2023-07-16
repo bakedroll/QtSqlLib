@@ -416,6 +416,93 @@ static void expectCorrectRelations(QtSqlLib::API::IDatabase& m_db)
 
 /**
  * @description:
+ * Checks the correctness of the relations between tuples after unlinking
+ *   (1) Query students and related professors (a)
+ *   (2) Query professors and related students (a)
+ *   (3) Query professors and related lectures (b)
+ *   (4) Query lectures and related professors (b)
+ *   (5) Query lectures and related students (c)
+ *   (6) Query students and related lectures (c)
+ */
+static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
+{
+  // (1)
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Students)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::StudentsConfidant));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::StudentsConfidant),
+    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+    "Sarah", QVariantList() << "Prof. Adams");
+
+  // (2)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::StudentsConfidant));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::StudentsConfidant),
+    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+    "Prof. Adams", QVariantList() << "Sarah");
+
+  // (3)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::Lecturer));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::Lecturer),
+    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+    "Dr. Evans", QVariantList() << "Math");
+
+  // (4)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::Lecturer));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::Lecturer),
+    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+    "Math", QVariantList() << "Dr. Evans");
+
+  // (5)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::LectureParticipant));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+    "Operating systems", QVariantList() << "Sarah");
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+    "Database systems", QVariantList() << "Paul" << "Sarah");
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+    "Math", QVariantList() << "Paul");
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+    "Programming", QVariantList() << "John" << "Sarah");
+
+  // (6)
+  results = m_db.execQuery(FROM_TABLE(TableIds::Students)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::LectureParticipant));
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+    "John", QVariantList() << "Programming");
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+    "Paul", QVariantList() << "Database systems" << "Math");
+
+  Funcs::expectRelations(results.resultTuples, QtSqlLib::ID(Relationships::LectureParticipant),
+    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+    "Sarah", QVariantList() << "Operating systems" << "Database systems" << "Programming");
+}
+
+/**
+ * @description:
  * This test adds links between tuples of related tables directly on data insertion
  * whithin the #INSERT_INTO_EXT query.
  * For more information about the created tables and relationships, see #setupReplationshipTestsDatabase().
@@ -540,7 +627,7 @@ TEST_F(TestRelationship, linkTuplesOnInsertTest)
  *   (10) Link [ John ]             TO_MANY [ Math, Programming ] (c)
  *   (11) Link [ Programming ]      TO_MANY [ Mary, Sarah ] (c)
  *   (12) Link [ Mary ]             TO_ONE  [ Math ] (c)
- *   (13) Link [ Paul ]             TO_MANY [  Database systems, Math ] (c)
+ *   (13) Link [ Paul ]             TO_MANY [ Database systems, Math ] (c)
  *   (14) Link [ Sarah ]            TO_ONE  [ Operating systems ] (c)
  *   (15) Link [ Database systems ] TO_ONE  [ Sarah ] (c)
  *
@@ -554,6 +641,16 @@ TEST_F(TestRelationship, linkTuplesOnInsertTest)
  *   (21) Use LINK_TUPLES::FROM_ONE() with invalid tuple key
  *   (22) Use LINK_TUPLES::TO_ONE() with invalid tuple key
  *   (23) Use LINK_TUPLES::TO_MANY() with an invalid tuple key
+ *
+ * Unlink tuples tests:
+ *   (24) Unlink [ Paul ]        <==> [ Dr. Evans ] (a)
+ *   (25) Unlink [ Prof. Smith ] <==> [ John, Mary ] (a)
+ *   (26) Unlink [ Programming ] <==> [ Prof. Smith ] (b)
+ *   (27) Unlink [ Prof. Adams ] <==> [ Operating systems, Database systems ] (b)
+ *   (28) Unlink [ Mary ]        <==> [ Math, Programming ] (c)
+ *   (29) Unlink [ Math ]        <==> [ John ] (c)
+ *
+ *   (30) Check the correctness of remaining relations
  */
 TEST_F(TestRelationship, linkTuplesQueryTest)
 {
@@ -715,6 +812,39 @@ TEST_F(TestRelationship, linkTuplesQueryTest)
     .FROM_ONE(studentMary)
     .TO_MANY({ lectureMath, profSmith }))
     , DatabaseException);
+
+  // (24)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::StudentsConfidant)
+    .FROM_ONE(studentPaul)
+    .TO_ONE(profEvans));
+
+  // (25)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::StudentsConfidant)
+    .FROM_ONE(profSmith)
+    .TO_MANY({ studentJohn, studentMary }));
+
+  // (26)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::Lecturer)
+    .FROM_ONE(lectureProgramming)
+    .TO_ONE(profSmith));
+
+  // (27)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::Lecturer)
+    .FROM_ONE(profAdams)
+    .TO_MANY({ lectureOs, lectureDbs }));
+
+  // (28)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::LectureParticipant)
+    .FROM_ONE(studentMary)
+    .TO_MANY({ lectureMath, lectureProgramming }));
+
+  // (29)
+  m_db.execQuery(UNLINK_TUPLES(Relationships::LectureParticipant)
+    .FROM_ONE(lectureMath)
+    .TO_ONE(studentJohn));
+
+  // (30)
+  expectUnlinkedRelations(m_db);
 }
 
 /**

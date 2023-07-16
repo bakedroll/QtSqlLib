@@ -14,7 +14,7 @@ require_library(GMock)
 
 require_project(QtSqlLib)
 
-add_source_directory(tests)
+add_source_directory(itests)
 add_source_directory(src)
 add_source_directory(include)
 

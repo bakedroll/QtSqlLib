@@ -4,15 +4,14 @@
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
 
+#include <QVariantList>
+
 namespace QtSqlLib::Query
 {
 
-LinkTuples::LinkTuples(const API::IID& relationshipId)
-  : QuerySequence()
-  , m_relationshipId(relationshipId.get())
-  , m_expectedCall(ExpectedCall::From)
-  , m_type(RelationshipType::ToOne)
-  , m_bRemainingFromKeys(false)
+LinkTuples::LinkTuples(const API::IID& relationshipId) :
+  QuerySequence(),
+  m_relationshipPreparationData(relationshipId)
 {
 }
 
@@ -20,89 +19,71 @@ LinkTuples::~LinkTuples() = default;
 
 LinkTuples& LinkTuples::fromOne(const API::ISchema::TupleValues& tupleKeyValues)
 {
-  if (m_expectedCall != ExpectedCall::From)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "fromOne() call not expected.");
-  }
-
-  m_fromTupleKeyValues = tupleKeyValues;
-  m_expectedCall = ExpectedCall::To;
+  m_relationshipPreparationData.fromOne(tupleKeyValues);
   return *this;
 }
 
 LinkTuples& LinkTuples::fromRemainingKey()
 {
-  if (m_expectedCall != ExpectedCall::From)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "fromOne() call not expected.");
-  }
-
-  m_bRemainingFromKeys = true;
-  m_expectedCall = ExpectedCall::To;
+  m_relationshipPreparationData.fromRemainingKey();
   return *this;
 }
 
 LinkTuples& LinkTuples::toOne(const API::ISchema::TupleValues& tupleKeyValues)
 {
-  if (m_expectedCall != ExpectedCall::To)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "toOne() call not expected.");
-  }
-
-  m_type = RelationshipType::ToOne;
-  m_toTupleKeyValuesList.emplace_back(tupleKeyValues);
-  m_expectedCall = ExpectedCall::Complete;
+  m_relationshipPreparationData.toOne(tupleKeyValues);
   return *this;
 }
 
 LinkTuples& LinkTuples::toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
 {
-  if (m_expectedCall != ExpectedCall::To)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "toMany() call not expected.");
-  }
-
-  m_type = RelationshipType::ToMany;
-  m_toTupleKeyValuesList = tupleKeyValuesList;
-  m_expectedCall = ExpectedCall::Complete;
+  m_relationshipPreparationData.toMany(tupleKeyValuesList);
   return *this;
 }
 
 void LinkTuples::prepare(API::ISchema& schema)
 {
-  if (m_expectedCall != ExpectedCall::Complete)
+  const auto affectedData = m_relationshipPreparationData.resolveAffectedTableData(schema);
+  if (affectedData.isLinkTable)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "LinkTuples query incomplete.");
-  }
+    auto batchInsertQuery = affectedData.remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys
+      ? std::make_unique<BatchInsertRemainingKeys>(affectedData.tableId, static_cast<int>(affectedData.affectedTuples.size()),
+        affectedData.primaryForeignKeyColIdMap)
+      : std::make_unique<BatchInsertInto>(ID(affectedData.tableId));
 
-  if (!m_bRemainingFromKeys && m_fromTupleKeyValues.empty())
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      "From key must not be empty.");
-  }
+    std::map<API::IID::Type, QVariantList> colValuesMap;
+    for (const auto& tuple : affectedData.affectedTuples)
+    {
+      for (const auto& col : tuple.childKeyValues)
+      {
+        colValuesMap[col.first.columnId].append(col.second);
+      }
+    }
 
-  schema.throwIfRelationshipIsNotExisting(m_relationshipId);
-  const auto& relationship = schema.getRelationships().at(m_relationshipId);
+    for (const auto& column : colValuesMap)
+    {
+      batchInsertQuery->values(ID(column.first), column.second);
+    }
 
-  const auto tableIds = (m_type == RelationshipType::ToOne
-    ? schema.verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(m_relationshipId,  m_fromTupleKeyValues, m_toTupleKeyValuesList[0])
-    : schema.verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(m_relationshipId, m_fromTupleKeyValues, m_toTupleKeyValuesList));
-
-  const auto tableFromId = tableIds.first;
-  const auto tableToId = tableIds.second;
-
-  if (relationship.type == API::ISchema::RelationshipType::ManyToMany)
-  {
-    prepareToManyLinkQuery(schema, relationship, tableFromId, tableToId);
+    addQuery(std::move(batchInsertQuery));
   }
   else
   {
-    prepareToOneLinkQuery(schema, relationship, tableFromId, tableToId);
+    for (const auto& affectedTuple : affectedData.affectedTuples)
+    {
+      auto updateQuery = std::make_unique<UpdateTableForeignKeys>(affectedData.tableId, affectedData.primaryForeignKeyColIdMap);
+      updateQuery->setRemainingKeysMode(affectedData.remainingKeysMode);
+
+      if (affectedData.remainingKeysMode != RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys)
+      {
+        updateQuery->setForeignKeyValues(affectedTuple.foreignKeyValues);
+      }
+      if (affectedData.remainingKeysMode != RelationshipPreparationData::RemainingKeysMode::RemainingPrimaryKeys)
+      {
+        updateQuery->makeAndAddWhereExpr(affectedTuple.childKeyValues);
+      }
+      addQuery(std::move(updateQuery));
+    }
   }
 }
 
@@ -110,16 +91,16 @@ LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
   API::IID::Type tableId,
   const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : UpdateTable(ID(tableId))
-  , m_mode(Mode::Default)
+  , m_remainingKeysMode(RelationshipPreparationData::RemainingKeysMode::NoRemainingKeys)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
 {
 }
 
 LinkTuples::UpdateTableForeignKeys::~UpdateTableForeignKeys() = default;
 
-void LinkTuples::UpdateTableForeignKeys::setMode(Mode mode)
+void LinkTuples::UpdateTableForeignKeys::setRemainingKeysMode(RelationshipPreparationData::RemainingKeysMode mode)
 {
-  m_mode = mode;
+  m_remainingKeysMode = mode;
 }
 
 void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues)
@@ -158,12 +139,12 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSql
     }
   };
 
-  if (m_mode == Mode::ForeignKeyValuesRemaining)
+  if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys)
   {
     throwIfInvalidPreviousQueryResults();
     setForeignKeyValues(previousQueryResults.resultTuples[0].values);
   }
-  else if (m_mode == Mode::AffectedChildKeyValuesRemaining)
+  else if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingPrimaryKeys)
   {
     throwIfInvalidPreviousQueryResults();
     makeAndAddWhereExpr(previousQueryResults.resultTuples[0].values);
@@ -208,117 +189,6 @@ API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QS
   }
 
   return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
-}
-
-void LinkTuples::prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                       API::IID::Type fromTableId, API::IID::Type toTableId)
-{
-  auto parentTableId = relationship.tableFromId;
-  auto childTableId = relationship.tableToId;
-
-  if (relationship.type == API::ISchema::RelationshipType::ManyToOne)
-  {
-    std::swap(parentTableId, childTableId);
-  }
-
-  const auto isCorrectTableRelationDirection = (parentTableId == fromTableId || fromTableId == toTableId);
-  const auto keyValuesToInsert = (isCorrectTableRelationDirection ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
-  const auto affectedChildTupleKeys = (isCorrectTableRelationDirection
-    ? m_toTupleKeyValuesList
-    : std::vector<API::ISchema::TupleValues>{ m_fromTupleKeyValues });
-
-  const auto& childTable = schema.getTables().at(childTableId);
-  const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
-
-  const auto isRemainingForeignKeyValues = (m_bRemainingFromKeys && ((parentTableId == fromTableId) || (toTableId == fromTableId)));
-  const auto isRemainingAffectedChildKeyValues = (m_bRemainingFromKeys && ((childTableId == fromTableId) && (toTableId != fromTableId)));
-
-  if (foreignKeyRefs.size() != 1)
-  {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError,
-      "Foreign key references table seems to be corrupted.");
-  }
-
-  for (const auto& affectedChildRowId : affectedChildTupleKeys)
-  {
-    auto updateQuery = std::make_unique<UpdateTableForeignKeys>(childTableId, foreignKeyRefs[0].primaryForeignKeyColIdMap);
-
-    if (isRemainingForeignKeyValues)
-    {
-      updateQuery->setMode(UpdateTableForeignKeys::Mode::ForeignKeyValuesRemaining);
-    }
-    else
-    {
-      updateQuery->setForeignKeyValues(keyValuesToInsert);
-    }
-
-    if (isRemainingAffectedChildKeyValues)
-    {
-      updateQuery->setMode(UpdateTableForeignKeys::Mode::AffectedChildKeyValuesRemaining);
-    }
-    else
-    {
-      updateQuery->makeAndAddWhereExpr(affectedChildRowId);
-    }
-
-    addQuery(std::move(updateQuery));
-  }
-}
-
-void LinkTuples::prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                                        API::IID::Type fromTableId, API::IID::Type toTableId)
-{
-  const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
-  const auto& linkTable = schema.getTables().at(linkTableId);
-
-  const auto isSelfRelationship = (fromTableId == toTableId);
-
-  const auto& foreignKeyRefsFromList = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, fromTableId });
-  const auto& foreignKeyRefsToList = linkTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, toTableId });
-
-  if ((isSelfRelationship && foreignKeyRefsFromList.size() != 2) ||
-    (!isSelfRelationship && (foreignKeyRefsFromList.size() != 1 || foreignKeyRefsToList.size() != 1)))
-  {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError,
-      "Foreign key references table seems to be corrupted.");
-  }
-
-  const auto& foreignKeyRefsFrom =  foreignKeyRefsFromList[0];
-  const auto& foreignKeyRefsTo = (isSelfRelationship ? foreignKeyRefsToList[1] : foreignKeyRefsToList[0]);
-
-  std::map<API::IID::Type, QVariantList> columnValuesMap;
-
-  const auto appendValues = [&columnValuesMap](
-    const API::ISchema::TupleValues& values,
-    const API::ISchema::ForeignKeyReference& foreignKeyRef)
-  {
-    for (const auto& refColId : values)
-    {
-      if (foreignKeyRef.primaryForeignKeyColIdMap.count(refColId.first) > 0)
-      {
-        const auto& colId = foreignKeyRef.primaryForeignKeyColIdMap.at(refColId.first);
-        columnValuesMap[colId].append(refColId.second);
-      }
-    }
-  };
-
-  for (const auto& toRowIds : m_toTupleKeyValuesList)
-  {
-    appendValues(m_fromTupleKeyValues, foreignKeyRefsFrom);
-    appendValues(toRowIds, foreignKeyRefsTo);
-  }
-
-  auto batchInsertQuery = m_bRemainingFromKeys
-    ? std::make_unique<BatchInsertRemainingKeys>(linkTableId, static_cast<int>(m_toTupleKeyValuesList.size()),
-      foreignKeyRefsFrom.primaryForeignKeyColIdMap)
-    : std::make_unique<BatchInsertInto>(ID(linkTableId));
-
-  for (const auto& values : columnValuesMap)
-  {
-    batchInsertQuery->values(ID(values.first), values.second);
-  }
-
-  addQuery(std::move(batchInsertQuery));
 }
 
 }

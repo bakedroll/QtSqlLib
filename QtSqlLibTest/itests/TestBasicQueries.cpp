@@ -7,10 +7,10 @@
 namespace QtSqlLibTest
 {
 
-class TestInsertUpdateRead : public testing::Test
+class TestBasicQueries : public testing::Test
 {
 public:
-  ~TestInsertUpdateRead() override
+  ~TestBasicQueries() override
   {
     m_db.close();
     QFile::remove(Funcs::getDefaultDatabaseFilename());
@@ -27,7 +27,7 @@ public:
  *            The first FromTable query delivers four results with correct values.
  *            The second FromTable query delivers three results with correct values.
  */
-TEST_F(TestInsertUpdateRead, insertAndRead)
+TEST_F(TestBasicQueries, insertAndRead)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -93,7 +93,7 @@ TEST_F(TestInsertUpdateRead, insertAndRead)
  * @expected: No exceptions occur.
  *            The table contains the updated value.
  */
-TEST_F(TestInsertUpdateRead, insertUpdateAndRead)
+TEST_F(TestBasicQueries, insertUpdateAndRead)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -122,11 +122,44 @@ TEST_F(TestInsertUpdateRead, insertUpdateAndRead)
 }
 
 /**
+ * @test: Creates a single table and inserts some values, then some values will be deletes.
+ * @expected: No exceptions occur.
+ *            The tuples were deleted as expected.
+ */
+TEST_F(TestBasicQueries, insertAndDelete)
+{
+  SchemaConfigurator configurator;
+  configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
+    .COLUMN(Table1Cols::Id, "id", DataType::Integer).PRIMARY_KEY.AUTO_INCREMENT.NOT_NULL
+    .COLUMN_VARCHAR(Table1Cols::Text, "text", 128)
+    .COLUMN(Table1Cols::Number, "number", DataType::Integer);
+
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+
+  m_db.execQuery(BATCH_INSERT_INTO(TableIds::Table1)
+    .VALUES(Table1Cols::Text, QVariantList() << "value1" << "value2" << "value3" << "value3")
+    .VALUES(Table1Cols::Number, QVariantList() << 1 << 2 << 3 << 4));
+
+  m_db.execQuery(DELETE_FROM(TableIds::Table1)
+    .WHERE(EQUAL(Table1Cols::Text, "value1").OR.GREATEREQUAL(Table1Cols::Number, 3)));
+
+  const auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
+    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
+
+  EXPECT_EQ(results.resultTuples.size(), 1);
+
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value2"));
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value3"));
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results.resultTuples, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value4"));
+}
+
+/**
  * @test: Creates a single table with a primary key that is defined by two columns and inserts a value.
  * @expected: No exceptions occur.
  *            The resulting tuple key after the insert query operation is valid.
  */
-TEST_F(TestInsertUpdateRead, multiplePrimaryKeysTable)
+TEST_F(TestBasicQueries, multiplePrimaryKeysTable)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
@@ -157,7 +190,7 @@ TEST_F(TestInsertUpdateRead, multiplePrimaryKeysTable)
  * @test: Initializes some databases with invalid schema configurations
  * @expected: Exceptions will be thrown.
  */
-TEST_F(TestInsertUpdateRead, databaseImitializationExceptions)
+TEST_F(TestBasicQueries, databaseInitializationExceptions)
 {
   // Two different tables must not have the same id
   const auto case1 = []()
@@ -329,7 +362,7 @@ TEST_F(TestInsertUpdateRead, databaseImitializationExceptions)
  * @test: Creates some invalid FromTable queries.
  * @expected: Exceptions will be thrown.
  */
-TEST_F(TestInsertUpdateRead, fromTableExceptions)
+TEST_F(TestBasicQueries, fromTableExceptions)
 {
   EXPECT_THROW(
     FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT(IDS(QtSqlLib::ID(StudentsCols::Id))),

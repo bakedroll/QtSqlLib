@@ -3,9 +3,10 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ISchema.h>
 
-#include <QtSqlLib/Query/QuerySequence.h>
-#include "QtSqlLib/Query/UpdateTable.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
+#include "QtSqlLib/Query/UpdateTable.h"
+#include "QtSqlLib/RelationshipPreparationData.h"
+#include <QtSqlLib/Query/QuerySequence.h>
 
 #define LINK_TUPLES(X) QtSqlLib::Query::LinkTuples(QtSqlLib::ID(X))
 
@@ -35,26 +36,19 @@ private:
   class UpdateTableForeignKeys : public UpdateTable
   {
   public:
-    enum class Mode
-    {
-      Default,
-      AffectedChildKeyValuesRemaining,
-      ForeignKeyValuesRemaining
-    };
-
     UpdateTableForeignKeys(
       API::IID::Type tableId,
       const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
-    void setMode(Mode mode);
+    void setRemainingKeysMode(RelationshipPreparationData::RemainingKeysMode mode);
     void setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues);
     void makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues);
 
     SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
 
   private:
-    Mode m_mode;
+    RelationshipPreparationData::RemainingKeysMode m_remainingKeysMode;
     const API::ISchema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
@@ -76,32 +70,7 @@ private:
 
   };
 
-  enum class ExpectedCall
-  {
-    From,
-    To,
-    Complete
-  };
-
-  enum class RelationshipType
-  {
-    ToOne,
-    ToMany
-  };
-
-  API::IID::Type m_relationshipId;
-  ExpectedCall m_expectedCall;
-
-  RelationshipType m_type;
-
-  bool m_bRemainingFromKeys;
-  API::ISchema::TupleValues m_fromTupleKeyValues;
-  std::vector<API::ISchema::TupleValues> m_toTupleKeyValuesList;
-
-  void prepareToOneLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                             API::IID::Type fromTableId, API::IID::Type toTableId);
-  void prepareToManyLinkQuery(API::ISchema& schema, const API::ISchema::Relationship& relationship,
-                              API::IID::Type fromTableId, API::IID::Type toTableId);
+  RelationshipPreparationData m_relationshipPreparationData;
 
 };
 

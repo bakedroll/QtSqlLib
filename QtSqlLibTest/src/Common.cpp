@@ -67,7 +67,7 @@ void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, const IID
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
 
-  auto joinedTuples = getJoinedTuples(results, fromTableId, fromColId, fromValue, relationshipId);
+  const auto joinedTuples = getJoinedTuples(results, fromTableId, fromColId, fromValue, relationshipId);
   EXPECT_EQ(joinedTuples.size(), toValues.size());
 
   for (const auto& value : toValues)
