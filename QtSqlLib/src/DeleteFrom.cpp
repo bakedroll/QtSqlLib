@@ -30,7 +30,7 @@ API::IQuery::SqlQuery DeleteFrom::getSqlQuery(
   API::ISchema& schema,
   const ResultSet& previousQueryResults)
 {
-  schema.throwIfTableIdNotExisting(m_tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
 
   QString queryStr;

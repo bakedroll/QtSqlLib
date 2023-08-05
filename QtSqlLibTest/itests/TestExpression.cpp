@@ -2,6 +2,8 @@
 
 #include <Common.h>
 
+#include <mocks/MockSanityChecker.h>
+
 namespace QtSqlLibTest
 {
 
@@ -11,7 +13,9 @@ namespace QtSqlLibTest
  */
 TEST(ExpressionTest, validity)
 {
+  auto sanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
   Schema schema;
+  schema.setSanityChecker(std::move(sanityChecker));
 
   auto& table = schema.getTables()[static_cast<int>(TableIds::Table1)];
   table.name = "test";
@@ -42,7 +46,9 @@ TEST(ExpressionTest, validity)
  */
 TEST(ExpressionTest, exceptions)
 {
+  auto sanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
   Schema schema;
+  schema.setSanityChecker(std::move(sanityChecker));
 
   auto& table = schema.getTables()[static_cast<int>(TableIds::Table1)];
   table.name = "test";

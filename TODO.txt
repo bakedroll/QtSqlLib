@@ -1,6 +1,5 @@
 Refactoring:
 
-Schema::throw* Methoden auslagern (ISanityChecker)
 MAKROS zentral definieren
 class forwarding
 Expr interfaces auslagern

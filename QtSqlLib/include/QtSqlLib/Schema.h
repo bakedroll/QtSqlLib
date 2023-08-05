@@ -10,19 +10,16 @@ namespace QtSqlLib
 class Schema : public API::ISchema
 {
 public:
-  Schema();
+  explicit Schema();
   ~Schema() override;
 
   std::map<API::IID::Type, API::Table>& getTables() override;
   std::map<API::IID::Type, API::Relationship>& getRelationships() override;
+  const API::ISanityChecker& getSanityChecker() const override;
 
   API::IID::Type getManyToManyLinkTableId(API::IID::Type relationshipId) const override;
 
   void configureRelationships() override;
-
-  void throwIfTableIdNotExisting(API::IID::Type tableId) const override;
-  void throwIfRelationshipIsNotExisting(API::IID::Type relationshipId) const override;
-  void throwIfColumnIdNotExisting(const API::Table& table, API::IID::Type colId) const override;
 
   API::IID::Type validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const override;
   API::IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<API::TupleValues>& tupleKeyValuesList) const override;
@@ -37,7 +34,11 @@ public:
     const API::TupleValues& fromTupleKeyValues,
     const std::vector<API::TupleValues>& toTupleKeyValuesList) const override;
 
+  void setSanityChecker(std::unique_ptr<API::ISanityChecker> sanityChecker);
+
 private:
+  std::unique_ptr<API::ISanityChecker> m_sanityChecker;
+
   std::map<API::IID::Type, API::Table> m_tables;
   std::map<API::IID::Type, API::Relationship> m_relationships;
   std::map<API::IID::Type, API::IID::Type> m_mapManyToManyRelationshipToLinkTableId;

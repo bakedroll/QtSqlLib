@@ -14,11 +14,9 @@ class MockSchema : public QtSqlLib::API::ISchema
 public:
   MOCK_METHOD((std::map<QtSqlLib::API::IID::Type, QtSqlLib::API::Table>&), getTables, (), (override));
   MOCK_METHOD((std::map<QtSqlLib::API::IID::Type, QtSqlLib::API::Relationship>&), getRelationships, (), (override));
+  MOCK_METHOD((const QtSqlLib::API::ISanityChecker&), getSanityChecker, (), (const override));
   MOCK_METHOD((QtSqlLib::API::IID::Type), getManyToManyLinkTableId, (QtSqlLib::API::IID::Type), (const override));
   MOCK_METHOD((void), configureRelationships, (), (override));
-  MOCK_METHOD((void), throwIfTableIdNotExisting, (QtSqlLib::API::IID::Type), (const override));
-  MOCK_METHOD((void), throwIfRelationshipIsNotExisting, (QtSqlLib::API::IID::Type), (const override));
-  MOCK_METHOD((void), throwIfColumnIdNotExisting, (const QtSqlLib::API::Table&, QtSqlLib::API::IID::Type), (const override));
   MOCK_METHOD((QtSqlLib::API::IID::Type), validatePrimaryKeysAndGetTableId, (const QtSqlLib::API::TupleValues&), (const override));
   MOCK_METHOD((QtSqlLib::API::IID::Type), validatePrimaryKeysListAndGetTableId, (const std::vector<QtSqlLib::API::TupleValues>&), (const override));
   MOCK_METHOD((std::pair<QtSqlLib::API::IID::Type, QtSqlLib::API::IID::Type>), verifyOneToOneRelationshipPrimaryKeysAndGetTableIds,

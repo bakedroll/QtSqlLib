@@ -56,7 +56,7 @@ void InsertIntoExt::prepare(API::ISchema& schema)
 {
   getOrCreateInsertQuery();
 
-  schema.throwIfTableIdNotExisting(m_tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
 
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -67,7 +67,7 @@ void InsertIntoExt::prepare(API::ISchema& schema)
   {
     const auto relationshipId = linkedTuples.first;
 
-    schema.throwIfRelationshipIsNotExisting(relationshipId);
+    schema.getSanityChecker().throwIfRelationshipIsNotExisting(relationshipId);
     const auto& relationship = relationships.at(relationshipId);
 
     if ((relationship.tableFromId != m_tableId) && (relationship.tableToId != m_tableId))
@@ -137,7 +137,7 @@ InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
 
 API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
-  schema.throwIfTableIdNotExisting(m_tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
 
   QString keyColumns;

@@ -33,7 +33,7 @@ void BaseInsert::throwIfColumnIdAlreadyExisting(API::IID::Type id) const
 
 QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema) const
 {
-  schema.throwIfTableIdNotExisting(m_tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
 
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -42,7 +42,7 @@ QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema)
 
   for (const auto& id : m_columnIds)
   {
-    schema.throwIfColumnIdNotExisting(table, id);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, id);
 
     columnsString += QString("'%1', ").arg(table.columns.at(id).name);
     valuesString += "?, ";

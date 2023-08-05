@@ -21,9 +21,14 @@ std::map<API::IID::Type, API::Relationship>& Schema::getRelationships()
   return m_relationships;
 }
 
+const API::ISanityChecker& Schema::getSanityChecker() const
+{
+  return *m_sanityChecker;
+}
+
 API::IID::Type Schema::getManyToManyLinkTableId(API::IID::Type relationshipId) const
 {
-  throwIfRelationshipIsNotExisting(relationshipId);
+  m_sanityChecker->throwIfRelationshipIsNotExisting(relationshipId);
   return m_mapManyToManyRelationshipToLinkTableId.at(relationshipId);
 }
 
@@ -138,33 +143,6 @@ void Schema::configureRelationships()
   }
 }
 
-void Schema::throwIfTableIdNotExisting(API::IID::Type tableId) const
-{
-  if (m_tables.count(tableId) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidId,
-      QString("Unknown table id: %1.").arg(tableId));
-  }
-}
-
-void Schema::throwIfRelationshipIsNotExisting(API::IID::Type relationshipId) const
-{
-  if (m_relationships.count(relationshipId) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidId,
-      QString("Unknown relationship id: %1.").arg(relationshipId));
-  }
-}
-
-void Schema::throwIfColumnIdNotExisting(const API::Table& table, API::IID::Type colId) const
-{
-  if (table.columns.count(colId) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidId,
-      QString("Unknown column id %1 in table '%2'.").arg(colId).arg(table.name));
-  }
-}
-
 API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const
 {
   if (tupleKeyValues.empty())
@@ -193,7 +171,7 @@ API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const API::TupleValues& 
     colIds.insert(value.first.columnId);
   }
 
-  throwIfTableIdNotExisting(tableId);
+  m_sanityChecker->throwIfTableIdNotExisting(tableId);
   const auto& table = m_tables.at(tableId);
 
   for (const auto& primaryKey : table.primaryKeys)
@@ -240,7 +218,7 @@ API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<AP
     }
   }
 
-  throwIfTableIdNotExisting(tableId);
+  m_sanityChecker->throwIfTableIdNotExisting(tableId);
 
   return tableId;
 }
@@ -261,13 +239,18 @@ std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToManyRelationshipPri
   return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
 
+void Schema::setSanityChecker(std::unique_ptr<API::ISanityChecker> sanityChecker)
+{
+  m_sanityChecker = std::move(sanityChecker);
+}
+
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
   API::IID::Type relationshipId,
   const API::TupleValues& fromTupleKeyValues,
   const std::vector<API::TupleValues>& toTupleKeyValuesList) const
 {
-  throwIfRelationshipIsNotExisting(relationshipId);
+  m_sanityChecker->throwIfRelationshipIsNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
   const auto bIgnoreFromKeys = fromTupleKeyValues.empty();
 

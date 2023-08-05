@@ -167,7 +167,7 @@ QString Expr::Comparison::toQString(API::ISchema& schema, const OptionalIID& def
       }
       else if (defaultTableId && !columnId.isTableIdValid())
       {
-        schema.throwIfTableIdNotExisting(defaultTableId->get().get());
+        schema.getSanityChecker().throwIfTableIdNotExisting(defaultTableId->get().get());
       }
 
       const auto colId = columnId.get().columnId;
@@ -175,7 +175,7 @@ QString Expr::Comparison::toQString(API::ISchema& schema, const OptionalIID& def
         ? columnId.get().tableId
         : defaultTableId->get().get());
 
-      schema.throwIfColumnIdNotExisting(table, colId);
+      schema.getSanityChecker().throwIfColumnIdNotExisting(table, colId);
 
       const auto tableAlias = columnId.getTableAlias();
 

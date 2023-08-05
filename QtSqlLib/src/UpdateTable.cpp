@@ -38,7 +38,7 @@ UpdateTable& UpdateTable::where(Expr& expr)
 
 API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
-  schema.throwIfTableIdNotExisting(m_tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
 
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -51,7 +51,7 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISch
   QString setString = "";
   for (const auto& colValue : m_colIdNewValueMap)
   {
-    schema.throwIfColumnIdNotExisting(table, colValue.first);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, colValue.first);
 
     if (!setString.isEmpty())
     {

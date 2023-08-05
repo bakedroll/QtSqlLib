@@ -2,6 +2,7 @@
 
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/RelationshipConfigurator.h"
+#include "QtSqlLib/SanityChecker.h"
 #include "QtSqlLib/Schema.h"
 #include "QtSqlLib/TableConfigurator.h"
 
@@ -9,9 +10,12 @@ namespace QtSqlLib
 {
 
 SchemaConfigurator::SchemaConfigurator() :
-  ISchemaConfigurator(),
-  m_schema(std::make_unique<Schema>())
+  ISchemaConfigurator()
 {
+  auto schema = std::make_unique<Schema>();
+  schema->setSanityChecker(std::make_unique<SanityChecker>(schema->getTables(), schema->getRelationships()));
+
+  m_schema = std::move(schema);
 }
 
 SchemaConfigurator::~SchemaConfigurator() = default;

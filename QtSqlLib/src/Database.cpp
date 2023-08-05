@@ -2,12 +2,13 @@
 
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/ID.h"
-#include "QtSqlLib/QueryPrepareVisitor.h"
-#include "QtSqlLib/QueryExecuteVisitor.h"
 #include "QtSqlLib/Query/FromTable.h"
 #include "QtSqlLib/Query/InsertInto.h"
 #include "QtSqlLib/Query/Query.h"
 #include "QtSqlLib/Query/QuerySequence.h"
+#include "QtSqlLib/QueryExecuteVisitor.h"
+#include "QtSqlLib/QueryPrepareVisitor.h"
+#include "QtSqlLib/SanityChecker.h"
 
 #include <QSqlQuery>
 #include <QVariant>
@@ -340,6 +341,8 @@ ResultSet Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement&
 bool Database::isVersionTableExisting() const
 {
   Schema sqliteMasterSchema;
+  sqliteMasterSchema.setSanityChecker(
+    std::make_unique<SanityChecker>(sqliteMasterSchema.getTables(), sqliteMasterSchema.getRelationships()));
 
   auto& table = sqliteMasterSchema.getTables()[s_sqliteMasterTableId];
   table.name = "sqlite_master";

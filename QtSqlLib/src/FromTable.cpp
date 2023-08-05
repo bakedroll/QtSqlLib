@@ -146,7 +146,7 @@ FromTable& FromTable::where(Expr& expr)
 
 API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
-  schema.throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
+  schema.getSanityChecker().throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
   const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
 
   if (m_columnSelectionInfo.columnInfos.empty())
@@ -272,7 +272,7 @@ void FromTable::verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema)
   {
     const auto relationshipId = join.first;
 
-    schema.throwIfRelationshipIsNotExisting(relationshipId);
+    schema.getSanityChecker().throwIfRelationshipIsNotExisting(relationshipId);
     const auto& relationship = schema.getRelationships().at(relationshipId);
 
     if (m_columnSelectionInfo.tableId == relationship.tableFromId)
@@ -291,7 +291,7 @@ void FromTable::verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema)
         .arg(m_columnSelectionInfo.tableId));
     }
 
-    schema.throwIfTableIdNotExisting(join.second.tableId);
+    schema.getSanityChecker().throwIfTableIdNotExisting(join.second.tableId);
     if (joinTableIds.count(join.second.tableId) == 0)
     {
       joinTableIds.insert(join.second.tableId);
@@ -325,7 +325,7 @@ void FromTable::addToSelectedColumns(const API::ISchema& schema, const API::Tabl
 {
   for (auto& info : columnSelectionInfo.columnInfos)
   {
-    schema.throwIfColumnIdNotExisting(table, info.columnId);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, info.columnId);
 
     const auto indexInQuery = static_cast<int>(m_allSelectedColumns.size());
     info.indexInQuery = indexInQuery;
@@ -386,7 +386,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(API::ISchema& schema, con
       const auto& parentFromTableAlias = m_columnSelectionInfo.tableAlias;
 
       const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
-      schema.throwIfTableIdNotExisting(linkTableId);
+      schema.getSanityChecker().throwIfTableIdNotExisting(linkTableId);
 
       const auto& linkTable = schema.getTables().at(linkTableId);
 

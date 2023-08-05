@@ -79,7 +79,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
       "From key must not be empty.");
   }
 
-  schema.throwIfRelationshipIsNotExisting(m_relationshipId);
+  schema.getSanityChecker().throwIfRelationshipIsNotExisting(m_relationshipId);
   const auto& relationship = schema.getRelationships().at(m_relationshipId);
 
   const auto tableIds = (m_type == RelationshipType::ToOne
