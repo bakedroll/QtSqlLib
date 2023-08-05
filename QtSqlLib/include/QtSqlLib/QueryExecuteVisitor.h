@@ -19,13 +19,13 @@ public:
   void visit(API::IQuery& query) override;
   void visit(API::IQuerySequence& query) override;
 
-  API::IQuery::QueryResults getLastQueryResults() const;
+  ResultSet getLastQueryResults() const;
 
 private:
   const QSqlDatabase& m_sqlDb;
   API::ISchema& m_schema;
 
-  API::IQuery::QueryResults m_lastResults;
+  ResultSet m_lastResults;
 
 };
 

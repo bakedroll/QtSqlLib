@@ -21,7 +21,7 @@ public:
                   const QString& databaseName = QSqlDatabase::defaultConnection) override;
   void close() override;
 
-  API::IQuery::QueryResults execQuery(API::IQueryElement& query) override;
+  ResultSet execQuery(API::IQueryElement& query) override;
 
 private:
   std::unique_ptr<QSqlDatabase> m_db;
@@ -33,7 +33,7 @@ private:
   int  queryDatabaseVersion();
   void createOrMigrateTables(int currentVersion = 1);
 
-  API::IQuery::QueryResults execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const;
+  ResultSet execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const;
 
   bool isVersionTableExisting() const;
 

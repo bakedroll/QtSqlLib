@@ -97,7 +97,7 @@ public:
 
   ~CreateTable() override = default;
 
-  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override
+  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override
   {
     const auto cutTailingComma = [](QString& str)
     {
@@ -231,7 +231,7 @@ void Database::close()
   }
 }
 
-API::IQuery::QueryResults Database::execQuery(API::IQueryElement& query)
+ResultSet Database::execQuery(API::IQueryElement& query)
 {
   return execQueryForSchema(*m_schema, query);
 }
@@ -276,12 +276,12 @@ void Database::loadDatabaseFile(const QString& filename)
 int Database::queryDatabaseVersion()
 {
   const auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select({ s_versionColId }));
-  if (results.resultTuples.empty())
+  if (!results.hasNext())
   {
     return -1;
   }
 
-  return results.resultTuples[0].values.at({ s_versionTableid, s_versionColId }).toInt();
+  return results.next().at({ s_versionTableid, s_versionColId }).toInt();
 }
 
 void Database::createOrMigrateTables(int currentVersion)
@@ -308,7 +308,7 @@ void Database::createOrMigrateTables(int currentVersion)
   }
 }
 
-API::IQuery::QueryResults Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
+ResultSet Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
 {
   if (!m_db || !m_schema)
   {
@@ -354,7 +354,7 @@ bool Database::isVersionTableExisting() const
       .and()
       .equal(ID(s_sqliteMasterNameColId), s_versionTableName)));
 
-  return !results.resultTuples.empty();
+  return results.hasNext();
 }
 
 }

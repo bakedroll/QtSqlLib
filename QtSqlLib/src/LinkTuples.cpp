@@ -128,11 +128,11 @@ void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::ISchema:
 }
 
 API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-                                                                      QueryResults& previousQueryResults)
+                                                                      const ResultSet& previousQueryResults)
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
   {
-    if ((previousQueryResults.validity == QueryResults::Validity::Invalid) || previousQueryResults.resultTuples.empty())
+    if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Expected previous query results.");
@@ -142,14 +142,15 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSql
   if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys)
   {
     throwIfInvalidPreviousQueryResults();
-    setForeignKeyValues(previousQueryResults.resultTuples[0].values);
+    setForeignKeyValues(previousQueryResults.next());
   }
   else if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingPrimaryKeys)
   {
     throwIfInvalidPreviousQueryResults();
-    makeAndAddWhereExpr(previousQueryResults.resultTuples[0].values);
+    makeAndAddWhereExpr(previousQueryResults.next());
   }
 
+  previousQueryResults.resetIteration();
   return UpdateTable::getSqlQuery(db, schema, previousQueryResults);
 }
 
@@ -165,14 +166,14 @@ LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type ta
 LinkTuples::BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
 
 API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-                                                                        QueryResults& previousQueryResults)
+                                                                        const ResultSet& previousQueryResults)
 {
-  if (previousQueryResults.validity != QueryResults::Validity::Valid || previousQueryResults.resultTuples.empty())
+  if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
   {
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Expected previous query results.");
   }
 
-  const auto& prevValues = previousQueryResults.resultTuples[0].values;
+  const auto& prevValues = previousQueryResults.next();
   for (const auto& value : prevValues)
   {
     if (m_primaryForeignKeyColIdMap.count(value.first) == 0)
@@ -188,6 +189,7 @@ API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QS
     values(ID(m_primaryForeignKeyColIdMap.at(value.first)), list);
   }
 
+  previousQueryResults.resetIteration();
   return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }
 

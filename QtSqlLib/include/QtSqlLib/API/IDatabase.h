@@ -18,7 +18,7 @@ public:
                           const QString& databaseName = QSqlDatabase::defaultConnection) = 0;
   virtual void close() = 0;
 
-  virtual IQuery::QueryResults execQuery(IQueryElement& query) = 0;
+  virtual ResultSet execQuery(IQueryElement& query) = 0;
 
 };
 

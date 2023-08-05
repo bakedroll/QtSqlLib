@@ -45,7 +45,7 @@ private:
     void setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues);
     void makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues);
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
 
   private:
     RelationshipPreparationData::RemainingKeysMode m_remainingKeysMode;
@@ -62,7 +62,7 @@ private:
       const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~BatchInsertRemainingKeys() override;
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
 
   private:
     int m_numRelations;

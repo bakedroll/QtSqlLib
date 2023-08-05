@@ -10,17 +10,19 @@ QString Funcs::getDefaultDatabaseFilename()
   return "test.db";
 }
 
-bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& results, const IID& tableId,
+bool Funcs::isResultTuplesContaining(const QtSqlLib::ResultSet& results, const IID& tableId,
                                      const IID& columnId, QVariant value)
 {
+  results.resetIteration();
   const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
-  for (const auto& result : results)
+  while (results.hasNext())
   {
-    if (result.values.count(colId) == 0)
+    const auto& next = results.next();
+    if (next.count(colId) == 0)
     {
       return false;
     }
-    if (result.values.at(colId) == value)
+    if (next.at(colId) == value)
     {
       return true;
     }
@@ -28,54 +30,45 @@ bool Funcs::isResultTuplesContaining(const std::vector<IQuery::ResultTuple>& res
   return false;
 }
 
-bool Funcs::isResultTuplesContaining(const IQuery::TupleValuesList& results, const IID& tableId,
-                                     const IID& columnId, QVariant value)
-{
-  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
-  for (const auto& result : results)
-  {
-    if (result.count(colId) == 0)
-    {
-      return false;
-    }
-    if (result.at(colId) == value)
-    {
-      return true;
-    }
-  }
-  return false;
-}
-
-IQuery::TupleValuesList& Funcs::getJoinedTuples(std::vector<IQuery::ResultTuple>& results,
-                                                               const IID& tableId, const IID& columnId, const QVariant& value,
-                                                               const IID& relationshipId)
-{
-  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
-  for (auto& result : results)
-  {
-    if (result.values.at(colId) == value)
-    {
-      return result.joinedTuples.at(relationshipId.get());
-    }
-  }
-  return s_nullTupleValuesList;
-}
-
-void Funcs::expectRelations(std::vector<IQuery::ResultTuple>& results, const IID& relationshipId,
+void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relationshipId,
                             const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
                             const QVariant& fromValue, const QVariantList& toValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
 
-  const auto joinedTuples = getJoinedTuples(results, fromTableId, fromColId, fromValue, relationshipId);
-  EXPECT_EQ(joinedTuples.size(), toValues.size());
+  results.resetIteration();
 
-  for (const auto& value : toValues)
+  std::set<int> matchingToValuesIndices;
+
+  const ISchema::TableColumnId colId{ fromTableId.get(), fromColId.get() };
+  const ISchema::TableColumnId valueColId{ toTableId.get(), toColId.get() };
+
+  while (results.hasNext())
   {
-    EXPECT_TRUE(isResultTuplesContaining(joinedTuples, toTableId, toColId, value));
-  }
-}
+    const auto& next = results.next();
+    if (next.at(colId) == fromValue)
+    {
+      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId.get()), toValues.size());
+      while (results.hasNextJoinedTuple(relationshipId.get()))
+      {
+        const auto& joinedTuple = results.nextJoinedTuple(relationshipId.get());
+        const auto& value = joinedTuple.at(valueColId);
 
-IQuery::TupleValuesList Funcs::s_nullTupleValuesList;
+        for (int i=0; i<toValues.size(); ++i)
+        {
+          if (value == toValues.at(i))
+          {
+            matchingToValuesIndices.insert(i);
+            break;
+          }
+        }
+      }
+
+      break;
+    }
+  }
+
+  EXPECT_EQ(toValues.size(), matchingToValuesIndices.size());
+}
 
 }

@@ -107,23 +107,14 @@ public:
   static QString getDefaultDatabaseFilename();
 
   static bool isResultTuplesContaining(
-    const std::vector<IQuery::ResultTuple>& results,
+    const QtSqlLib::ResultSet& results,
     const IID& tableId, const IID& columnId, QVariant value);
 
-  static bool isResultTuplesContaining(
-    const IQuery::TupleValuesList& results,
-    const IID& tableId, const IID& columnId, QVariant value);
-
-  static IQuery::TupleValuesList& getJoinedTuples(std::vector<IQuery::ResultTuple>& results,
-    const IID& tableId, const IID& columnId, const QVariant& value, const IID& relationshipId);
-
-  static void expectRelations(std::vector<IQuery::ResultTuple>& results,
+  static void expectRelations(const QtSqlLib::ResultSet& results,
     const IID& relationshipId,
     const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
     const QVariant& fromValue, const QVariantList& toValues);
 
-private:
-  static IQuery::TupleValuesList s_nullTupleValuesList;
 
 };
 

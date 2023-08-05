@@ -144,7 +144,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
   const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
@@ -184,14 +184,14 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   return { QSqlQuery(queryStr, db) };
 }
 
-API::IQuery::QueryResults FromTable::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
+ResultSet FromTable::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
 {
   using JoinKey = std::pair<API::IID::Type, NTuple>;
 
   std::set<NTuple> retrievedResultKeys;
   std::map<JoinKey, std::set<NTuple>> retrievedRelationResultKeys;
 
-  QueryResults::ResultTuples resultTuples;
+  ResultSet::TupleList resultTuples;
   std::map<NTuple, int> resultTupleIndices;
 
   while (query.next())
@@ -202,7 +202,7 @@ API::IQuery::QueryResults FromTable::getQueryResults(API::ISchema& schema, QSqlQ
     {
       retrievedResultKeys.emplace(keyTuple);
 
-      ResultTuple tuple;
+      ResultSet::Tuple tuple;
       for (auto& info : m_columnSelectionInfo.columnInfos)
       {
         tuple.values[{ m_columnSelectionInfo.tableId, info.columnId }] = query.value(info.indexInQuery);
@@ -242,7 +242,7 @@ API::IQuery::QueryResults FromTable::getQueryResults(API::ISchema& schema, QSqlQ
     }
   }
 
-  return { QueryResults::Validity::Valid, resultTuples };
+  return ResultSet::create(resultTuples);
 }
 
 void FromTable::throwIfMultipleSelects() const

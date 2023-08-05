@@ -21,7 +21,7 @@ public:
 
   BatchInsertInto& values(const API::IID& columnId, const QVariantList& values);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
 
 protected:
   void bindQueryValues(QSqlQuery& query) const override;

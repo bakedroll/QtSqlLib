@@ -1,17 +1,19 @@
-Schema::throw* Methoden auslagern
+Refactoring:
+
+Schema::throw* Methoden auslagern (ISanityChecker)
 Container-Type für ResultSet
-
 MAKROS zentral definieren
-
-Mehr exception tests
+class forwarding
+Expr interfaces auslagern
 private class declarations hpp => cpp?
 
+Features:
+
 SQL-Indices
-
-Expr interfaces auslagern
-
-class forwarding
-
-Anfragezeiten messen (Profiling/Optimierung)
-
 Migrations-Feature
+
+Sonstiges:
+
+Mehr exception tests
+Unittests
+Anfragezeiten messen (Profiling/Optimierung)

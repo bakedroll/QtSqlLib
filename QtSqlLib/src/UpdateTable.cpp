@@ -36,7 +36,7 @@ UpdateTable& UpdateTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
 

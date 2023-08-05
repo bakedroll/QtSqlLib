@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/ResultSet.h>
 
 #include <QSqlQuery>
 
@@ -10,28 +11,6 @@ namespace QtSqlLib::API
 class IQuery
 {
 public:
-  using TupleValuesList = std::vector<ISchema::TupleValues>;
-
-  struct ResultTuple
-  {
-    ISchema::TupleValues values;
-    std::map<API::IID::Type, TupleValuesList> joinedTuples;
-  };
-
-  struct QueryResults
-  {
-    using ResultTuples = std::vector<ResultTuple>;
-
-    enum class Validity
-    {
-      Valid,
-      Invalid
-    };
-
-    Validity validity = Validity::Invalid;
-    ResultTuples resultTuples;
-  };
-
   enum class QueryMode
   {
     Single,
@@ -50,8 +29,8 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, QueryResults& previousQueryResults) = 0;
-  virtual QueryResults getQueryResults(ISchema& schema, QSqlQuery& query) const { return {}; }
+  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, const ResultSet& previousQueryResults) = 0;
+  virtual ResultSet getQueryResults(ISchema& schema, QSqlQuery& query) const { return ResultSet::invalid(); }
 
 };
 

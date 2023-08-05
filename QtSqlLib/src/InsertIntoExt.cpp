@@ -135,7 +135,7 @@ InsertIntoExt::QueryInsertedIds::QueryInsertedIds(API::IID::Type tableId)
 
 InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
 
-API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults)
+API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -152,7 +152,7 @@ API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDat
     db) };
 }
 
-API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
+ResultSet InsertIntoExt::QueryInsertedIds::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
 {
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -162,7 +162,7 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(API::
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  ResultTuple tuple;
+  ResultSet::Tuple tuple;
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)
   {
@@ -170,7 +170,7 @@ API::IQuery::QueryResults InsertIntoExt::QueryInsertedIds::getQueryResults(API::
     currentValue++;
   }
 
-  return { QueryResults::Validity::Valid, { { tuple } } };
+  return ResultSet::create({ tuple });
 }
 
 void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshipId) const

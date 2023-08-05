@@ -55,8 +55,8 @@ private:
     QueryInsertedIds(API::IID::Type tableId);
     ~QueryInsertedIds() override;
 
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, QueryResults& previousQueryResults) override;
-    QueryResults getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
+    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
+    ResultSet getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
   private:
     API::IID::Type m_tableId;

@@ -28,7 +28,7 @@ DeleteFrom& DeleteFrom::where(Expr& expr)
 API::IQuery::SqlQuery DeleteFrom::getSqlQuery(
   const QSqlDatabase& db,
   API::ISchema& schema,
-  QueryResults& previousQueryResults)
+  const ResultSet& previousQueryResults)
 {
   schema.throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
