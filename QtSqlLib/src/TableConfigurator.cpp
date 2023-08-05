@@ -5,7 +5,7 @@
 namespace QtSqlLib
 {
 
-TableConfigurator::TableConfigurator(API::ISchema::Table& table)
+TableConfigurator::TableConfigurator(API::Table& table)
   : m_table(table)
   , m_bIsPrimaryKeysConfigured(false)
 {
@@ -14,7 +14,7 @@ TableConfigurator::TableConfigurator(API::ISchema::Table& table)
 TableConfigurator::~TableConfigurator() = default;
 
 API::ITableConfigurator& TableConfigurator::column(const API::IID& columnId, const QString& columnName,
-                                                   API::ISchema::DataType type, int varcharLength)
+                                                   API::DataType type, int varcharLength)
 {
   const auto cid = columnId.get();
   if (m_table.columns.count(cid) > 0)
@@ -35,13 +35,13 @@ API::ITableConfigurator& TableConfigurator::column(const API::IID& columnId, con
       QString("Column with name '%1' already exists for table '%2'.").arg(columnName).arg(m_table.name));
   }
 
-  if ((type == API::ISchema::DataType::Varchar) && (varcharLength <= 0))
+  if ((type == API::DataType::Varchar) && (varcharLength <= 0))
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("Varchar length must greater that 0 for column '%1' of table '%2'.").arg(columnName).arg(m_table.name));
   }
 
-  API::ISchema::Column column;
+  API::Column column;
   column.name = columnName;
   column.type = type;
   column.varcharLength = varcharLength;

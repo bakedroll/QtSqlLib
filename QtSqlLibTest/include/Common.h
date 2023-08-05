@@ -25,7 +25,7 @@ namespace QtSqlLibTest
 
 using BatchInsertInto = QtSqlLib::Query::BatchInsertInto;
 using DatabaseException = QtSqlLib::DatabaseException;
-using DataType = QtSqlLib::API::ISchema::DataType;
+using DataType = QtSqlLib::API::DataType;
 using DeleteFrom = QtSqlLib::Query::DeleteFrom;
 using Expr = QtSqlLib::Expr;
 using FromTable = QtSqlLib::Query::FromTable;

@@ -45,20 +45,20 @@ public:
   {
   public:
     ColumnId();
-    ColumnId(const API::ISchema::TableColumnId& tableColumnId);
+    ColumnId(const API::TableColumnId& tableColumnId);
     ColumnId(const API::IID& columnId);
-    ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId);
+    ColumnId(const QString& tableAlias, const API::TableColumnId& tableColumnId);
     virtual ~ColumnId();
 
-    const API::ISchema::TableColumnId& get() const;
+    const API::TableColumnId& get() const;
     bool isTableIdValid() const;
     QString getTableAlias() const;
 
   private:
-    ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId, bool bIsTableIdValid);
+    ColumnId(const QString& tableAlias, const API::TableColumnId& tableColumnId, bool bIsTableIdValid);
 
     QString m_tableAlias;
-    API::ISchema::TableColumnId m_tableColumnId;
+    API::TableColumnId m_tableColumnId;
     bool m_bIsTableIdValid;
 
   };

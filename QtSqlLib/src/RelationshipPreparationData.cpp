@@ -15,7 +15,7 @@ RelationshipPreparationData::RelationshipPreparationData(const API::IID& relatio
 
 RelationshipPreparationData::~RelationshipPreparationData() = default;
 
-void RelationshipPreparationData::fromOne(const API::ISchema::TupleValues& tupleKeyValues)
+void RelationshipPreparationData::fromOne(const API::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::From)
   {
@@ -39,7 +39,7 @@ void RelationshipPreparationData::fromRemainingKey()
   m_expectedCall = ExpectedCall::To;
 }
 
-void RelationshipPreparationData::toOne(const API::ISchema::TupleValues& tupleKeyValues)
+void RelationshipPreparationData::toOne(const API::TupleValues& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -52,7 +52,7 @@ void RelationshipPreparationData::toOne(const API::ISchema::TupleValues& tupleKe
   m_expectedCall = ExpectedCall::Complete;
 }
 
-void RelationshipPreparationData::toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
+void RelationshipPreparationData::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -89,7 +89,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
   const auto tableFromId = tableIds.first;
   const auto tableToId = tableIds.second;
 
-  if (relationship.type == API::ISchema::RelationshipType::ManyToMany)
+  if (relationship.type == API::RelationshipType::ManyToMany)
   {
     return determineAffectedLinkTableData(schema, relationship, tableFromId, tableToId);
   }
@@ -98,13 +98,13 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedChildTableData(
-  API::ISchema& schema, const API::ISchema::Relationship& relationship,
+  API::ISchema& schema, const API::Relationship& relationship,
   API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   auto parentTableId = relationship.tableFromId;
   auto childTableId = relationship.tableToId;
 
-  if (relationship.type == API::ISchema::RelationshipType::ManyToOne)
+  if (relationship.type == API::RelationshipType::ManyToOne)
   {
     std::swap(parentTableId, childTableId);
   }
@@ -113,7 +113,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
   const auto keyValuesToInsert = (isCorrectTableRelationDirection ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
   const auto affectedChildTupleKeys = (isCorrectTableRelationDirection
     ? m_toTupleKeyValuesList
-    : std::vector<API::ISchema::TupleValues>{ m_fromTupleKeyValues });
+    : std::vector<API::TupleValues>{ m_fromTupleKeyValues });
 
   const auto& childTable = schema.getTables().at(childTableId);
   const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
@@ -154,7 +154,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedLinkTableData(
-  API::ISchema& schema, const API::ISchema::Relationship& relationship,
+  API::ISchema& schema, const API::Relationship& relationship,
   API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
@@ -177,15 +177,15 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 
   const auto appendTuple = [&linkTableId](
     AffectedTuple& tuple,
-    const API::ISchema::TupleValues& values,
-    const API::ISchema::ForeignKeyReference& foreignKeyRef)
+    const API::TupleValues& values,
+    const API::ForeignKeyReference& foreignKeyRef)
   {
     for (const auto& refColId : values)
     {
       if (foreignKeyRef.primaryForeignKeyColIdMap.count(refColId.first) > 0)
       {
         const auto& colId = foreignKeyRef.primaryForeignKeyColIdMap.at(refColId.first);
-        tuple.childKeyValues[API::ISchema::TableColumnId{ linkTableId, colId }] = refColId.second;
+        tuple.childKeyValues[API::TableColumnId{ linkTableId, colId }] = refColId.second;
       }
     }
   };

@@ -7,39 +7,16 @@
 namespace QtSqlLib
 {
 
-bool Schema::TableColumnId::operator<(const TableColumnId& rhs) const
-{
-  if (tableId == rhs.tableId)
-  {
-    return columnId < rhs.columnId;
-  }
-  return tableId < rhs.tableId;
-}
-
-bool Schema::TableColumnId::operator!=(const TableColumnId& rhs) const
-{
-  return (tableId != rhs.tableId) || (columnId != rhs.columnId);
-}
-
-bool Schema::RelationshipTableId::operator<(const RelationshipTableId& rhs) const
-{
-  if (relationshipId == rhs.relationshipId)
-  {
-    return tableId < rhs.tableId;
-  }
-  return relationshipId < rhs.relationshipId;
-}
-
 Schema::Schema() = default;
 
 Schema::~Schema() = default;
 
-std::map<API::IID::Type, API::ISchema::Table>& Schema::getTables()
+std::map<API::IID::Type, API::Table>& Schema::getTables()
 {
   return m_tables;
 }
 
-std::map<API::IID::Type, Schema::Relationship>& Schema::getRelationships()
+std::map<API::IID::Type, API::Relationship>& Schema::getRelationships()
 {
   return m_relationships;
 }
@@ -69,7 +46,7 @@ void Schema::configureRelationships()
     auto parentTableId = relationship.second.tableFromId;
     auto childTableId = relationship.second.tableToId;
 
-    if (relationship.second.type == RelationshipType::ManyToOne)
+    if (relationship.second.type == API::RelationshipType::ManyToOne)
     {
       std::swap(parentTableId, childTableId);
     }
@@ -77,8 +54,8 @@ void Schema::configureRelationships()
     const auto& parentTable = m_tables.at(parentTableId);
     auto& childTable = m_tables.at(childTableId);
 
-    if ((relationship.second.type == RelationshipType::ManyToOne) ||
-      (relationship.second.type == RelationshipType::OneToMany))
+    if ((relationship.second.type == API::RelationshipType::ManyToOne) ||
+      (relationship.second.type == API::RelationshipType::OneToMany))
     {
       const auto parentPrimaryKeyColIds = parentTable.primaryKeys;
 
@@ -88,9 +65,10 @@ void Schema::configureRelationships()
           QString("Relationship with id %1 expects the table '%2' to have a primary key column").arg(relationship.first).arg(parentTable.name));
       }
 
-      ForeignKeyReference foreignKeyReference { parentTableId,
-                                                relationship.second.onUpdateAction,
-                                                relationship.second.onDeleteAction };
+      API::ForeignKeyReference foreignKeyReference {
+        parentTableId,
+        relationship.second.onUpdateAction,
+        relationship.second.onDeleteAction };
 
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
@@ -102,7 +80,7 @@ void Schema::configureRelationships()
 
         const auto& parentKeyCol = parentTable.columns.at(parentKeyColId);
 
-        Column foreignKeyColumn;
+        API::Column foreignKeyColumn;
         foreignKeyColumn.name = QString("rel_%1_foreign_key_%2").arg(relationship.first).arg(parentKeyCol.name);
         foreignKeyColumn.type = parentKeyCol.type;
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
@@ -113,17 +91,17 @@ void Schema::configureRelationships()
 
       childTable.relationshipToForeignKeyReferencesMap[{ relationship.first, parentTableId }].emplace_back(foreignKeyReference);
     }
-    else if (relationship.second.type == RelationshipType::ManyToMany)
+    else if (relationship.second.type == API::RelationshipType::ManyToMany)
     {
-      Table linkTable;
+      API::Table linkTable;
       linkTable.name = QString("rel_%1_link_%2_to_%3")
         .arg(relationship.first).arg(parentTable.name).arg(childTable.name);
 
       auto currentColId = 0U;
 
-      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](API::IID::Type refTableId, const Table& refTable)
+      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](API::IID::Type refTableId, const API::Table& refTable)
       {
-        ForeignKeyReference foreignKeyReference { refTableId,
+        API::ForeignKeyReference foreignKeyReference { refTableId,
           relationship.second.onUpdateAction,
           relationship.second.onDeleteAction };
 
@@ -131,7 +109,7 @@ void Schema::configureRelationships()
         {
           const auto& refCol = refTable.columns.at(refColId);
 
-          Column col;
+          API::Column col;
           col.name = QString("%1_%2_%3").arg(refTable.name).arg(refCol.name).arg(currentColId);
           col.type = refCol.type;
 
@@ -178,7 +156,7 @@ void Schema::throwIfRelationshipIsNotExisting(API::IID::Type relationshipId) con
   }
 }
 
-void Schema::throwIfColumnIdNotExisting(const Table& table, API::IID::Type colId) const
+void Schema::throwIfColumnIdNotExisting(const API::Table& table, API::IID::Type colId) const
 {
   if (table.columns.count(colId) == 0)
   {
@@ -187,7 +165,7 @@ void Schema::throwIfColumnIdNotExisting(const Table& table, API::IID::Type colId
   }
 }
 
-API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const
+API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const
 {
   if (tupleKeyValues.empty())
   {
@@ -236,7 +214,7 @@ API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const TupleValues& tuple
   return tableId;
 }
 
-API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const
+API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<API::TupleValues>& tupleKeyValuesList) const
 {
   if (tupleKeyValuesList.empty())
   {
@@ -269,16 +247,16 @@ API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<Tu
 
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
   API::IID::Type relationshipId,
-  const TupleValues& fromTupleKeyValues,
-  const TupleValues& toTupleKeyValues) const
+  const API::TupleValues& fromTupleKeyValues,
+  const API::TupleValues& toTupleKeyValues) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
   API::IID::Type relationshipId,
-  const TupleValues& fromTupleKeyValues,
-  const std::vector<TupleValues>& toTupleKeyValuesList) const
+  const API::TupleValues& fromTupleKeyValues,
+  const std::vector<API::TupleValues>& toTupleKeyValuesList) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
@@ -286,8 +264,8 @@ std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToManyRelationshipPri
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
   API::IID::Type relationshipId,
-  const TupleValues& fromTupleKeyValues,
-  const std::vector<TupleValues>& toTupleKeyValuesList) const
+  const API::TupleValues& fromTupleKeyValues,
+  const std::vector<API::TupleValues>& toTupleKeyValuesList) const
 {
   throwIfRelationshipIsNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
@@ -302,12 +280,12 @@ std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysA
     ? validatePrimaryKeysAndGetTableId(fromTupleKeyValues)
     : expectedTableFromId);
 
-  const auto isOneToMany = (relationship.type == RelationshipType::OneToMany);
-  const auto isManyToOne = (relationship.type == RelationshipType::ManyToOne);
+  const auto isOneToMany = (relationship.type == API::RelationshipType::OneToMany);
+  const auto isManyToOne = (relationship.type == API::RelationshipType::ManyToOne);
 
   if (bIsOneToMany)
   {
-    if ((relationship.type != RelationshipType::ManyToMany) &&
+    if ((relationship.type != API::RelationshipType::ManyToMany) &&
       ((isManyToOne && (relationship.tableToId == tableToId)) ||
         (isOneToMany && (relationship.tableToId != tableToId))))
     {
@@ -326,7 +304,7 @@ std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysA
 }
 
 bool Schema::isTableIdsMatching(
-  const Relationship& relationship,
+  const API::Relationship& relationship,
   API::IID::Type tableFromId,
   API::IID::Type tableToId,
   bool bIgnoreFromKeys)

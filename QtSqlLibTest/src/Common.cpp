@@ -14,7 +14,7 @@ bool Funcs::isResultTuplesContaining(const QtSqlLib::ResultSet& results, const I
                                      const IID& columnId, QVariant value)
 {
   results.resetIteration();
-  const ISchema::TableColumnId colId{ tableId.get(), columnId.get() };
+  const QtSqlLib::API::TableColumnId colId{ tableId.get(), columnId.get() };
   while (results.hasNext())
   {
     const auto& next = results.next();
@@ -40,8 +40,8 @@ void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relat
 
   std::set<int> matchingToValuesIndices;
 
-  const ISchema::TableColumnId colId{ fromTableId.get(), fromColId.get() };
-  const ISchema::TableColumnId valueColId{ toTableId.get(), toColId.get() };
+  const QtSqlLib::API::TableColumnId colId{ fromTableId.get(), fromColId.get() };
+  const QtSqlLib::API::TableColumnId valueColId{ toTableId.get(), toColId.get() };
 
   while (results.hasNext())
   {

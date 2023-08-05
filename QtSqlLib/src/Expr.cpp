@@ -10,7 +10,7 @@ Expr::ColumnId::ColumnId()
 {
 }
 
-Expr::ColumnId::ColumnId(const API::ISchema::TableColumnId& tableColumnId)
+Expr::ColumnId::ColumnId(const API::TableColumnId& tableColumnId)
   : ColumnId("", tableColumnId, true)
 {
 }
@@ -20,14 +20,14 @@ Expr::ColumnId::ColumnId(const API::IID& columnId)
 {
 }
 
-Expr::ColumnId::ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId)
+Expr::ColumnId::ColumnId(const QString& tableAlias, const API::TableColumnId& tableColumnId)
   : ColumnId(tableAlias, tableColumnId, true)
 {
 }
 
 Expr::ColumnId::~ColumnId() = default;
 
-const API::ISchema::TableColumnId& Expr::ColumnId::get() const
+const API::TableColumnId& Expr::ColumnId::get() const
 {
   return m_tableColumnId;
 }
@@ -42,7 +42,7 @@ QString Expr::ColumnId::getTableAlias() const
   return m_tableAlias;
 }
 
-Expr::ColumnId::ColumnId(const QString& tableAlias, const API::ISchema::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+Expr::ColumnId::ColumnId(const QString& tableAlias, const API::TableColumnId& tableColumnId, bool bIsTableIdValid) :
   m_tableAlias(tableAlias),
   m_tableColumnId(tableColumnId),
   m_bIsTableIdValid(bIsTableIdValid)

@@ -18,8 +18,8 @@ public:
 
   struct AffectedTuple
   {
-    API::ISchema::TupleValues foreignKeyValues;
-    API::ISchema::TupleValues childKeyValues;
+    API::TupleValues foreignKeyValues;
+    API::TupleValues childKeyValues;
   };
 
   struct AffectedData
@@ -27,18 +27,18 @@ public:
     API::IID::Type tableId = -1;
     bool isLinkTable = false;
     RemainingKeysMode remainingKeysMode = RemainingKeysMode::NoRemainingKeys;
-    const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap;
+    const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap;
     std::vector<AffectedTuple> affectedTuples;
   };
 
   explicit RelationshipPreparationData(const API::IID& relationshipId);
   virtual ~RelationshipPreparationData();
 
-  void fromOne(const API::ISchema::TupleValues& tupleKeyValues);
+  void fromOne(const API::TupleValues& tupleKeyValues);
   void fromRemainingKey();
 
-  void toOne(const API::ISchema::TupleValues& tupleKeyValues);
-  void toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
+  void toOne(const API::TupleValues& tupleKeyValues);
+  void toMany(const std::vector<API::TupleValues>& tupleKeyValuesList);
 
   AffectedData resolveAffectedTableData(API::ISchema& schema);
 
@@ -61,14 +61,14 @@ private:
   ExpectedCall m_expectedCall;
   bool m_bRemainingFromKeys;
 
-  API::ISchema::TupleValues m_fromTupleKeyValues;
-  std::vector<API::ISchema::TupleValues> m_toTupleKeyValuesList;
+  API::TupleValues m_fromTupleKeyValues;
+  std::vector<API::TupleValues> m_toTupleKeyValuesList;
 
   AffectedData determineAffectedChildTableData(
-    API::ISchema& schema, const API::ISchema::Relationship& relationship,
+    API::ISchema& schema, const API::Relationship& relationship,
     API::IID::Type fromTableId, API::IID::Type toTableId);
   AffectedData determineAffectedLinkTableData(
-    API::ISchema& schema, const API::ISchema::Relationship& relationship,
+    API::ISchema& schema, const API::Relationship& relationship,
     API::IID::Type fromTableId, API::IID::Type toTableId);
 
 };

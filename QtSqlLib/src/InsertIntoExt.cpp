@@ -23,7 +23,7 @@ InsertIntoExt& InsertIntoExt::value(const API::IID& columnId, const QVariant& va
   return *this;
 }
 
-InsertIntoExt& InsertIntoExt::linkToOneTuple(const API::IID& relationshipId, const API::ISchema::TupleValues& tupleKeyValues)
+InsertIntoExt& InsertIntoExt::linkToOneTuple(const API::IID& relationshipId, const API::TupleValues& tupleKeyValues)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId.get());
   
@@ -32,7 +32,7 @@ InsertIntoExt& InsertIntoExt::linkToOneTuple(const API::IID& relationshipId, con
 }
 
 InsertIntoExt& InsertIntoExt::linkToManyTuples(const API::IID& relationshipId,
-                                               const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
+                                               const std::vector<API::TupleValues>& tupleKeyValuesList)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId.get());
 
@@ -191,19 +191,19 @@ std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreate
   return m_insertQuery;
 }
 
-bool InsertIntoExt::isSeparateLinkTuplesQueryNeeded(const API::ISchema::Relationship& relationship) const
+bool InsertIntoExt::isSeparateLinkTuplesQueryNeeded(const API::Relationship& relationship) const
 {
-  return ((relationship.type == API::ISchema::RelationshipType::ManyToMany) ||
-    ((relationship.type == API::ISchema::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
-    ((relationship.type == API::ISchema::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)));
+  return ((relationship.type == API::RelationshipType::ManyToMany) ||
+    ((relationship.type == API::RelationshipType::OneToMany) && (relationship.tableFromId == m_tableId)) ||
+    ((relationship.type == API::RelationshipType::ManyToOne) && (relationship.tableToId == m_tableId)));
 }
 
 void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::IID::Type relationshipId,
-                                                                const API::ISchema::Relationship& relationship,
-                                                                const API::ISchema::Table& childTable,
+                                                                const API::Relationship& relationship,
+                                                                const API::Table& childTable,
                                                                 const LinkedTuples& linkedTuples) const
 {
-  const auto parentTableId = (relationship.type == API::ISchema::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
+  const auto parentTableId = (relationship.type == API::RelationshipType::OneToMany ? relationship.tableFromId : relationship.tableToId);
   const auto& parentTable = schema.getTables().at(parentTableId);
   const auto& linkedPrimaryKeys = linkedTuples.linkedPrimaryKeys.at(0);
 

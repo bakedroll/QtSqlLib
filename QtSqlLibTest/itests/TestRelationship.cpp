@@ -317,13 +317,13 @@ static void setupReplationshipTestsDatabase(QtSqlLib::API::IDatabase& m_db)
     .COLUMN_VARCHAR(LecturesCols::Topic, "topic", 128);
 
   configurator.CONFIGURE_RELATIONSHIP(Relationships::StudentsConfidant, TableIds::Students, TableIds::Professors,
-    ISchema::RelationshipType::ManyToOne).ON_DELETE(ISchema::ForeignKeyAction::Cascade);
+    QtSqlLib::API::RelationshipType::ManyToOne).ON_DELETE(QtSqlLib::API::ForeignKeyAction::Cascade);
 
   configurator.CONFIGURE_RELATIONSHIP(Relationships::Lecturer, TableIds::Professors, TableIds::Lectures,
-    ISchema::RelationshipType::OneToMany).ON_DELETE(ISchema::ForeignKeyAction::Cascade);
+    QtSqlLib::API::RelationshipType::OneToMany).ON_DELETE(QtSqlLib::API::ForeignKeyAction::Cascade);
 
   configurator.CONFIGURE_RELATIONSHIP(Relationships::LectureParticipant, TableIds::Students, TableIds::Lectures,
-    ISchema::RelationshipType::ManyToMany);
+    QtSqlLib::API::RelationshipType::ManyToMany);
 
   m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 }
@@ -929,12 +929,12 @@ TEST_F(TestRelationship, specialRelationships)
     .COLUMN_VARCHAR(ProfessorsCols::Name, "name", 128)
     .PRIMARY_KEYS(IDS(QtSqlLib::ID(ProfessorsCols::Id), QtSqlLib::ID(ProfessorsCols::Name)));
 
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special1, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::OneToMany);
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special2, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::OneToMany);
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special3, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::ManyToMany);
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special4, TableIds::Students, TableIds::Professors, ISchema::RelationshipType::ManyToMany);
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special5, TableIds::Students, TableIds::Students, ISchema::RelationshipType::OneToMany);
-  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special6, TableIds::Students, TableIds::Students, ISchema::RelationshipType::ManyToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special1, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::OneToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special2, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::OneToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special3, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::ManyToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special4, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::ManyToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special5, TableIds::Students, TableIds::Students, QtSqlLib::API::RelationshipType::OneToMany);
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special6, TableIds::Students, TableIds::Students, QtSqlLib::API::RelationshipType::ManyToMany);
 
   m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 

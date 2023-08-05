@@ -6,7 +6,7 @@
 namespace QtSqlLib::Query
 {
 
-Expr createWhereExpression(const API::ISchema::TupleValues& childKeyValues)
+Expr createWhereExpression(const API::TupleValues& childKeyValues)
 {
   Expr whereExpr;
   for (const auto& col : childKeyValues)
@@ -29,19 +29,19 @@ UnlinkTuples::UnlinkTuples(const API::IID& relationshipId) :
 
 UnlinkTuples::~UnlinkTuples() = default;
 
-UnlinkTuples& UnlinkTuples::fromOne(const API::ISchema::TupleValues& tupleKeyValues)
+UnlinkTuples& UnlinkTuples::fromOne(const API::TupleValues& tupleKeyValues)
 {
   m_relationshipPreparationData.fromOne(tupleKeyValues);
   return *this;
 }
 
-UnlinkTuples& UnlinkTuples::toOne(const API::ISchema::TupleValues& tupleKeyValues)
+UnlinkTuples& UnlinkTuples::toOne(const API::TupleValues& tupleKeyValues)
 {
   m_relationshipPreparationData.toOne(tupleKeyValues);
   return *this;
 }
 
-UnlinkTuples& UnlinkTuples::toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
+UnlinkTuples& UnlinkTuples::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
 {
   m_relationshipPreparationData.toMany(tupleKeyValuesList);
   return *this;

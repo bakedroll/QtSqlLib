@@ -7,7 +7,7 @@
 namespace QtSqlLib
 {
 
-RelationshipConfigurator::RelationshipConfigurator(API::ISchema::Relationship& relationship)
+RelationshipConfigurator::RelationshipConfigurator(API::Relationship& relationship)
   : m_relationship(relationship)
   , m_bOnDeleteCalled(false)
   , m_bOnUpdateCalled(false)
@@ -16,7 +16,7 @@ RelationshipConfigurator::RelationshipConfigurator(API::ISchema::Relationship& r
 
 RelationshipConfigurator::~RelationshipConfigurator() = default;
 
-API::IRelationshipConfigurator& RelationshipConfigurator::onDelete(API::ISchema::ForeignKeyAction action)
+API::IRelationshipConfigurator& RelationshipConfigurator::onDelete(API::ForeignKeyAction action)
 {
   if (m_bOnDeleteCalled)
   {
@@ -30,7 +30,7 @@ API::IRelationshipConfigurator& RelationshipConfigurator::onDelete(API::ISchema:
   return *this;
 }
 
-API::IRelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ISchema::ForeignKeyAction action)
+API::IRelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ForeignKeyAction action)
 {
   if (m_bOnUpdateCalled)
   {

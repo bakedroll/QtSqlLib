@@ -21,7 +21,7 @@ public:
 
   virtual ITableConfigurator& configureTable(const IID& tableId, const QString& tableName) = 0;
   virtual IRelationshipConfigurator& configureRelationship(const IID& relationshipId, const IID& tableFromId,
-                                                           const IID& tableToId, ISchema::RelationshipType type) = 0;
+                                                           const IID& tableToId, API::RelationshipType type) = 0;
 
   virtual std::unique_ptr<ISchema> getSchema() = 0;
 

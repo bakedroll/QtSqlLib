@@ -57,7 +57,7 @@ private:
   struct TableAliasColumnId
   {
     QString tableAlias;
-    API::ISchema::TableColumnId tableColumnId;
+    API::TableColumnId tableColumnId;
   };
 
   ColumnSelectionInfo m_columnSelectionInfo;
@@ -74,22 +74,22 @@ private:
   void verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema);
   void generateTableAliases();
 
-  void addToSelectedColumns(const API::ISchema& schema, const API::ISchema::Table& table,
+  void addToSelectedColumns(const API::ISchema& schema, const API::Table& table,
                             ColumnSelectionInfo& columnSelectionInfo);
-  void addForeignKeyColumns(const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap,
+  void addForeignKeyColumns(const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap,
                             std::vector<int>& foreignKeyColumnIndicesInQuery,
                             API::IID::Type childTableId, const QString& childTableAlias);
 
-  QString processJoinsAndCreateQuerySubstring(API::ISchema& schema, const API::ISchema::Table& table);
+  QString processJoinsAndCreateQuerySubstring(API::ISchema& schema, const API::Table& table);
 
-  static std::vector<ColumnInfo> getAllTableColumnIds(const API::ISchema::Table& table);
+  static std::vector<ColumnInfo> getAllTableColumnIds(const API::Table& table);
 
   QString createSelectString(API::ISchema& schema, const std::vector<TableAliasColumnId>& tableColumnIds) const;
   void appendJoinQuerySubstring(QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId,
                                 API::IID::Type parentTableId, const QString& parentTableAlias,
                                 API::IID::Type childTableId, const QString& childTableAlias,
-                                const API::ISchema::Table& joinTable, const QString& joinTableAlias,
-                                const API::ISchema::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
+                                const API::Table& joinTable, const QString& joinTableAlias,
+                                const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
                                 int foreignKeyReferencesIndex,
                                 std::vector<int>& foreignKeyColumnIndicesInQuery);
 

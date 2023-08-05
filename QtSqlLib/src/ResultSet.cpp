@@ -38,7 +38,7 @@ bool ResultSet::hasNext() const
   return m_currentTupleIndex < (static_cast<long long>(m_tuples.size()) - 1);
 }
 
-const API::ISchema::TupleValues& ResultSet::next() const
+const API::TupleValues& ResultSet::next() const
 {
   if (!hasNext())
   {
@@ -73,7 +73,7 @@ bool ResultSet::hasNextJoinedTuple(API::IID::Type relationshipId) const
   return m_currentJoinedTupleIndex < (static_cast<long long>(currentTuple.joinedTuples.at(relationshipId).size()) - 1);
 }
 
-const API::ISchema::TupleValues& ResultSet::nextJoinedTuple(API::IID::Type relationshipId) const
+const API::TupleValues& ResultSet::nextJoinedTuple(API::IID::Type relationshipId) const
 {
   if (!hasNextJoinedTuple(relationshipId))
   {

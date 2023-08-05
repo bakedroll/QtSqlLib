@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtSqlLib/API/IQuery.h>
 #include <QtSqlLib/API/IQueryElement.h>
 #include <QtSqlLib/API/IQuerySequence.h>
 

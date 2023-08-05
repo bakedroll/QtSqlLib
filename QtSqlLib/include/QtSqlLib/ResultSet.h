@@ -10,11 +10,11 @@ namespace QtSqlLib
 class ResultSet
 {
 public:
-  using TupleValuesList = std::vector<API::ISchema::TupleValues>;
+  using TupleValuesList = std::vector<API::TupleValues>;
 
   struct Tuple
   {
-    API::ISchema::TupleValues values;
+    API::TupleValues values;
     std::map<API::IID::Type, TupleValuesList> joinedTuples;
   };
 
@@ -30,11 +30,11 @@ public:
 
   size_t getNumResults() const;
   bool hasNext() const;
-  const API::ISchema::TupleValues& next() const;
+  const API::TupleValues& next() const;
 
   size_t getCurrentNumJoinedResults(API::IID::Type relationshipId) const;
   bool hasNextJoinedTuple(API::IID::Type relationshipId) const;
-  const API::ISchema::TupleValues& nextJoinedTuple(API::IID::Type relationshipId) const;
+  const API::TupleValues& nextJoinedTuple(API::IID::Type relationshipId) const;
 
 private:
   enum class Validity

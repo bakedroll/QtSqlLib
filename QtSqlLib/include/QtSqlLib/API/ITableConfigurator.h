@@ -3,10 +3,8 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ISchema.h>
 
-#include <set>
-
 #define COLUMN(X, Y, Z) column(QtSqlLib::ID(X), Y, Z)
-#define COLUMN_VARCHAR(X, Y, Z) column(QtSqlLib::ID(X), Y, QtSqlLib::API::ISchema::DataType::Varchar, Z)
+#define COLUMN_VARCHAR(X, Y, Z) column(QtSqlLib::ID(X), Y, QtSqlLib::API::DataType::Varchar, Z)
 
 #define PRIMARY_KEY primaryKey()
 #define AUTO_INCREMENT autoIncrement()
@@ -24,7 +22,7 @@ public:
   virtual ~ITableConfigurator() = default;
 
   virtual ITableConfigurator& column(const IID& columnId, const QString& columnName,
-                                     ISchema::DataType type, int varcharLength = 64) = 0;
+                                     API::DataType type, int varcharLength = 64) = 0;
 
   virtual ITableConfigurator& primaryKey() = 0;
   virtual ITableConfigurator& autoIncrement() = 0;

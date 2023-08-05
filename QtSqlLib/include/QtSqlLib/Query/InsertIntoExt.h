@@ -25,8 +25,8 @@ public:
   ~InsertIntoExt() override;
 
   InsertIntoExt& value(const API::IID& columnId, const QVariant& value);
-  InsertIntoExt& linkToOneTuple(const API::IID& relationshipId, const API::ISchema::TupleValues& tupleKeyValues);
-  InsertIntoExt& linkToManyTuples(const API::IID& relationshipId, const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
+  InsertIntoExt& linkToOneTuple(const API::IID& relationshipId, const API::TupleValues& tupleKeyValues);
+  InsertIntoExt& linkToManyTuples(const API::IID& relationshipId, const std::vector<API::TupleValues>& tupleKeyValuesList);
 
   InsertIntoExt& returnIds();
 
@@ -66,7 +66,7 @@ private:
   void throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshipId) const;
 
   std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();
-  bool isSeparateLinkTuplesQueryNeeded(const API::ISchema::Relationship& relationship) const;
+  bool isSeparateLinkTuplesQueryNeeded(const API::Relationship& relationship) const;
 
   std::unique_ptr<InsertIntoReferences> m_insertQuery;
 
@@ -79,7 +79,7 @@ private:
   struct LinkedTuples
   {
     LinkType linkType;
-    std::vector<API::ISchema::TupleValues> linkedPrimaryKeys;
+    std::vector<API::TupleValues> linkedPrimaryKeys;
   };
 
   API::IID::Type m_tableId;
@@ -87,8 +87,8 @@ private:
   std::map<API::IID::Type, LinkedTuples> m_linkedTuplesMap;
 
   void addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& schema, API::IID::Type relationshipId,
-                                                   const API::ISchema::Relationship& relationship,
-                                                   const API::ISchema::Table& childTable,
+                                                   const API::Relationship& relationship,
+                                                   const API::Table& childTable,
                                                    const LinkedTuples& linkedTuples) const;
 
   void addLinkTuplesQueriesForRelationshipIds(const std::set<API::IID::Type>& relationshipIds);

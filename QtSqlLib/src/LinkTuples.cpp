@@ -17,7 +17,7 @@ LinkTuples::LinkTuples(const API::IID& relationshipId) :
 
 LinkTuples::~LinkTuples() = default;
 
-LinkTuples& LinkTuples::fromOne(const API::ISchema::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::fromOne(const API::TupleValues& tupleKeyValues)
 {
   m_relationshipPreparationData.fromOne(tupleKeyValues);
   return *this;
@@ -29,13 +29,13 @@ LinkTuples& LinkTuples::fromRemainingKey()
   return *this;
 }
 
-LinkTuples& LinkTuples::toOne(const API::ISchema::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::toOne(const API::TupleValues& tupleKeyValues)
 {
   m_relationshipPreparationData.toOne(tupleKeyValues);
   return *this;
 }
 
-LinkTuples& LinkTuples::toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList)
+LinkTuples& LinkTuples::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
 {
   m_relationshipPreparationData.toMany(tupleKeyValuesList);
   return *this;
@@ -89,7 +89,7 @@ void LinkTuples::prepare(API::ISchema& schema)
 
 LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
   API::IID::Type tableId,
-  const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
+  const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : UpdateTable(ID(tableId))
   , m_remainingKeysMode(RelationshipPreparationData::RemainingKeysMode::NoRemainingKeys)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
@@ -103,7 +103,7 @@ void LinkTuples::UpdateTableForeignKeys::setRemainingKeysMode(RelationshipPrepar
   m_remainingKeysMode = mode;
 }
 
-void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues)
+void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::TupleValues& parentKeyValues)
 {
   for (const auto& parentKeyValue : parentKeyValues)
   {
@@ -112,7 +112,7 @@ void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::ISchema:
   }
 }
 
-void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues)
+void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues)
 {
   Expr whereExpr;
   for (const auto& childKeyValue : affectedChildKeyValues)
@@ -156,7 +156,7 @@ API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSql
 
 LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type tableId,
   int numRelations,
-  const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
+  const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
   : BatchInsertInto(ID(tableId))
   , m_numRelations(numRelations)
   , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)

@@ -43,7 +43,7 @@ API::ITableConfigurator& SchemaConfigurator::configureTable(const API::IID& tabl
       "Table name must not start with 'sqlite_'.");
   }
 
-  API::ISchema::Table table;
+  API::Table table;
   table.name = tableName;
 
   m_schema->getTables()[tid] = table;
@@ -53,7 +53,7 @@ API::ITableConfigurator& SchemaConfigurator::configureTable(const API::IID& tabl
 }
 
 API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const API::IID& relationshipId, const API::IID& tableFromId,
-                                                                          const API::IID& tableToId, API::ISchema::RelationshipType type)
+                                                                          const API::IID& tableToId, API::RelationshipType type)
 {
   const auto relId = relationshipId.get();
   if (m_schema->getRelationships().count(relId) > 0)
@@ -62,14 +62,14 @@ API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const 
       QString("Relationship with id %1 already exists.").arg(relId));
   }
 
-  if ((tableFromId.get() == tableToId.get()) && type == API::ISchema::RelationshipType::ManyToOne)
+  if ((tableFromId.get() == tableToId.get()) && type == API::RelationshipType::ManyToOne)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "The relationship type ManyToOne is not allowed for a relationship of a table that references itself due to possible ambiguity. " \
       "Please use OneToMany instead.");
   }
 
-  const API::ISchema::Relationship relationship{ tableFromId.get(), tableToId.get(), type };
+  const API::Relationship relationship{ tableFromId.get(), tableToId.get(), type };
 
   m_schema->getRelationships()[relId] = relationship;
   m_relationshipConfigurators[relId] =

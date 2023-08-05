@@ -18,7 +18,7 @@ public:
 
   API::ITableConfigurator& configureTable(const API::IID& tableId, const QString& tableName) override;
   API::IRelationshipConfigurator& configureRelationship(const API::IID& relationshipId, const API::IID& tableFromId,
-                                                        const API::IID& tableToId, API::ISchema::RelationshipType type) override;
+                                                        const API::IID& tableToId, API::RelationshipType type) override;
 
   std::unique_ptr<API::ISchema> getSchema() override;
 

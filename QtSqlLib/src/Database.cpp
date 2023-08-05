@@ -27,7 +27,7 @@ static const API::IID::Type s_versionColId = 0;
 static const API::IID::Type s_versionTableid = std::numeric_limits<API::IID::Type>::max();
 static const QString s_versionTableName = "database_version";
 
-static void verifyPrimaryKeys(const API::ISchema::Table& table)
+static void verifyPrimaryKeys(const API::Table& table)
 {
   for (const auto& key : table.primaryKeys)
   {
@@ -49,36 +49,36 @@ static void verifyPrimaryKeys(const API::ISchema::Table& table)
   }
 }
 
-static QString getDataTypeName(API::ISchema::DataType type, int varcharLength)
+static QString getDataTypeName(API::DataType type, int varcharLength)
 {
   switch (type)
   {
-  case API::ISchema::DataType::Integer:
+  case API::DataType::Integer:
     return "INTEGER";
-  case API::ISchema::DataType::Real:
+  case API::DataType::Real:
     return "REAL";
-  case API::ISchema::DataType::Varchar:
+  case API::DataType::Varchar:
     return QString("VARCHAR(%1)").arg(varcharLength);
-  case API::ISchema::DataType::Blob:
+  case API::DataType::Blob:
     return "BLOB";
   default:
     throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
   }
 }
 
-static QString getActionString(API::ISchema::ForeignKeyAction action)
+static QString getActionString(API::ForeignKeyAction action)
 {
   switch (action)
   {
-  case API::ISchema::ForeignKeyAction::NoAction:
+  case API::ForeignKeyAction::NoAction:
     return "NO ACTION";
-  case API::ISchema::ForeignKeyAction::Restrict:
+  case API::ForeignKeyAction::Restrict:
     return "RESTRICT";
-  case API::ISchema::ForeignKeyAction::SetNull:
+  case API::ForeignKeyAction::SetNull:
     return "SET NULL";
-  case API::ISchema::ForeignKeyAction::SetDefault:
+  case API::ForeignKeyAction::SetDefault:
     return "SET DEFAULT";
-  case API::ISchema::ForeignKeyAction::Cascade:
+  case API::ForeignKeyAction::Cascade:
     return "CASCADE";
   default:
     break;
@@ -90,7 +90,7 @@ static QString getActionString(API::ISchema::ForeignKeyAction action)
 class CreateTable : public Query::Query
 {
 public:
-  CreateTable(const API::ISchema::Table& table)
+  CreateTable(const API::Table& table)
     : Query()
     , m_table(table)
   {}
@@ -159,13 +159,13 @@ public:
           cutTailingComma(parentKeyColNames);
 
           QString onDeleteStr;
-          if (foreignKeyRef.onDeleteAction != API::ISchema::ForeignKeyAction::NoAction)
+          if (foreignKeyRef.onDeleteAction != API::ForeignKeyAction::NoAction)
           {
             onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyRef.onDeleteAction));
           }
 
           QString onUpdateStr;
-          if (foreignKeyRef.onUpdateAction != API::ISchema::ForeignKeyAction::NoAction)
+          if (foreignKeyRef.onUpdateAction != API::ForeignKeyAction::NoAction)
           {
             onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyRef.onUpdateAction));
           }
@@ -190,7 +190,7 @@ public:
   }
 
 private:
-  const API::ISchema::Table& m_table;
+  const API::Table& m_table;
 
 };
 
@@ -212,7 +212,7 @@ void Database::initialize(API::ISchemaConfigurator& schemaConfigurator, const QS
   m_databaseName = databaseName;
 
   schemaConfigurator.configureTable(ID(s_versionTableid), s_versionTableName)
-    .column(ID(s_versionColId), "version", API::ISchema::DataType::Integer).primaryKey().notNull();
+    .column(ID(s_versionColId), "version", API::DataType::Integer).primaryKey().notNull();
 
   m_schema = schemaConfigurator.getSchema();
   m_schema->configureRelationships();

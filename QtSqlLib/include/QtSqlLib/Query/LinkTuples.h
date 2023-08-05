@@ -24,11 +24,11 @@ public:
   LinkTuples(const API::IID& relationshipId);
   ~LinkTuples() override;
 
-  LinkTuples& fromOne(const API::ISchema::TupleValues& tupleKeyValues);
+  LinkTuples& fromOne(const API::TupleValues& tupleKeyValues);
   LinkTuples& fromRemainingKey();
 
-  LinkTuples& toOne(const API::ISchema::TupleValues& tupleKeyValues);
-  LinkTuples& toMany(const std::vector<API::ISchema::TupleValues>& tupleKeyValuesList);
+  LinkTuples& toOne(const API::TupleValues& tupleKeyValues);
+  LinkTuples& toMany(const std::vector<API::TupleValues>& tupleKeyValuesList);
 
   void prepare(API::ISchema& schema) override;
 
@@ -38,18 +38,18 @@ private:
   public:
     UpdateTableForeignKeys(
       API::IID::Type tableId,
-      const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
+      const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~UpdateTableForeignKeys() override;
 
     void setRemainingKeysMode(RelationshipPreparationData::RemainingKeysMode mode);
-    void setForeignKeyValues(const API::ISchema::TupleValues& parentKeyValues);
-    void makeAndAddWhereExpr(const API::ISchema::TupleValues& affectedChildKeyValues);
+    void setForeignKeyValues(const API::TupleValues& parentKeyValues);
+    void makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues);
 
     SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
 
   private:
     RelationshipPreparationData::RemainingKeysMode m_remainingKeysMode;
-    const API::ISchema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
+    const API::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 
@@ -59,14 +59,14 @@ private:
     BatchInsertRemainingKeys(
       API::IID::Type tableId,
       int numRelations,
-      const API::ISchema::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
+      const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
     ~BatchInsertRemainingKeys() override;
 
     SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
 
   private:
     int m_numRelations;
-    const API::ISchema::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
+    const API::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
 
   };
 
