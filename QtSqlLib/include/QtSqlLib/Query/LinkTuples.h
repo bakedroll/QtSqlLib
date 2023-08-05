@@ -30,43 +30,6 @@ public:
   void prepare(API::ISchema& schema) override;
 
 private:
-  class UpdateTableForeignKeys : public UpdateTable
-  {
-  public:
-    UpdateTableForeignKeys(
-      API::IID::Type tableId,
-      const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
-    ~UpdateTableForeignKeys() override;
-
-    void setRemainingKeysMode(RelationshipPreparationData::RemainingKeysMode mode);
-    void setForeignKeyValues(const API::TupleValues& parentKeyValues);
-    void makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues);
-
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
-
-  private:
-    RelationshipPreparationData::RemainingKeysMode m_remainingKeysMode;
-    const API::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
-
-  };
-
-  class BatchInsertRemainingKeys : public BatchInsertInto
-  {
-  public:
-    BatchInsertRemainingKeys(
-      API::IID::Type tableId,
-      int numRelations,
-      const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
-    ~BatchInsertRemainingKeys() override;
-
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
-
-  private:
-    int m_numRelations;
-    const API::PrimaryForeignKeyColumnIdMap& m_primaryForeignKeyColIdMap;
-
-  };
-
   RelationshipPreparationData m_relationshipPreparationData;
 
 };

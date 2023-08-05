@@ -18,22 +18,22 @@
 
 // Expr
 #define EQUAL(A, B) equal(QtSqlLib::ID(A), QVariant(B))
-#define EQUAL_COL(A, B) equal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define EQUAL_COL(A, B) equal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define UNEQUAL(A, B) unequal(QtSqlLib::ID(A), QVariant(B))
-#define UNEQUAL_COL(A, B) unequal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define UNEQUAL_COL(A, B) unequal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define LESSEQUAL(A, B) lessEqual(QtSqlLib::ID(A), QVariant(B))
-#define LESSEQUAL_COL(A, B) lessEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define LESSEQUAL_COL(A, B) lessEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define LESS(A, B) less(QtSqlLib::ID(A), QVariant(B))
-#define LESS_COL(A, B) less(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define LESS_COL(A, B) less(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define GREATEREQUAL(A, B) greaterEqual(QtSqlLib::ID(A), QVariant(B))
-#define GREATEREQUAL_COL(A, B) greaterEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define GREATEREQUAL_COL(A, B) greaterEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define GREATER(A, B) greater(QtSqlLib::ID(A), QVariant(B))
-#define GREATER_COL(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::Expr::ColumnId(QtSqlLib::ID(B))))
+#define GREATER_COL(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
 #define ISNULL(A, B) greater(QtSqlLib::ID(A))
 

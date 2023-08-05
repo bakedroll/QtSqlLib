@@ -1,5 +1,6 @@
 #include "QtSqlLib/Query/UnlinkTuples.h"
 
+#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/DeleteFrom.h"

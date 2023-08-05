@@ -2,6 +2,7 @@
 
 #include "QtSqlLib/API/ISanityChecker.h"
 #include "QtSqlLib/API/ISchema.h"
+#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -498,12 +499,12 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, API::ISchema& sche
     }
 
     const auto parentColumnId = (m_isTableAliasesNeeded && !parentTableAlias.isEmpty()
-      ? Expr::ColumnId(parentTableAlias, { parentTableId, idMapping.first.columnId})
-      : Expr::ColumnId({ parentTableId, idMapping.first.columnId }));
+      ? ColumnID(parentTableAlias, { parentTableId, idMapping.first.columnId})
+      : ColumnID({ parentTableId, idMapping.first.columnId }));
 
     const auto childColumnId = (m_isTableAliasesNeeded && !childTableAlias.isEmpty()
-      ? Expr::ColumnId(childTableAlias, { childTableId, idMapping.second})
-      : Expr::ColumnId({childTableId, idMapping.second}));
+      ? ColumnID(childTableAlias, { childTableId, idMapping.second})
+      : ColumnID({childTableId, idMapping.second}));
 
     joinOnExpr.equal(parentColumnId, QVariant::fromValue(childColumnId));
   }

@@ -6,6 +6,9 @@
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/LinkTuples.h"
 
+#include "InsertIntoReferences.h"
+#include "QueryInsertedIDs.h"
+
 namespace QtSqlLib::Query
 {
 
@@ -100,78 +103,10 @@ void InsertIntoExt::prepare(API::ISchema& schema)
 
   if (m_bIsReturningInsertedIds)
   {
-    addQuery(std::make_unique<QueryInsertedIds>(m_tableId));
+    addQuery(std::make_unique<QueryInsertedIDs>(m_tableId));
   }
 
   addLinkTuplesQueriesForRelationshipIds(specialInsertionRelationshipIds);
-}
-
-InsertIntoExt::InsertIntoReferences::InsertIntoReferences(API::IID::Type tableId)
-  : InsertInto(ID(tableId))
-{
-}
-
-InsertIntoExt::InsertIntoReferences::~InsertIntoReferences() = default;
-
-void InsertIntoExt::InsertIntoReferences::addForeignKeyValue(const QVariant& value)
-{
-  m_foreignKeyValues.emplace_back(value);
-}
-
-void InsertIntoExt::InsertIntoReferences::bindQueryValues(QSqlQuery& query) const
-{
-  InsertInto::bindQueryValues(query);
-
-  for (const auto& value : m_foreignKeyValues)
-  {
-    query.addBindValue(value);
-  }
-}
-
-InsertIntoExt::QueryInsertedIds::QueryInsertedIds(API::IID::Type tableId)
-  : Query()
-  , m_tableId(tableId)
-{
-}
-
-InsertIntoExt::QueryInsertedIds::~QueryInsertedIds() = default;
-
-API::IQuery::SqlQuery InsertIntoExt::QueryInsertedIds::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
-{
-  schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
-  const auto& table = schema.getTables().at(m_tableId);
-
-  QString keyColumns;
-  for (const auto& primaryKey : table.primaryKeys)
-  {
-    keyColumns += QString("'%1'.'%2', ").arg(table.name).arg(table.columns.at(primaryKey).name);
-  }
-  keyColumns = keyColumns.left(keyColumns.length() - 2);
-
-  return { QSqlQuery(QString("SELECT rowid, %1 FROM '%2' WHERE rowid = last_insert_rowid();")
-    .arg(keyColumns).arg(table.name),
-    db) };
-}
-
-ResultSet InsertIntoExt::QueryInsertedIds::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
-{
-  const auto& table = schema.getTables().at(m_tableId);
-
-  if (!query.next())
-  {
-    throw DatabaseException(DatabaseException::Type::QueryError, 
-      QString("Could not query last inserted id from table '%1'.").arg(table.name));
-  }
-
-  ResultSet::Tuple tuple;
-  auto currentValue = 1;
-  for (const auto& primaryKey : table.primaryKeys)
-  {
-    tuple.values[{ m_tableId, primaryKey }] = query.value(currentValue);
-    currentValue++;
-  }
-
-  return ResultSet::create({ tuple });
 }
 
 void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshipId) const
@@ -183,7 +118,7 @@ void InsertIntoExt::throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshi
   }
 }
 
-std::unique_ptr<InsertIntoExt::InsertIntoReferences>& InsertIntoExt::getOrCreateInsertQuery()
+std::unique_ptr<InsertIntoReferences>& InsertIntoExt::getOrCreateInsertQuery()
 {
   if (!m_insertQuery)
   {

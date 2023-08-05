@@ -12,6 +12,8 @@
 namespace QtSqlLib::Query
 {
 
+class InsertIntoReferences;
+
 class InsertIntoExt : public QuerySequence
 {
 public:
@@ -27,36 +29,6 @@ public:
   void prepare(API::ISchema& schema) override;
 
 private:
-  class InsertIntoReferences : public InsertInto
-  {
-  public:
-    InsertIntoReferences(API::IID::Type tableId);
-    ~InsertIntoReferences() override;
-
-    void addForeignKeyValue(const QVariant& value);
-
-  protected:
-    void bindQueryValues(QSqlQuery& query) const override;
-
-  private:
-    std::vector<QVariant> m_foreignKeyValues;
-
-  };
-
-  class QueryInsertedIds : public Query
-  {
-  public:
-    QueryInsertedIds(API::IID::Type tableId);
-    ~QueryInsertedIds() override;
-
-    SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
-    ResultSet getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
-
-  private:
-    API::IID::Type m_tableId;
-
-  };
-
   void throwIdLinkedTupleAlreadyExisting(API::IID::Type relationshipId) const;
 
   std::unique_ptr<InsertIntoReferences>& getOrCreateInsertQuery();

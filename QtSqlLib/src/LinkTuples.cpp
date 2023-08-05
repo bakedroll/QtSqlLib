@@ -1,9 +1,12 @@
 #include "QtSqlLib/Query/LinkTuples.h"
 
-#include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
+
+#include "BatchInsertRemainingKeys.h"
+#include "UpdateTableForeignKeys.h"
 
 #include <QVariantList>
 
@@ -86,112 +89,6 @@ void LinkTuples::prepare(API::ISchema& schema)
       addQuery(std::move(updateQuery));
     }
   }
-}
-
-LinkTuples::UpdateTableForeignKeys::UpdateTableForeignKeys(
-  API::IID::Type tableId,
-  const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
-  : UpdateTable(ID(tableId))
-  , m_remainingKeysMode(RelationshipPreparationData::RemainingKeysMode::NoRemainingKeys)
-  , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
-{
-}
-
-LinkTuples::UpdateTableForeignKeys::~UpdateTableForeignKeys() = default;
-
-void LinkTuples::UpdateTableForeignKeys::setRemainingKeysMode(RelationshipPreparationData::RemainingKeysMode mode)
-{
-  m_remainingKeysMode = mode;
-}
-
-void LinkTuples::UpdateTableForeignKeys::setForeignKeyValues(const API::TupleValues& parentKeyValues)
-{
-  for (const auto& parentKeyValue : parentKeyValues)
-  {
-    const auto childColId = m_primaryForeignKeyColIdMap.at(parentKeyValue.first);
-    set(ID(childColId), parentKeyValue.second);
-  }
-}
-
-void LinkTuples::UpdateTableForeignKeys::makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues)
-{
-  Expr whereExpr;
-  for (const auto& childKeyValue : affectedChildKeyValues)
-  {
-    if (childKeyValue.first != affectedChildKeyValues.begin()->first)
-    {
-      whereExpr.and();
-    }
-    whereExpr.equal(ID(childKeyValue.first.columnId), childKeyValue.second);
-  }
-
-  where(whereExpr);
-}
-
-API::IQuery::SqlQuery LinkTuples::UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-                                                                      const ResultSet& previousQueryResults)
-{
-  const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
-  {
-    if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
-    {
-      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-        "Expected previous query results.");
-    }
-  };
-
-  if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys)
-  {
-    throwIfInvalidPreviousQueryResults();
-    setForeignKeyValues(previousQueryResults.next());
-  }
-  else if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingPrimaryKeys)
-  {
-    throwIfInvalidPreviousQueryResults();
-    makeAndAddWhereExpr(previousQueryResults.next());
-  }
-
-  previousQueryResults.resetIteration();
-  return UpdateTable::getSqlQuery(db, schema, previousQueryResults);
-}
-
-LinkTuples::BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type tableId,
-  int numRelations,
-  const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap)
-  : BatchInsertInto(ID(tableId))
-  , m_numRelations(numRelations)
-  , m_primaryForeignKeyColIdMap(primaryForeignKeyColIdMap)
-{
-}
-
-LinkTuples::BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
-
-API::IQuery::SqlQuery LinkTuples::BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-                                                                        const ResultSet& previousQueryResults)
-{
-  if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
-  {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Expected previous query results.");
-  }
-
-  const auto& prevValues = previousQueryResults.next();
-  for (const auto& value : prevValues)
-  {
-    if (m_primaryForeignKeyColIdMap.count(value.first) == 0)
-    {
-      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Missing foreign key ref.");
-    }
-    QVariantList list;
-    for (auto i=0; i<m_numRelations; ++i)
-    {
-      list << value.second;
-    }
-
-    values(ID(m_primaryForeignKeyColIdMap.at(value.first)), list);
-  }
-
-  previousQueryResults.resetIteration();
-  return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }
 
 }

@@ -2,6 +2,7 @@
 
 #include "QtSqlLib/API/ISchemaConfigurator.h"
 #include "QtSqlLib/API/ITableConfigurator.h"
+#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
