@@ -8,15 +8,15 @@
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/FromTable.h"
 #include "QtSqlLib/Query/InsertInto.h"
-#include "QtSqlLib/Query/Query.h"
 #include "QtSqlLib/Query/QuerySequence.h"
 #include "QtSqlLib/QueryExecuteVisitor.h"
 #include "QtSqlLib/QueryPrepareVisitor.h"
 #include "QtSqlLib/Schema.h"
 
+#include "CreateIndex.h"
+#include "CreateTable.h"
 #include "SanityChecker.h"
 
-#include <QSqlQuery>
 #include <QVariant>
 
 #include <set>
@@ -56,151 +56,6 @@ static void verifyPrimaryKeys(const API::Table& table)
   }
 }
 
-static QString getDataTypeName(API::DataType type, int varcharLength)
-{
-  switch (type)
-  {
-  case API::DataType::Integer:
-    return "INTEGER";
-  case API::DataType::Real:
-    return "REAL";
-  case API::DataType::Varchar:
-    return QString("VARCHAR(%1)").arg(varcharLength);
-  case API::DataType::Blob:
-    return "BLOB";
-  default:
-    throw DatabaseException(DatabaseException::Type::UnableToLoad, "Unknown data type.");
-  }
-}
-
-static QString getActionString(API::ForeignKeyAction action)
-{
-  switch (action)
-  {
-  case API::ForeignKeyAction::NoAction:
-    return "NO ACTION";
-  case API::ForeignKeyAction::Restrict:
-    return "RESTRICT";
-  case API::ForeignKeyAction::SetNull:
-    return "SET NULL";
-  case API::ForeignKeyAction::SetDefault:
-    return "SET DEFAULT";
-  case API::ForeignKeyAction::Cascade:
-    return "CASCADE";
-  default:
-    break;
-  }
-
-  return "";
-}
-
-class CreateTable : public Query::Query
-{
-public:
-  CreateTable(const API::Table& table)
-    : Query()
-    , m_table(table)
-  {}
-
-  ~CreateTable() override = default;
-
-  API::IQuery::SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override
-  {
-    const auto cutTailingComma = [](QString& str)
-    {
-      str = str.left(str.length() - 2);
-    };
-
-    const auto bIsSinglePrimaryKey = (m_table.primaryKeys.size() == 1);
-
-    QString columns;
-    for (const auto& column : m_table.columns)
-    {
-      columns += QString("'%1' %2")
-        .arg(column.second.name)
-        .arg(getDataTypeName(column.second.type, column.second.varcharLength));
-
-      if (bIsSinglePrimaryKey && (m_table.primaryKeys.count(column.first) > 0))
-      {
-        columns += " PRIMARY KEY";
-      }
-      if (column.second.bIsAutoIncrement)
-      {
-        columns += " AUTOINCREMENT";
-      }
-      if (column.second.bIsNotNull)
-      {
-        columns += " NOT NULL";
-      }
-      columns.append(", ");
-    }
-
-    if (m_table.primaryKeys.size() > 1)
-    {
-      QString primaryKeyNames;
-      for (const auto& primaryKeyId : m_table.primaryKeys)
-      {
-        primaryKeyNames += QString("'%1', ").arg(m_table.columns.at(primaryKeyId).name);
-      }
-      cutTailingComma(primaryKeyNames);
-      columns += QString("PRIMARY KEY(%1), ").arg(primaryKeyNames);
-    }
-
-    if (!m_table.relationshipToForeignKeyReferencesMap.empty())
-    {
-      for (const auto& foreignKeyReferences : m_table.relationshipToForeignKeyReferencesMap)
-      {
-        for (const auto& foreignKeyRef : foreignKeyReferences.second)
-        {
-          const auto& parentTable = schema.getTables().at(foreignKeyRef.referenceTableId);
-
-          QString foreignKeyColNames;
-          QString parentKeyColNames;
-
-          for (const auto& refKeyColumn : foreignKeyRef.primaryForeignKeyColIdMap)
-          {
-            foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
-            parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.columnId).name);
-          }
-          cutTailingComma(foreignKeyColNames);
-          cutTailingComma(parentKeyColNames);
-
-          QString onDeleteStr;
-          if (foreignKeyRef.onDeleteAction != API::ForeignKeyAction::NoAction)
-          {
-            onDeleteStr = QString(" ON DELETE %1").arg(getActionString(foreignKeyRef.onDeleteAction));
-          }
-
-          QString onUpdateStr;
-          if (foreignKeyRef.onUpdateAction != API::ForeignKeyAction::NoAction)
-          {
-            onUpdateStr = QString(" ON UPDATE %1").arg(getActionString(foreignKeyRef.onUpdateAction));
-          }
-
-          columns += QString("FOREIGN KEY (%1) REFERENCES '%2'(%3)%4%5, ")
-            .arg(foreignKeyColNames).arg(parentTable.name).arg(parentKeyColNames)
-            .arg(onDeleteStr).arg(onUpdateStr);
-        }
-      }
-    }
-
-    if (columns.right(2) == ", ")
-    {
-      cutTailingComma(columns);
-    }
-    columns = columns.simplified();
-
-    QSqlQuery query;
-    query.prepare(QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns));
-
-    return { query };
-  }
-
-private:
-  const API::Table& m_table;
-
-};
-
 Database::Database() = default;
 
 Database::~Database()
@@ -223,6 +78,7 @@ void Database::initialize(API::ISchemaConfigurator& schemaConfigurator, const QS
 
   m_schema = schemaConfigurator.getSchema();
   m_schema->configureRelationships();
+  m_schema->validateAndPrepareIndices();
 
   loadDatabaseFile(fileName);
 }
@@ -302,7 +158,12 @@ void Database::createOrMigrateTables(int currentVersion)
       for (const auto& table : m_schema->getTables())
       {
         verifyPrimaryKeys(table.second);
-        sequence.addQuery(std::make_unique<CreateTable>(table.second));
+        sequence.addQuery(std::make_unique<Query::CreateTable>(table.second));
+      }
+
+      for (const auto& index : m_schema->getIndices())
+      {
+        sequence.addQuery(std::make_unique<Query::CreateIndex>(index));
       }
 
       auto query = std::make_unique<Query::InsertInto>(ID(s_versionTableid));

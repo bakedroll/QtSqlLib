@@ -47,6 +47,7 @@ struct Column
 
   bool bIsAutoIncrement = false;
   bool bIsNotNull = false;
+  bool bIsUnique = false;
 };
 
 struct ForeignKeyReference
@@ -73,6 +74,7 @@ struct Table
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
   std::set<IID::Type> primaryKeys;
+  std::set<IID::Type> uniqueColIds;
 };
 
 enum class RelationshipType
@@ -89,6 +91,15 @@ struct Relationship
   RelationshipType type = RelationshipType::OneToMany;
   ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
   ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
+  bool bForeignKeyIndexingEnabled = false;
+};
+
+struct Index
+{
+  IID::Type tableId = 0;
+  QString name;
+  std::vector<IID::Type> columnIds;
+  bool isUnique = false;
 };
 
 using TupleValues = std::map<TableColumnId, QVariant>;

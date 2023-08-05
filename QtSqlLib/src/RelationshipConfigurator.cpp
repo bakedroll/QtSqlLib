@@ -7,10 +7,11 @@
 namespace QtSqlLib
 {
 
-RelationshipConfigurator::RelationshipConfigurator(API::Relationship& relationship)
-  : m_relationship(relationship)
-  , m_bOnDeleteCalled(false)
-  , m_bOnUpdateCalled(false)
+RelationshipConfigurator::RelationshipConfigurator(API::Relationship& relationship) :
+  m_relationship(relationship),
+  m_bOnDeleteCalled(false),
+  m_bOnUpdateCalled(false),
+  m_bEnableForeignKeyIndexingCalled(false)
 {
 }
 
@@ -21,7 +22,7 @@ API::IRelationshipConfigurator& RelationshipConfigurator::onDelete(API::ForeignK
   if (m_bOnDeleteCalled)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("onDelete() should only be called once for a relationshio."));
+      QString("onDelete() should only be called once for a relationship."));
   }
 
   m_relationship.onDeleteAction = action;
@@ -35,7 +36,7 @@ API::IRelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ForeignK
   if (m_bOnUpdateCalled)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-      QString("onUpdate() should only be called once for a relationshio."));
+      QString("onUpdate() should only be called once for a relationship."));
   }
 
   m_relationship.onUpdateAction = action;
@@ -44,4 +45,17 @@ API::IRelationshipConfigurator& RelationshipConfigurator::onUpdate(API::ForeignK
   return *this;
 }
 
+API::IRelationshipConfigurator& RelationshipConfigurator::enableForeignKeyIndexing()
+{
+  if (m_bEnableForeignKeyIndexingCalled)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("enableForeignKeyIndexing() should only be called once for a relationship."));
+  }
+
+  m_relationship.bForeignKeyIndexingEnabled = true;
+
+  m_bEnableForeignKeyIndexingCalled = true;
+  return *this;
+}
 }

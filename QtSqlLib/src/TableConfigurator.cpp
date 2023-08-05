@@ -107,6 +107,21 @@ API::ITableConfigurator& TableConfigurator::notNull()
   return *this;
 }
 
+API::ITableConfigurator& TableConfigurator::unique()
+{
+  checkColumn();
+  auto& col = m_table.columns.at(m_lastColumnId.value());
+
+  if (col.bIsUnique)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("unique() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
+  }
+
+  col.bIsUnique = true;
+  return *this;
+}
+
 API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::IID::Type>& columnIds)
 {
   if (m_bIsPrimaryKeysConfigured)
@@ -126,6 +141,21 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::I
     m_table.primaryKeys.emplace(id);
   }
   m_bIsPrimaryKeysConfigured = true;
+  return *this;
+}
+
+API::ITableConfigurator& TableConfigurator::uniqueCols(const std::vector<API::IID::Type>& columnIds)
+{
+  if (columnIds.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
+  }
+
+  for (const auto& id : columnIds)
+  {
+    m_table.uniqueColIds.emplace(id);
+  }
   return *this;
 }
 

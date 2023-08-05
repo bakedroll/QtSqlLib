@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/API/IIndexConfigurator.h>
 #include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/API/IRelationshipConfigurator.h>
 #include <QtSqlLib/API/ITableConfigurator.h>

@@ -13,12 +13,14 @@ public:
 
   IRelationshipConfigurator& onDelete(API::ForeignKeyAction action) override;
   IRelationshipConfigurator& onUpdate(API::ForeignKeyAction action) override;
+  IRelationshipConfigurator& enableForeignKeyIndexing() override;
 
 private:
   API::Relationship& m_relationship;
 
   bool m_bOnDeleteCalled;
   bool m_bOnUpdateCalled;
+  bool m_bEnableForeignKeyIndexingCalled;
 
 };
 

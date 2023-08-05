@@ -13,7 +13,7 @@ class TableConfigurator : public API::ITableConfigurator
 {
 public:
   TableConfigurator(API::Table& table);
-  virtual ~TableConfigurator();
+  ~TableConfigurator() override;
 
   ITableConfigurator& column(const API::IID& columnId, const QString& columnName,
                              API::DataType type, int varcharLength) override;
@@ -21,8 +21,10 @@ public:
   ITableConfigurator& primaryKey() override;
   ITableConfigurator& autoIncrement() override;
   ITableConfigurator& notNull() override;
+  ITableConfigurator& unique() override;
 
   ITableConfigurator& primaryKeys(const std::vector<API::IID::Type>& columnIds) override;
+  ITableConfigurator& uniqueCols(const std::vector<API::IID::Type>& columnIds) override;
 
 private:
   API::Table& m_table;

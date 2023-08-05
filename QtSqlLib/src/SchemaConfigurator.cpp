@@ -3,6 +3,7 @@
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Schema.h"
 
+#include "IndexConfigurator.h"
 #include "RelationshipConfigurator.h"
 #include "SanityChecker.h"
 #include "TableConfigurator.h"
@@ -52,9 +53,9 @@ API::ITableConfigurator& SchemaConfigurator::configureTable(const API::IID& tabl
   table.name = tableName;
 
   m_schema->getTables()[tid] = table;
-  m_tableConfigurators[tid] = std::make_unique<TableConfigurator>(m_schema->getTables().at(tid));
+  m_tableConfigurators.emplace_back(std::make_unique<TableConfigurator>(m_schema->getTables().at(tid)));
 
-  return *m_tableConfigurators.at(tid);
+  return **m_tableConfigurators.rbegin();
 }
 
 API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const API::IID& relationshipId, const API::IID& tableFromId,
@@ -77,10 +78,20 @@ API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const 
   const API::Relationship relationship{ tableFromId.get(), tableToId.get(), type };
 
   m_schema->getRelationships()[relId] = relationship;
-  m_relationshipConfigurators[relId] =
-    std::make_unique<RelationshipConfigurator>(m_schema->getRelationships().at(relId));
+  m_relationshipConfigurators.emplace_back(std::make_unique<RelationshipConfigurator>(m_schema->getRelationships().at(relId)));
 
-  return *m_relationshipConfigurators.at(relId);
+  return **m_relationshipConfigurators.rbegin();
+}
+
+API::IIndexConfigurator& SchemaConfigurator::configureIndex(const API::IID& tableId)
+{
+  API::Index index;
+  index.tableId = tableId.get();
+
+  m_schema->getIndices().emplace_back(index);
+  m_indexConfigurators.emplace_back(std::make_unique<IndexConfigurator>(*m_schema->getIndices().rbegin()));
+
+  return **m_indexConfigurators.rbegin();
 }
 
 std::unique_ptr<API::ISchema> SchemaConfigurator::getSchema()

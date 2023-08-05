@@ -3,6 +3,7 @@
 // Configurator
 #define CONFIGURE_TABLE(X, Y) configureTable(QtSqlLib::ID(X), Y)
 #define CONFIGURE_RELATIONSHIP(X, Y, Z, T) configureRelationship(QtSqlLib::ID(X), QtSqlLib::ID(Y), QtSqlLib::ID(Z), T)
+#define CONFIGURE_INDEX(X) configureIndex(QtSqlLib::ID(X))
 
 #define COLUMN(X, Y, Z) column(QtSqlLib::ID(X), Y, Z)
 #define COLUMN_VARCHAR(X, Y, Z) column(QtSqlLib::ID(X), Y, QtSqlLib::API::DataType::Varchar, Z)
@@ -12,9 +13,14 @@
 #define NOT_NULL notNull()
 
 #define PRIMARY_KEYS(X) primaryKeys(X)
+#define UNIQUE_COLS(X) uniqueCols(X)
 
 #define ON_DELETE(X) onDelete(X)
 #define ON_UPDATE(X) onUpdate(X)
+#define ENABLE_FOREIGN_KEY_INDEXING enableForeignKeyIndexing()
+
+#define UNIQUE unique()
+#define COLUMNS(X) columns(X)
 
 // Expr
 #define EQUAL(A, B) equal(QtSqlLib::ID(A), QVariant(B))

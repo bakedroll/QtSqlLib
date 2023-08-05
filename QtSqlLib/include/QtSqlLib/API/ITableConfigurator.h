@@ -17,8 +17,10 @@ public:
   virtual ITableConfigurator& primaryKey() = 0;
   virtual ITableConfigurator& autoIncrement() = 0;
   virtual ITableConfigurator& notNull() = 0;
+  virtual ITableConfigurator& unique() = 0;
 
   virtual ITableConfigurator& primaryKeys(const std::vector<API::IID::Type>& columnIds) = 0;
+  virtual ITableConfigurator& uniqueCols(const std::vector<API::IID::Type>& columnIds) = 0;
 
 };
 

@@ -1,6 +1,5 @@
 Features:
 
-SQL-Indices
 Migrations-Feature
 
 Sonstiges:

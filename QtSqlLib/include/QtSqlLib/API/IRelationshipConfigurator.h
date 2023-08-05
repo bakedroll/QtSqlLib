@@ -13,6 +13,7 @@ public:
 
   virtual IRelationshipConfigurator& onDelete(API::ForeignKeyAction action) = 0;
   virtual IRelationshipConfigurator& onUpdate(API::ForeignKeyAction action) = 0;
+  virtual IRelationshipConfigurator& enableForeignKeyIndexing() = 0;
 
 };
 

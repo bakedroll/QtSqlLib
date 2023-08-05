@@ -15,11 +15,14 @@ public:
 
   std::map<API::IID::Type, API::Table>& getTables() override;
   std::map<API::IID::Type, API::Relationship>& getRelationships() override;
+  std::vector<API::Index>& getIndices() override;
+
   const API::ISanityChecker& getSanityChecker() const override;
 
   API::IID::Type getManyToManyLinkTableId(API::IID::Type relationshipId) const override;
 
   void configureRelationships() override;
+  void validateAndPrepareIndices() override;
 
   API::IID::Type validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const override;
   API::IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<API::TupleValues>& tupleKeyValuesList) const override;
@@ -41,6 +44,8 @@ private:
 
   std::map<API::IID::Type, API::Table> m_tables;
   std::map<API::IID::Type, API::Relationship> m_relationships;
+  std::vector<API::Index> m_indices;
+
   std::map<API::IID::Type, API::IID::Type> m_mapManyToManyRelationshipToLinkTableId;
 
   std::pair<API::IID::Type, API::IID::Type> verifyRelationshipPrimaryKeysAndGetTableIds(

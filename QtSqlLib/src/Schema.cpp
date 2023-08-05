@@ -22,6 +22,11 @@ std::map<API::IID::Type, API::Relationship>& Schema::getRelationships()
   return m_relationships;
 }
 
+std::vector<API::Index>& Schema::getIndices()
+{
+  return m_indices;
+}
+
 const API::ISanityChecker& Schema::getSanityChecker() const
 {
   return *m_sanityChecker;
@@ -76,6 +81,7 @@ void Schema::configureRelationships()
         relationship.second.onUpdateAction,
         relationship.second.onDeleteAction };
 
+      std::vector<API::IID::Type> indexedColumns;
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
         auto nextAvailableChildTableColid = 0U;
@@ -93,6 +99,19 @@ void Schema::configureRelationships()
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
         foreignKeyReference.primaryForeignKeyColIdMap[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
+
+        if (relationship.second.bForeignKeyIndexingEnabled)
+        {
+          indexedColumns.emplace_back(nextAvailableChildTableColid);
+        }
+      }
+
+      if (relationship.second.bForeignKeyIndexingEnabled)
+      {
+        API::Index index;
+        index.tableId = childTableId;
+        index.columnIds = indexedColumns;
+        m_indices.emplace_back(index);
       }
 
       childTable.relationshipToForeignKeyReferencesMap[{ relationship.first, parentTableId }].emplace_back(foreignKeyReference);
@@ -104,13 +123,20 @@ void Schema::configureRelationships()
         .arg(relationship.first).arg(parentTable.name).arg(childTable.name);
 
       auto currentColId = 0U;
+      auto nextAvailableTableId = 0U;
+      while (m_tables.count(nextAvailableTableId) > 0)
+      {
+        nextAvailableTableId++;
+      }
 
-      const auto addRefTableColumns = [&linkTable, &currentColId, &relationship](API::IID::Type refTableId, const API::Table& refTable)
+      const auto addRefTableColumns = [this, &linkTable, &currentColId, &relationship, nextAvailableTableId]
+        (API::IID::Type refTableId, const API::Table& refTable)
       {
         API::ForeignKeyReference foreignKeyReference { refTableId,
           relationship.second.onUpdateAction,
           relationship.second.onDeleteAction };
 
+        std::vector<API::IID::Type> indexedColumns;
         for (const auto& refColId : refTable.primaryKeys)
         {
           const auto& refCol = refTable.columns.at(refColId);
@@ -123,24 +149,61 @@ void Schema::configureRelationships()
           linkTable.columns[currentColId] = col;
           linkTable.primaryKeys.insert(currentColId);
 
+          if (relationship.second.bForeignKeyIndexingEnabled)
+          {
+            indexedColumns.emplace_back(currentColId);
+          }
+
           currentColId++;
         }
 
         linkTable.relationshipToForeignKeyReferencesMap[{ relationship.first, refTableId }].emplace_back(foreignKeyReference);
+
+        if (relationship.second.bForeignKeyIndexingEnabled)
+        {
+          API::Index index;
+          index.tableId = nextAvailableTableId;
+          index.columnIds = indexedColumns;
+          m_indices.emplace_back(index);
+        }
       };
 
       addRefTableColumns(parentTableId, parentTable);
       addRefTableColumns(childTableId, childTable);
 
-      auto nextAvailableTableId = 0U;
-      while (m_tables.count(nextAvailableTableId) > 0)
-      {
-        nextAvailableTableId++;
-      }
-
       m_tables[nextAvailableTableId] = linkTable;
       m_mapManyToManyRelationshipToLinkTableId[relationship.first] = nextAvailableTableId;
     }
+  }
+}
+
+void Schema::validateAndPrepareIndices()
+{
+  std::map<API::IID::Type, int> tableIndexCounter;
+
+  for (auto& index : m_indices)
+  {
+    if (m_tables.count(index.tableId) == 0)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidId,
+        QString("Index cannot be created for non-existing table id '%1'").arg(index.tableId));
+    }
+
+    const auto& table = m_tables.at(index.tableId);
+    for (const auto& colId : index.columnIds)
+    {
+      if (table.columns.count(colId) == 0)
+      {
+        throw DatabaseException(DatabaseException::Type::InvalidId,
+          QString("Index cannot be created. Table with id '%1' has no column id '%2'").arg(index.tableId).arg(colId));
+      }
+    }
+
+    if (tableIndexCounter.count(index.tableId) == 0)
+    {
+      tableIndexCounter[index.tableId] = 1;
+    }
+    index.name = QString("index_%1_%2").arg(table.name).arg(tableIndexCounter[index.tableId]++);
   }
 }
 
