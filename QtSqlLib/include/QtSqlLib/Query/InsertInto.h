@@ -7,10 +7,6 @@
 
 #include <vector>
 
-#define INSERT_INTO(X) QtSqlLib::Query::InsertInto(QtSqlLib::ID(X))
-
-#define VALUE(X, Y) value(QtSqlLib::ID(X), Y)
-
 namespace QtSqlLib::Query
 {
 

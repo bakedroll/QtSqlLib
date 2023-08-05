@@ -7,9 +7,6 @@
 
 #include <memory>
 
-#define CONFIGURE_TABLE(X, Y) configureTable(QtSqlLib::ID(X), Y)
-#define CONFIGURE_RELATIONSHIP(X, Y, Z, T) configureRelationship(QtSqlLib::ID(X), QtSqlLib::ID(Y), QtSqlLib::ID(Z), T)
-
 namespace QtSqlLib::API
 {
 

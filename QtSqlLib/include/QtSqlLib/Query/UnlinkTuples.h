@@ -4,12 +4,6 @@
 #include <QtSqlLib/Query/QuerySequence.h>
 #include <QtSqlLib/RelationshipPreparationData.h>
 
-#define UNLINK_TUPLES(X) QtSqlLib::Query::UnlinkTuples(QtSqlLib::ID(X))
-
-#define FROM_ONE(X) fromOne(X)
-#define TO_ONE(X) toOne(X)
-#define TO_MANY(...) toMany(__VA_ARGS__)
-
 namespace QtSqlLib::Query
 {
 

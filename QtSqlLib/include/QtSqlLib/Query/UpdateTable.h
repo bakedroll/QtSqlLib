@@ -5,11 +5,6 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Expr.h>
 
-#define UPDATE_TABLE(X) QtSqlLib::Query::UpdateTable(QtSqlLib::ID(X))
-
-#define SET(X, Y) set(QtSqlLib::ID(X), Y)
-#define WHERE(X) where(QtSqlLib::Expr().X)
-
 namespace QtSqlLib::Query
 {
 

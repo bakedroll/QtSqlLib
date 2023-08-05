@@ -8,13 +8,6 @@
 
 #include <vector>
 
-#define INSERT_INTO_EXT(X) QtSqlLib::Query::InsertIntoExt(QtSqlLib::ID(X))
-
-#define VALUE(X, Y) value(QtSqlLib::ID(X), Y)
-#define LINK_TO_ONE_TUPLE(X, Y) linkToOneTuple(QtSqlLib::ID(X), Y)
-#define LINK_TO_MANY_TUPLES(X, ...) linkToManyTuples(QtSqlLib::ID(X), __VA_ARGS__)
-#define RETURN_IDS returnIds()
-
 namespace QtSqlLib::Query
 {
 

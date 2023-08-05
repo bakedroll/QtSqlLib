@@ -7,9 +7,6 @@
 
 #include <vector>
 
-#define BATCH_INSERT_INTO(X) QtSqlLib::Query::BatchInsertInto(QtSqlLib::ID(X))
-#define VALUES(X, Y) values(QtSqlLib::ID(X), Y)
-
 namespace QtSqlLib::Query
 {
 

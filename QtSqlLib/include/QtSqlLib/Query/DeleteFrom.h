@@ -6,9 +6,6 @@
 
 #include <memory>
 
-#define DELETE_FROM(X) QtSqlLib::Query::DeleteFrom(QtSqlLib::ID(X))
-#define WHERE(X) where(QtSqlLib::Expr().X)
-
 namespace QtSqlLib::Query
 {
 

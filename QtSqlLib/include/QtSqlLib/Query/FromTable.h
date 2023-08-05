@@ -6,16 +6,6 @@
 
 #include <vector>
 
-#define FROM_TABLE(X) QtSqlLib::Query::FromTable(QtSqlLib::ID(X))
-
-#define SELECT_ALL selectAll()
-#define SELECT(X) select(X)
-
-#define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
-#define JOIN(X, Y) join(QtSqlLib::ID(X), Y)
-
-#define WHERE(X) where(QtSqlLib::Expr().X)
-
 namespace QtSqlLib::Query
 {
 

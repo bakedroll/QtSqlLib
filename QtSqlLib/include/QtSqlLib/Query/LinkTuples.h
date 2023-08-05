@@ -8,13 +8,6 @@
 #include "QtSqlLib/RelationshipPreparationData.h"
 #include <QtSqlLib/Query/QuerySequence.h>
 
-#define LINK_TUPLES(X) QtSqlLib::Query::LinkTuples(QtSqlLib::ID(X))
-
-#define FROM_ONE(X) fromOne(X)
-#define FROM_REMAINING_KEY fromRemainingKey()
-#define TO_ONE(X) toOne(X)
-#define TO_MANY(...) toMany(__VA_ARGS__)
-
 namespace QtSqlLib::Query
 {
 

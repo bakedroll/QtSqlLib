@@ -3,15 +3,6 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ISchema.h>
 
-#define COLUMN(X, Y, Z) column(QtSqlLib::ID(X), Y, Z)
-#define COLUMN_VARCHAR(X, Y, Z) column(QtSqlLib::ID(X), Y, QtSqlLib::API::DataType::Varchar, Z)
-
-#define PRIMARY_KEY primaryKey()
-#define AUTO_INCREMENT autoIncrement()
-#define NOT_NULL notNull()
-
-#define PRIMARY_KEYS(X) primaryKeys(X)
-
 namespace QtSqlLib::API
 {
 

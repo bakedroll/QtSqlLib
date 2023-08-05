@@ -20,6 +20,8 @@
 #include <QtSqlLib/Schema.h>
 #include <QtSqlLib/SchemaConfigurator.h>
 
+#include <QtSqlLib/Macros.h>
+
 namespace QtSqlLibTest
 {
 

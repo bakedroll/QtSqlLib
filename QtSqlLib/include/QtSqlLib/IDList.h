@@ -4,8 +4,6 @@
 
 #include <vector>
 
-#define IDS(...) QtSqlLib::IDList::make(__VA_ARGS__)
-
 namespace QtSqlLib
 {
 
