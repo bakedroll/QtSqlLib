@@ -1,4 +1,4 @@
-#include "QtSqlLib/RelationshipConfigurator.h"
+#include "RelationshipConfigurator.h"
 
 #include "QtSqlLib/DatabaseException.h"
 

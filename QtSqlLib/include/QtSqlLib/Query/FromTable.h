@@ -1,10 +1,15 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Query/Query.h>
-#include <QtSqlLib/Expr.h>
+
+#include <QtSqlLib/API/IID.h>
 
 #include <vector>
+
+namespace QtSqlLib
+{
+class Expr;
+}
 
 namespace QtSqlLib::Query
 {

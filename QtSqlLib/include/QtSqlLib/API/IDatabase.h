@@ -1,12 +1,15 @@
 #pragma once
 
-#include <QtSqlLib/API/ISchemaConfigurator.h>
-#include <QtSqlLib/API/IQuery.h>
+#include <QtSqlLib/ResultSet.h>
+
+#include <QSqlDatabase>
+#include <QString>
 
 namespace QtSqlLib::API
 {
 
 class IQueryElement;
+class ISchemaConfigurator;
 
 class IDatabase
 {

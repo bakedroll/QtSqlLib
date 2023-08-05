@@ -1,4 +1,4 @@
-#include "QtSqlLib/SanityChecker.h"
+#include "SanityChecker.h"
 
 #include "QtSqlLib/DatabaseException.h"
 

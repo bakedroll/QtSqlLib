@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/ITableConfigurator.h>
+
+#include <QtSqlLib/API/SchemaTypes.h>
 
 #include <optional>
 

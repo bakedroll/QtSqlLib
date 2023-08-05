@@ -1,8 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Query/QuerySequence.h>
+
 #include <QtSqlLib/RelationshipPreparationData.h>
+
+namespace QtSqlLib::API
+{
+class IID;
+}
 
 namespace QtSqlLib::Query
 {

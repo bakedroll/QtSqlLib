@@ -1,12 +1,16 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/API/ISchema.h>
-
-#include "QtSqlLib/Query/BatchInsertInto.h"
-#include "QtSqlLib/Query/UpdateTable.h"
-#include "QtSqlLib/RelationshipPreparationData.h"
+#include <QtSqlLib/Query/BatchInsertInto.h>
 #include <QtSqlLib/Query/QuerySequence.h>
+#include <QtSqlLib/Query/UpdateTable.h>
+
+#include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/RelationshipPreparationData.h>
+
+namespace QtSqlLib::API
+{
+class ISchema;
+}
 
 namespace QtSqlLib::Query
 {

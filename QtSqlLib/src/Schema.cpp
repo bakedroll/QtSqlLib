@@ -1,5 +1,6 @@
 #include "QtSqlLib/Schema.h"
 
+#include "QtSqlLib/API/ISanityChecker.h"
 #include "QtSqlLib/DatabaseException.h"
 
 #include <set>

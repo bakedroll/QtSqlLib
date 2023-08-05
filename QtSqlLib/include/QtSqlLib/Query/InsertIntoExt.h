@@ -1,8 +1,9 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/Query/QuerySequence.h>
 #include "QtSqlLib/Query/InsertInto.h"
+
+#include <QtSqlLib/API/IID.h>
 
 #include <QVariant>
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
 
 namespace QtSqlLib::API

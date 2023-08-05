@@ -1,12 +1,13 @@
 #pragma once
 
-#include <QtSqlLib/API/ISchema.h>
+#include <memory>
 
 namespace QtSqlLib::API
 {
 
 class IQueryElement;
 class IQueryVisitor;
+class ISchema;
 
 class IQuerySequence
 {

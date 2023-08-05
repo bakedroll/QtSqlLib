@@ -1,6 +1,9 @@
 #include "QtSqlLib/Query/FromTable.h"
 
+#include "QtSqlLib/API/ISanityChecker.h"
+#include "QtSqlLib/API/ISchema.h"
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 
 namespace QtSqlLib::Query

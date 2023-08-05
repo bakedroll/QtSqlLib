@@ -2,10 +2,15 @@
 
 #include <QtSqlLib/API/IQueryVisitor.h>
 
-#include <QtSqlLib/API/IQuery.h>
-#include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/ResultSet.h>
 
 #include <QSqlDatabase>
+
+namespace QtSqlLib::API
+{
+class IQuery;
+class ISchema;
+}
 
 namespace QtSqlLib
 {

@@ -1,7 +1,5 @@
 Refactoring:
 
-MAKROS zentral definieren
-class forwarding
 Expr interfaces auslagern
 private class declarations hpp => cpp?
 

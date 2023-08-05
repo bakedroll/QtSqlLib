@@ -1,8 +1,9 @@
 #include "QtSqlLib/Query/InsertIntoExt.h"
 
+#include "QtSqlLib/API/ISanityChecker.h"
+#include "QtSqlLib/API/ISchema.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/ID.h"
-#include "QtSqlLib/Query/InsertInto.h"
 #include "QtSqlLib/Query/LinkTuples.h"
 
 namespace QtSqlLib::Query

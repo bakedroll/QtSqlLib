@@ -2,8 +2,6 @@
 #pragma once
 
 #include <QtSqlLib/Query/Query.h>
-#include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/API/ISchema.h>
 
 #include <vector>
 

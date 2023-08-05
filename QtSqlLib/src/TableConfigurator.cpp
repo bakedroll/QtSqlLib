@@ -1,4 +1,4 @@
-#include "QtSqlLib/TableConfigurator.h"
+#include "TableConfigurator.h"
 
 #include "QtSqlLib/DatabaseException.h"
 

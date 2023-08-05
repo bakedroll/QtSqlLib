@@ -1,5 +1,7 @@
 #include "QtSqlLib/Expr.h"
 
+#include "QtSqlLib/API/ISanityChecker.h"
+#include "QtSqlLib/API/ISchema.h"
 #include "QtSqlLib/DatabaseException.h"
 
 namespace QtSqlLib

@@ -1,10 +1,11 @@
 #include "QtSqlLib/SchemaConfigurator.h"
 
 #include "QtSqlLib/DatabaseException.h"
-#include "QtSqlLib/RelationshipConfigurator.h"
-#include "QtSqlLib/SanityChecker.h"
 #include "QtSqlLib/Schema.h"
-#include "QtSqlLib/TableConfigurator.h"
+
+#include "RelationshipConfigurator.h"
+#include "SanityChecker.h"
+#include "TableConfigurator.h"
 
 namespace QtSqlLib
 {

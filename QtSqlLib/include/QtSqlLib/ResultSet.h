@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/API/SchemaTypes.h>
 
 #include <vector>
 

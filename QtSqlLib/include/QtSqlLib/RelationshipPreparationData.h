@@ -1,7 +1,12 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/API/ISchema.h>
+#include <QtSqlLib/API/SchemaTypes.h>
+
+namespace QtSqlLib::API
+{
+class ISchema;
+}
 
 namespace QtSqlLib
 {

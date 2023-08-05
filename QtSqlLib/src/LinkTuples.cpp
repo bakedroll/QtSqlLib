@@ -1,6 +1,7 @@
 #include "QtSqlLib/Query/LinkTuples.h"
 
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/BatchInsertInto.h"
 

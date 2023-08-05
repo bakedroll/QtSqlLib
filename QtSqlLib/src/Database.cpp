@@ -1,6 +1,9 @@
 #include "QtSqlLib/Database.h"
 
+#include "QtSqlLib/API/ISchemaConfigurator.h"
+#include "QtSqlLib/API/ITableConfigurator.h"
 #include "QtSqlLib/DatabaseException.h"
+#include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/FromTable.h"
 #include "QtSqlLib/Query/InsertInto.h"
@@ -8,7 +11,9 @@
 #include "QtSqlLib/Query/QuerySequence.h"
 #include "QtSqlLib/QueryExecuteVisitor.h"
 #include "QtSqlLib/QueryPrepareVisitor.h"
-#include "QtSqlLib/SanityChecker.h"
+#include "QtSqlLib/Schema.h"
+
+#include "SanityChecker.h"
 
 #include <QSqlQuery>
 #include <QVariant>

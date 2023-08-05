@@ -3,7 +3,11 @@
 #include <QtSqlLib/Query/Query.h>
 
 #include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/Expr.h>
+
+namespace QtSqlLib
+{
+class Expr;
+}
 
 namespace QtSqlLib::Query
 {

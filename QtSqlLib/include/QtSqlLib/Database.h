@@ -1,12 +1,16 @@
 #pragma once
 
 #include <QtSqlLib/API/IDatabase.h>
-#include <QtSqlLib/Schema.h>
-#include <QtSqlLib/SchemaConfigurator.h>
 
 #include <QSqlDatabase>
 
 #include <memory>
+
+namespace QtSqlLib::API
+{
+class ISchema;
+class ISchemaConfigurator;
+}
 
 namespace QtSqlLib
 {
