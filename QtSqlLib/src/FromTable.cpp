@@ -12,6 +12,34 @@
 namespace QtSqlLib::Query
 {
 
+static bool qVariantsLess(const QVariant& lhs, const QVariant& rhs)
+{
+  if (lhs.userType() != rhs.userType())
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Cannot compare tuple values of different types.");
+  }
+
+  switch (lhs.userType())
+  {
+  case QMetaType::Int:
+    return lhs.toInt() < rhs.toInt();
+  case QMetaType::UInt:
+    return lhs.toUInt() < rhs.toUInt();
+  case QMetaType::LongLong:
+    return lhs.toLongLong() < rhs.toLongLong();
+  case QMetaType::ULongLong:
+    return lhs.toULongLong() < rhs.toULongLong();
+  case QMetaType::QString:
+    return lhs.toString() < rhs.toString();
+  case QMetaType::QByteArray:
+    return lhs.toByteArray() < rhs.toByteArray();
+  default:
+    break;
+  }
+
+  throw DatabaseException(DatabaseException::Type::UnexpectedError, "Tuple types not comparable.");
+}
+
 class NTuple
 {
 public:
@@ -33,7 +61,7 @@ public:
     bool isLess = false;
     for (; i<m_values.size(); ++i)
     {
-      isLess = (m_values.at(i) < rhs.m_values.at(i));
+      isLess = qVariantsLess(m_values.at(i), rhs.m_values.at(i));
       if (!isLess)
       {
         continue;
