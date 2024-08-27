@@ -40,7 +40,7 @@ void UpdateTableForeignKeys::makeAndAddWhereExpr(const API::TupleValues& affecte
   {
     if (childKeyValue.first != affectedChildKeyValues.begin()->first)
     {
-      whereExpr.and();
+      whereExpr.opAnd();
     }
     whereExpr.equal(ID(childKeyValue.first.columnId), childKeyValue.second);
   }

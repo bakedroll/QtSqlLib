@@ -221,7 +221,7 @@ bool Database::isVersionTableExisting() const
     .select({ s_sqliteMasterNameColId })
     .where(Expr()
       .equal(ID(s_sqliteMasterTypeColId), "table")
-      .and()
+      .opAnd()
       .equal(ID(s_sqliteMasterNameColId), s_versionTableName)));
 
   return results.hasNext();

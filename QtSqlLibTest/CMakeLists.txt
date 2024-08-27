@@ -11,6 +11,7 @@ enable_automoc()
 require_library(Qt${QT_VERSION} MODULES Core Sql)
 
 require_library(GMock)
+require_library(GTest)
 
 require_project(QtSqlLib)
 

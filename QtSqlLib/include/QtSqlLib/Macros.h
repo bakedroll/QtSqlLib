@@ -43,8 +43,8 @@
 
 #define ISNULL(A, B) greater(QtSqlLib::ID(A))
 
-#define OR or()
-#define AND and()
+#define OR opOr()
+#define AND opAnd()
 
 #define _(A) braces(QtSqlLib::Expr().A)
 

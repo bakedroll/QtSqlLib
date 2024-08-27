@@ -16,7 +16,7 @@ Expr createWhereExpression(const API::TupleValues& childKeyValues)
   {
     if (col.first != childKeyValues.begin()->first)
     {
-      whereExpr.and();
+      whereExpr.opAnd();
     }
 
     whereExpr.equal(col.first, col.second);

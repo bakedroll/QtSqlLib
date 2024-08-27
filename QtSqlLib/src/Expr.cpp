@@ -56,12 +56,12 @@ Expr& Expr::isNull(const ColumnID& columnId)
   return addComparison(ComparisonOperator::IsNull, columnId, QVariant::fromValue(ColumnID()));
 }
 
-Expr& Expr::or()
+Expr& Expr::opOr()
 {
   return addLogic(std::make_unique<Logic>(LogicalOperator::Or));
 }
 
-Expr& Expr::and()
+Expr& Expr::opAnd()
 {
   return addLogic(std::make_unique<Logic>(LogicalOperator::And));
 }

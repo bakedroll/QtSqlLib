@@ -7,6 +7,8 @@
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 
+#include <QVariant>
+
 namespace QtSqlLib::Query
 {
 
@@ -28,11 +30,11 @@ public:
     }
 
     auto i = 0;
-    auto cmp = 0;
+    bool isLess = false;
     for (; i<m_values.size(); ++i)
     {
-      cmp = m_values[i].compare(rhs.m_values[i]);
-      if (cmp == 0)
+      isLess = (m_values.at(i) < rhs.m_values.at(i));
+      if (!isLess)
       {
         continue;
       }
@@ -42,7 +44,7 @@ public:
       }
     }
 
-    return cmp < 0;
+    return isLess;
   }
 
   bool isNull() const
@@ -495,7 +497,7 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, API::ISchema& sche
   {
     if (idMapping.first != foreignKeyRef.primaryForeignKeyColIdMap.cbegin()->first)
     {
-      joinOnExpr.and();
+      joinOnExpr.opAnd();
     }
 
     const auto parentColumnId = (m_isTableAliasesNeeded && !parentTableAlias.isEmpty()

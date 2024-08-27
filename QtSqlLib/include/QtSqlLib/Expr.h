@@ -41,8 +41,8 @@ public:
 
   Expr& isNull(const ColumnID& columnId);
 
-  Expr& or();
-  Expr& and();
+  Expr& opOr(void);
+  Expr& opAnd(void);
 
   Expr& braces(Expr& nestedExpr);
 

@@ -7,7 +7,7 @@
 namespace QtSqlLib
 {
 
-class DatabaseException : public std::exception
+class DatabaseException : public std::runtime_error
 {
 public:
   enum class Type
