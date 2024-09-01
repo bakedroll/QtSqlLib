@@ -4,7 +4,7 @@
     {
         "CMAKE_SCRIPTS_DIRECTORY": "${workspaceFolder}/../CMake-Scripts"
     },
-    "cmake.buildDirectory": "${workspaceFolder}/../../builds/vscode/${buildKit}-${buildType}/",
+    "cmake.buildDirectory": "${workspaceFolder}/../../builds/vscode/${workspaceFolderBasename}-${buildKit}-${buildType}/",
     "cmake.buildEnvironment": {
         "LANG": "en-US"
     },
@@ -231,6 +231,7 @@
         "databaserevisions": "cpp",
         "eventqueue": "cpp",
         "incrementalcompileoperation": "cpp",
-        "stategraph": "cpp"
+        "stategraph": "cpp",
+        "*.def": "cpp"
     }
 }
