@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        "SteveBushResearch.BuildOutputColorizer",
+        "Tyriar.sort-lines",
+        "amiralizadeh9480.cpp-helper",
+        "eamodio.gitlens",
+        "fredericbonnet.cmake-test-adapter",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "twxs.cmake"
+    ]
+}
