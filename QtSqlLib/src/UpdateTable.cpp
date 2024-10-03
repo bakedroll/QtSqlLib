@@ -81,7 +81,7 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISch
     query.addBindValue(colValue.second);
   }
 
-  return { query };
+  return { std::move(query) };
 }
 
 }

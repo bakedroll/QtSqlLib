@@ -44,7 +44,7 @@ API::IQuery::SqlQuery CreateIndex::getSqlQuery(
     .arg(table.name)
     .arg(columns));
 
-  return { query };
+  return { std::move(query) };
 }
 
 }

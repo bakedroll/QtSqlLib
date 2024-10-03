@@ -157,7 +157,7 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
   QSqlQuery query;
   query.prepare(QString("CREATE TABLE '%1' (%2);").arg(m_table.name).arg(columns));
 
-  return { query };
+  return { std::move(query) };
 }
 
 }
