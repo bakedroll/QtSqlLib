@@ -36,6 +36,7 @@ enum class DataType
   Integer,
   Real,
   Varchar,
+  Text,
   Blob
 };
 

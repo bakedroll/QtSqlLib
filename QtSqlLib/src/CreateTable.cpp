@@ -16,6 +16,8 @@ static QString getDataTypeName(API::DataType type, int varcharLength)
     return "REAL";
   case API::DataType::Varchar:
     return QString("VARCHAR(%1)").arg(varcharLength);
+  case API::DataType::Text:
+    return "TEXT";
   case API::DataType::Blob:
     return "BLOB";
   default:
