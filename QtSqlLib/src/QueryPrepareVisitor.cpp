@@ -12,7 +12,7 @@ QueryPrepareVisitor::QueryPrepareVisitor(API::ISchema& schema)
 
 QueryPrepareVisitor::~QueryPrepareVisitor() = default;
 
-void QueryPrepareVisitor::visit(API::IQuery& query)
+void QueryPrepareVisitor::visit(API::IQuery& /*query*/)
 {
 }
 

@@ -15,7 +15,7 @@ QueryInsertedIDs::QueryInsertedIDs(API::IID::Type tableId)
 
 QueryInsertedIDs::~QueryInsertedIDs() = default;
 
-API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
+API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);

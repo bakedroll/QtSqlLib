@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_SCRIPTS_DIRECTORY "" CACHE STRING "The CMake scripts directory")
 if(EXISTS ${CMAKE_SCRIPTS_DIRECTORY}/scripts.cmake)

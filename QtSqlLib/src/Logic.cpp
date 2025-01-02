@@ -10,7 +10,7 @@ Logic::Logic(LogicalOperator op)
 
 Logic::~Logic() = default;
 
-QString Logic::toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const
+QString Logic::toQString(API::ISchema& /*schema*/, const OptionalIID& /*defaultTableId*/) const
 {
   switch (m_operator)
   {

@@ -135,7 +135,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
       ? RemainingKeysMode::RemainingPrimaryKeys
       : RemainingKeysMode::NoRemainingKeys);
 
-  AffectedData affectedData { childTableId, false, remainingKeysMode, foreignKeyRefs[0].primaryForeignKeyColIdMap };
+  AffectedData affectedData { childTableId, false, remainingKeysMode, foreignKeyRefs[0].primaryForeignKeyColIdMap, {} };
   for (const auto& affectedChildRowId : affectedChildTupleKeys)
   {
     AffectedTuple affectedTuple;
@@ -156,7 +156,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedLinkTableData(
-  API::ISchema& schema, const API::Relationship& relationship,
+  API::ISchema& schema, const API::Relationship& /*relationship*/,
   API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
@@ -196,7 +196,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
     ? RemainingKeysMode::RemainingForeignKeys
     : RemainingKeysMode::NoRemainingKeys;
 
-  AffectedData affectedData { linkTableId, true, remainingKeysMode, foreignKeyRefsFrom.primaryForeignKeyColIdMap };
+  AffectedData affectedData { linkTableId, true, remainingKeysMode, foreignKeyRefsFrom.primaryForeignKeyColIdMap, {} };
 
   for (const auto& toRowIds : m_toTupleKeyValuesList)
   {

@@ -79,7 +79,8 @@ void Schema::configureRelationships()
       API::ForeignKeyReference foreignKeyReference {
         parentTableId,
         relationship.second.onUpdateAction,
-        relationship.second.onDeleteAction };
+        relationship.second.onDeleteAction,
+        {} };
 
       std::vector<API::IID::Type> indexedColumns;
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
@@ -132,9 +133,11 @@ void Schema::configureRelationships()
       const auto addRefTableColumns = [this, &linkTable, &currentColId, &relationship, nextAvailableTableId]
         (API::IID::Type refTableId, const API::Table& refTable)
       {
-        API::ForeignKeyReference foreignKeyReference { refTableId,
+        API::ForeignKeyReference foreignKeyReference {
+          refTableId,
           relationship.second.onUpdateAction,
-          relationship.second.onDeleteAction };
+          relationship.second.onDeleteAction,
+          {} };
 
         std::vector<API::IID::Type> indexedColumns;
         for (const auto& refColId : refTable.primaryKeys)

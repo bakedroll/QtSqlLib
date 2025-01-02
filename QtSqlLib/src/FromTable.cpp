@@ -57,9 +57,8 @@ public:
       throw DatabaseException(DatabaseException::Type::UnexpectedError, "Trying to compare incompatible types.");
     }
 
-    auto i = 0;
     bool isLess = false;
-    for (; i<m_values.size(); ++i)
+    for (size_t i = 0; i<m_values.size(); ++i)
     {
       isLess = qVariantsLess(m_values.at(i), rhs.m_values.at(i));
       if (!isLess)
@@ -95,7 +94,7 @@ private:
 static NTuple getKeyTuple(const QSqlQuery& query, const std::vector<int>& keyIndices)
 {
   std::vector<QVariant> keys(keyIndices.size());
-  for (auto i=0; i<keyIndices.size(); ++i)
+  for (size_t i=0; i<keyIndices.size(); ++i)
   {
     keys[i] = query.value(keyIndices[i]);
   }
@@ -178,7 +177,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults)
+API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
   const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
@@ -218,7 +217,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   return { QSqlQuery(queryStr, db) };
 }
 
-ResultSet FromTable::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
+ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query) const
 {
   using JoinKey = std::pair<API::IID::Type, NTuple>;
 
@@ -511,7 +510,7 @@ void FromTable::appendJoinQuerySubstring(QString& joinStrOut, API::ISchema& sche
   Expr joinOnExpr;
 
   const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
-  if (foreignKeyReference.size() <= foreignKeyReferencesIndex)
+  if (static_cast<int>(foreignKeyReference.size()) <= foreignKeyReferencesIndex)
   {
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
   }
