@@ -30,7 +30,7 @@ InsertIntoExt& InsertIntoExt::value(const API::IID& columnId, const QVariant& va
 InsertIntoExt& InsertIntoExt::linkToOneTuple(const API::IID& relationshipId, const API::TupleValues& tupleKeyValues)
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId.get());
-  
+
   m_linkedTuplesMap[relationshipId.get()] = { LinkType::ToOne, { tupleKeyValues } };
   return *this;
 }

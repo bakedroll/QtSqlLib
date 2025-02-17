@@ -26,6 +26,7 @@ public:
   void close() override;
 
   ResultSet execQuery(API::IQueryElement& query) override;
+  std::vector<API::IID::Type> foreinKeyColumnIds(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const override;
 
 private:
   std::unique_ptr<QSqlDatabase> m_db;

@@ -99,6 +99,30 @@ ResultSet Database::execQuery(API::IQueryElement& query)
   return execQueryForSchema(*m_schema, query);
 }
 
+std::vector<API::IID::Type> Database::foreinKeyColumnIds(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const
+{
+  const auto& tables = m_schema->getTables();
+  if (tables.count(tableId.get()) == 0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Table with id %1 does not exist.").arg(tableId.get()));
+  }
+
+  const auto& foreignKeys = m_schema->getTables().at(tableId.get()).relationshipToForeignKeyReferencesMap;
+  const auto& foreignKeyReferences = foreignKeys.at({ relationshipId.get(), parentTableId.get() });
+
+  std::vector<API::IID::Type> ids;
+  for (const auto& ref : foreignKeyReferences)
+  {
+    for (const auto& colId : ref.primaryForeignKeyColIdMap)
+    {
+      ids.emplace_back(colId.second);
+    }
+  }
+
+  return ids;
+}
+
 void Database::loadDatabaseFile(const QString& filename)
 {
   m_db = std::make_unique<QSqlDatabase>(QSqlDatabase::addDatabase("QSQLITE", m_databaseName));

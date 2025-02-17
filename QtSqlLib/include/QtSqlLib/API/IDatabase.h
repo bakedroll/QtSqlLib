@@ -22,6 +22,7 @@ public:
   virtual void close() = 0;
 
   virtual ResultSet execQuery(IQueryElement& query) = 0;
+  virtual std::vector<IID::Type> foreinKeyColumnIds(const IID& tableId, const IID& relationshipId, const IID& parentTableId) const = 0;
 
 };
 
