@@ -2,6 +2,8 @@
 
 #include <QtSqlLib/API/SchemaTypes.h>
 
+#include <QString>
+
 namespace QtSqlLib
 {
 
@@ -9,21 +11,22 @@ class ColumnID
 {
 public:
   ColumnID();
-  ColumnID(const API::TableColumnId& tableColumnId);
   ColumnID(const API::IID& columnId);
-  ColumnID(const QString& tableAlias, const API::TableColumnId& tableColumnId);
+  ColumnID(const API::IID& tableId, const API::IID& columnId);
+  ColumnID(const QString& tableAlias, const API::IID& tableId, const API::IID& columnId);
   virtual ~ColumnID();
 
-  const API::TableColumnId& get() const;
   bool isTableIdValid() const;
-  QString getTableAlias() const;
+  API::IID::Type tableId() const;
+  API::IID::Type columnId() const;
+  QString tableAlias() const;
 
 private:
-  ColumnID(const QString& tableAlias, const API::TableColumnId& tableColumnId, bool bIsTableIdValid);
+  ColumnID(const QString& tableAlias, const std::optional<API::IID::Type>& tableId, API::IID::Type columnId);
 
   QString m_tableAlias;
-  API::TableColumnId m_tableColumnId;
-  bool m_bIsTableIdValid;
+  std::optional<API::IID::Type> m_tableId;
+  API::IID::Type m_columnId;
 
 };
 

@@ -2,6 +2,7 @@
 
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
+#include <QtSqlLib/PrimaryKey.h>
 
 namespace QtSqlLib::API
 {
@@ -23,8 +24,8 @@ public:
 
   struct AffectedTuple
   {
-    API::TupleValues foreignKeyValues;
-    API::TupleValues childKeyValues;
+    PrimaryKey foreignKeyValues;
+    PrimaryKey childKeyValues;
   };
 
   struct AffectedData
@@ -39,11 +40,11 @@ public:
   explicit RelationshipPreparationData(const API::IID& relationshipId);
   virtual ~RelationshipPreparationData();
 
-  void fromOne(const API::TupleValues& tupleKeyValues);
+  void fromOne(const PrimaryKey& tupleKeyValues);
   void fromRemainingKey();
 
-  void toOne(const API::TupleValues& tupleKeyValues);
-  void toMany(const std::vector<API::TupleValues>& tupleKeyValuesList);
+  void toOne(const PrimaryKey& tupleKeyValues);
+  void toMany(const std::vector<PrimaryKey>& tupleKeyValuesList);
 
   AffectedData resolveAffectedTableData(API::ISchema& schema);
 
@@ -66,15 +67,14 @@ private:
   ExpectedCall m_expectedCall;
   bool m_bRemainingFromKeys;
 
-  API::TupleValues m_fromTupleKeyValues;
-  std::vector<API::TupleValues> m_toTupleKeyValuesList;
+  PrimaryKey m_fromTupleKeyValues;
+  std::vector<PrimaryKey> m_toTupleKeyValuesList;
 
   AffectedData determineAffectedChildTableData(
     API::ISchema& schema, const API::Relationship& relationship,
     API::IID::Type fromTableId, API::IID::Type toTableId);
   AffectedData determineAffectedLinkTableData(
-    API::ISchema& schema, const API::Relationship& relationship,
-    API::IID::Type fromTableId, API::IID::Type toTableId);
+    API::ISchema& schema, API::IID::Type fromTableId, API::IID::Type toTableId);
 
 };
 

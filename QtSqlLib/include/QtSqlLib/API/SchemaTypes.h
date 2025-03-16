@@ -1,26 +1,18 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/ColumnList.h>
 
 #include <QVariant>
 
 #include <map>
-#include <set>
+#include <optional>
 #include <vector>
 
 namespace QtSqlLib::API
 {
 
-struct TableColumnId
-{
-  IID::Type tableId = 0;
-  IID::Type columnId = 0;
-
-  bool operator<(const TableColumnId& rhs) const;
-  bool operator!=(const TableColumnId& rhs) const;
-};
-
-using PrimaryForeignKeyColumnIdMap = std::map<TableColumnId, IID::Type>;
+using PrimaryForeignKeyColumnIdMap = std::map<IID::Type, IID::Type>;
 
 enum class ForeignKeyAction
 {
@@ -59,23 +51,17 @@ struct ForeignKeyReference
   PrimaryForeignKeyColumnIdMap primaryForeignKeyColIdMap;
 };
 
-struct RelationshipTableId
-{
-  IID::Type relationshipId = 0;
-  IID::Type tableId = 0;
-
-  bool operator<(const RelationshipTableId& rhs) const;
-};
-
-using RelationshipToForeignKeyReferencesMap = std::map<RelationshipTableId, std::vector<ForeignKeyReference>>;
+using RelationshipTableIdPair = std::pair<IID::Type, IID::Type>;
+using RelationshipToForeignKeyReferencesMap = std::map<RelationshipTableIdPair, std::vector<ForeignKeyReference>>;
 
 struct Table
 {
   QString name;
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
-  std::set<IID::Type> primaryKeys;
-  std::set<IID::Type> uniqueColIds;
+
+  std::vector<IID::Type> primaryKeys;
+  std::vector<IID::Type> uniqueColIds;
 };
 
 enum class RelationshipType
@@ -99,10 +85,17 @@ struct Index
 {
   IID::Type tableId = 0;
   QString name;
-  std::vector<IID::Type> columnIds;
+  ColumnList columns;
   bool isUnique = false;
 };
 
-using TupleValues = std::map<TableColumnId, QVariant>;
+struct QueryMetaInfo
+{
+  API::IID::Type tableId = 0;
+  std::optional<API::IID::Type> relationshipId;
+  ColumnList columns;
+  std::vector<size_t> columnQueryIndices;
+  std::vector<size_t> primaryKeyColumnIndices;
+};
 
 }

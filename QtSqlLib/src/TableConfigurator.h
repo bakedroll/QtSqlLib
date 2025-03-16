@@ -23,8 +23,8 @@ public:
   ITableConfigurator& notNull() override;
   ITableConfigurator& unique() override;
 
-  ITableConfigurator& primaryKeys(const std::vector<API::IID::Type>& columnIds) override;
-  ITableConfigurator& uniqueCols(const std::vector<API::IID::Type>& columnIds) override;
+  ITableConfigurator& primaryKeys(const ColumnList& columns) override;
+  ITableConfigurator& uniqueCols(const ColumnList& columns) override;
 
 private:
   API::Table& m_table;

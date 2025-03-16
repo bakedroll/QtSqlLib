@@ -18,27 +18,32 @@ BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type tableId,
 BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
 
 API::IQuery::SqlQuery BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-  const ResultSet& previousQueryResults)
+  ResultSet& previousQueryResults)
 {
-  if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
+  if (!previousQueryResults.isValid() || !previousQueryResults.hasNextTuple())
   {
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Expected previous query results.");
   }
 
-  const auto& prevValues = previousQueryResults.next();
-  for (const auto& value : prevValues)
+  auto prevValues = previousQueryResults.nextTuple();
+  for (const auto& primaryForeignKeyPair : m_primaryForeignKeyColIdMap)
   {
-    if (m_primaryForeignKeyColIdMap.count(value.first) == 0)
+    API::IID::Type primaryKeyColId = primaryForeignKeyPair.first;
+    API::IID::Type foreignKeyColId = primaryForeignKeyPair.second;
+
+    if (!prevValues.hasColumnValue(primaryKeyColId))
     {
-      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Missing foreign key ref.");
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Missing primary key value.");
     }
+    const auto primaryKeyValue = prevValues.columnValue(primaryKeyColId);
+
     QVariantList list;
     for (auto i=0; i<m_numRelations; ++i)
     {
-      list << value.second;
+      list << primaryKeyValue;
     }
 
-    values(ID(m_primaryForeignKeyColIdMap.at(value.first)), list);
+    values(ID(foreignKeyColId), list);
   }
 
   previousQueryResults.resetIteration();

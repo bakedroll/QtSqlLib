@@ -5,6 +5,11 @@
 namespace QtSqlLib
 {
 
+static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+{
+  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+}
+
 TableConfigurator::TableConfigurator(API::Table& table)
   : m_table(table)
   , m_bIsPrimaryKeysConfigured(false)
@@ -60,7 +65,7 @@ API::ITableConfigurator& TableConfigurator::primaryKey()
   const auto colId = m_lastColumnId.value();
   auto& col = m_table.columns.at(colId);
 
-  if (m_table.primaryKeys.count(colId) > 0)
+  if (contains(m_table.primaryKeys, colId))
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("primaryKey() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
@@ -72,7 +77,7 @@ API::ITableConfigurator& TableConfigurator::primaryKey()
       QString("Only one column of a table can be the primary, see table '%1'.").arg(m_table.name));
   }
 
-  m_table.primaryKeys.insert(colId);
+  m_table.primaryKeys.emplace_back(colId);
 
   return *this;
 }
@@ -122,7 +127,7 @@ API::ITableConfigurator& TableConfigurator::unique()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::IID::Type>& columnIds)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& columns)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -130,31 +135,31 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::I
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
-    m_table.primaryKeys.emplace(id);
+    m_table.primaryKeys.emplace_back(id);
   }
   m_bIsPrimaryKeysConfigured = true;
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::uniqueCols(const std::vector<API::IID::Type>& columnIds)
+API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnList& columns)
 {
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
-    m_table.uniqueColIds.emplace(id);
+    m_table.uniqueColIds.emplace_back(id);
   }
   return *this;
 }

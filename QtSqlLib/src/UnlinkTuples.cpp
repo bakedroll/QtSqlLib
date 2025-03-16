@@ -9,17 +9,17 @@
 namespace QtSqlLib::Query
 {
 
-Expr createWhereExpression(const API::TupleValues& childKeyValues)
+static Expr createWhereExpression(const PrimaryKey& childKeyValues)
 {
   Expr whereExpr;
-  for (const auto& col : childKeyValues)
+  for (const auto& col : childKeyValues.values())
   {
-    if (col.first != childKeyValues.begin()->first)
+    if (col.columnId != childKeyValues.values().begin()->columnId)
     {
       whereExpr.opAnd();
     }
 
-    whereExpr.equal(col.first, col.second);
+    whereExpr.equal(ColumnID(ID(col.columnId)), col.value);
   }
   return whereExpr;
 }
@@ -32,19 +32,19 @@ UnlinkTuples::UnlinkTuples(const API::IID& relationshipId) :
 
 UnlinkTuples::~UnlinkTuples() = default;
 
-UnlinkTuples& UnlinkTuples::fromOne(const API::TupleValues& tupleKeyValues)
+UnlinkTuples& UnlinkTuples::fromOne(const PrimaryKey& tupleKeyValues)
 {
   m_relationshipPreparationData.fromOne(tupleKeyValues);
   return *this;
 }
 
-UnlinkTuples& UnlinkTuples::toOne(const API::TupleValues& tupleKeyValues)
+UnlinkTuples& UnlinkTuples::toOne(const PrimaryKey& tupleKeyValues)
 {
   m_relationshipPreparationData.toOne(tupleKeyValues);
   return *this;
 }
 
-UnlinkTuples& UnlinkTuples::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
+UnlinkTuples& UnlinkTuples::toMany(const std::vector<PrimaryKey>& tupleKeyValuesList)
 {
   m_relationshipPreparationData.toMany(tupleKeyValuesList);
   return *this;
@@ -69,9 +69,9 @@ void UnlinkTuples::prepare(API::ISchema& schema)
     for (const auto& tuple : affectedData.affectedTuples)
     {
       auto updateQuery = std::make_unique<UpdateTable>(ID(affectedData.tableId));
-      for (const auto& col : tuple.foreignKeyValues)
+      for (const auto& col : tuple.foreignKeyValues.values())
       {
-        const auto childColId = affectedData.primaryForeignKeyColIdMap.at(col.first);
+        const auto childColId = affectedData.primaryForeignKeyColIdMap.at(col.columnId);
         updateQuery->set(ID(childColId), QVariant());
 
         auto expr = createWhereExpression(tuple.childKeyValues);

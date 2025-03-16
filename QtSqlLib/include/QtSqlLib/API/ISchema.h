@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/SchemaTypes.h>
+#include <QtSqlLib/PrimaryKey.h>
 
 #include <map>
 #include <set>
@@ -27,18 +28,18 @@ public:
   virtual void configureRelationships() = 0;
   virtual void validateAndPrepareIndices() = 0;
 
-  virtual IID::Type validatePrimaryKeysAndGetTableId(const TupleValues& tupleKeyValues) const = 0;
-  virtual IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<TupleValues>& tupleKeyValuesList) const = 0;
+  virtual void validatePrimaryKeys(const PrimaryKey& tupleKeyValues) const = 0;
+  virtual void validatePrimaryKeysList(const std::vector<PrimaryKey>& tupleKeyValuesList) const = 0;
 
   virtual std::pair<IID::Type, IID::Type> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
     IID::Type relationshipId,
-    const TupleValues& fromTupleKeyValues,
-    const TupleValues& toTupleKeyValues) const = 0;
+    const PrimaryKey& fromTupleKeyValues,
+    const PrimaryKey& toTupleKeyValues) const = 0;
 
   virtual std::pair<IID::Type, IID::Type> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
     IID::Type relationshipId,
-    const TupleValues& fromTupleKeyValues,
-    const std::vector<TupleValues>& toTupleKeyValuesList) const = 0;
+    const PrimaryKey& fromTupleKeyValues,
+    const std::vector<PrimaryKey>& toTupleKeyValuesList) const = 0;
 
 };
 

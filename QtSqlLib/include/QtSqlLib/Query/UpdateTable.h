@@ -21,7 +21,7 @@ public:
   UpdateTable& set(const API::IID& columnId, const QVariant& newValue);
   UpdateTable& where(Expr& expr);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& previousQueryResults) override;
 
 private:
   API::IID::Type m_tableId;

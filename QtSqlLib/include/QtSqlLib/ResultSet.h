@@ -1,7 +1,14 @@
 #pragma once
 
-#include <QtSqlLib/API/SchemaTypes.h>
+#include <QSqlQuery>
 
+#include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/API/SchemaTypes.h>
+#include <QtSqlLib/PrimaryKey.h>
+#include <QtSqlLib/TupleView.h>
+
+#include <optional>
+#include <set>
 #include <vector>
 
 namespace QtSqlLib
@@ -10,46 +17,58 @@ namespace QtSqlLib
 class ResultSet
 {
 public:
-  using TupleValuesList = std::vector<API::TupleValues>;
+  ResultSet(
+    QSqlQuery&& query,
+    API::QueryMetaInfo&& queryMetaInfo,
+    std::vector<API::QueryMetaInfo>&& joinMetaInfo);
 
-  struct Tuple
-  {
-    API::TupleValues values;
-    std::map<API::IID::Type, TupleValuesList> joinedTuples;
-  };
+  ResultSet();
 
-  using TupleList = std::vector<Tuple>;
+  ResultSet(const ResultSet& rhs) = delete;
+  ResultSet& operator=(const ResultSet& rhs) = delete;
 
-  static ResultSet create(const TupleList& tuples);
-  static ResultSet invalid();
+  ResultSet(ResultSet&& rhs);
+  ResultSet& operator=(ResultSet&& rhs);
 
   virtual ~ResultSet();
 
   bool isValid() const;
-  void resetIteration() const;
+  void resetIteration();
 
-  size_t getNumResults() const;
-  bool hasNext() const;
-  const API::TupleValues& next() const;
+  bool hasNextTuple();
+  bool hasNextJoinedTuple();
 
-  size_t getCurrentNumJoinedResults(API::IID::Type relationshipId) const;
-  bool hasNextJoinedTuple(API::IID::Type relationshipId) const;
-  const API::TupleValues& nextJoinedTuple(API::IID::Type relationshipId) const;
+  TupleView nextTuple();
+  TupleView nextJoinedTuple();
 
 private:
-  enum class Validity
+  struct NextTupleResult
   {
-    Valid,
-    Invalid
+    bool hasNext = false;
+    bool hasNextJoin = false;
+    std::vector<bool> nextJoinsMask;
   };
 
-  explicit ResultSet(Validity validity, const TupleList& tuples = {});
+  enum class SearchMode
+  {
+    MAIN_TUPLE,
+    JOIN_TUPLE
+  };
 
-  Validity m_validity;
-  TupleList m_tuples;
+  QSqlQuery m_sqlQuery;
+  API::QueryMetaInfo m_queryMetaInfo;
+  std::vector<API::QueryMetaInfo> m_joinMetaInfo;
 
-  mutable long long m_currentTupleIndex;
-  mutable long long m_currentJoinedTupleIndex;
+  bool m_isValid;
+  NextTupleResult m_nextTupleResult;
+  std::set<PrimaryKey> m_retrievedResultKeys;
+  std::map<std::pair<API::IID::Type, PrimaryKey>, std::set<PrimaryKey>> m_retrievedJoinResultKeys;
+
+  void searchNextTuple(SearchMode searchMode);
+  void findNextJoinTuple(const PrimaryKey& tupleKey);
+
+  void resetNextTupleResult();
+  void clearNextJoinsMask();
 
 };
 

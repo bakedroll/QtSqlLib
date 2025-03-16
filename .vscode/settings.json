@@ -2,7 +2,8 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.configureSettings":
     {
-        "CMAKE_SCRIPTS_DIRECTORY": "${workspaceFolder}/../CMake-Scripts"
+        "CMAKE_SCRIPTS_DIRECTORY": "${workspaceFolder}/../CMake-Scripts",
+        "CMAKE_GENERATOR": "Unix Makefiles"
     },
     "cmake.buildDirectory": "${workspaceFolder}/../../builds/vscode/${workspaceFolderBasename}-${buildKit}-${buildType}/",
     "cmake.buildEnvironment": {
@@ -232,6 +233,18 @@
         "eventqueue": "cpp",
         "incrementalcompileoperation": "cpp",
         "stategraph": "cpp",
-        "*.def": "cpp"
+        "*.def": "cpp",
+        "__bit_reference": "cpp",
+        "__locale": "cpp",
+        "__split_buffer": "cpp",
+        "__verbose_abort": "cpp",
+        "execution": "cpp",
+        "ios": "cpp",
+        "locale": "cpp",
+        "ranges": "cpp",
+        "strstream": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "queue": "cpp"
     }
 }

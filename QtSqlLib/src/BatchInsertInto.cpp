@@ -11,12 +11,12 @@ BatchInsertInto::~BatchInsertInto() = default;
 
 BatchInsertInto& BatchInsertInto::values(const API::IID& columnId, const QVariantList& value)
 {
-  addColumnId(columnId);
+  addColumn(columnId);
   m_values.emplace_back(value);
   return *this;
 }
 
-API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& /*previousQueryResults*/)
 {
   return { getQSqlQuery(db, schema), QueryMode::Batch };
 }

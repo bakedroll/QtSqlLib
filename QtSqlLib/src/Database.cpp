@@ -3,6 +3,7 @@
 #include "QtSqlLib/API/ISchemaConfigurator.h"
 #include "QtSqlLib/API/ITableConfigurator.h"
 #include "QtSqlLib/ColumnID.h"
+#include "QtSqlLib/ColumnList.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -99,30 +100,6 @@ ResultSet Database::execQuery(API::IQueryElement& query)
   return execQueryForSchema(*m_schema, query);
 }
 
-std::vector<API::IID::Type> Database::foreinKeyColumnIds(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const
-{
-  const auto& tables = m_schema->getTables();
-  if (tables.count(tableId.get()) == 0)
-  {
-    throw DatabaseException(DatabaseException::Type::InvalidId,
-      QString("Table with id %1 does not exist.").arg(tableId.get()));
-  }
-
-  const auto& foreignKeys = m_schema->getTables().at(tableId.get()).relationshipToForeignKeyReferencesMap;
-  const auto& foreignKeyReferences = foreignKeys.at({ relationshipId.get(), parentTableId.get() });
-
-  std::vector<API::IID::Type> ids;
-  for (const auto& ref : foreignKeyReferences)
-  {
-    for (const auto& colId : ref.primaryForeignKeyColIdMap)
-    {
-      ids.emplace_back(colId.second);
-    }
-  }
-
-  return ids;
-}
-
 void Database::loadDatabaseFile(const QString& filename)
 {
   m_db = std::make_unique<QSqlDatabase>(QSqlDatabase::addDatabase("QSQLITE", m_databaseName));
@@ -162,13 +139,13 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  const auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select({ s_versionColId }));
-  if (!results.hasNext())
+  auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select(ColumnList{s_versionColId}));
+  if (!results.hasNextTuple())
   {
     return -1;
   }
 
-  return results.next().at({ s_versionTableid, s_versionColId }).toInt();
+  return results.nextTuple().columnValue(s_versionColId).toInt();
 }
 
 void Database::createOrMigrateTables(int currentVersion)
@@ -226,7 +203,7 @@ ResultSet Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement&
 
   QSqlDatabase::database().commit();
 
-  return executeVisitor.getLastQueryResults();
+  return executeVisitor.takeLastQueryResults();
 }
 
 bool Database::isVersionTableExisting() const
@@ -240,15 +217,15 @@ bool Database::isVersionTableExisting() const
   table.columns[s_sqliteMasterTypeColId].name = "type";
   table.columns[s_sqliteMasterNameColId].name = "name";
 
-  const auto results = execQueryForSchema(sqliteMasterSchema,
+  auto results = execQueryForSchema(sqliteMasterSchema,
     Query::FromTable(ID(s_sqliteMasterTableId))
-    .select({ s_sqliteMasterNameColId })
+    .select(ColumnList{s_sqliteMasterNameColId})
     .where(Expr()
       .equal(ID(s_sqliteMasterTypeColId), "table")
       .opAnd()
       .equal(ID(s_sqliteMasterNameColId), s_versionTableName)));
 
-  return results.hasNext();
+  return results.hasNextTuple();
 }
 
 }

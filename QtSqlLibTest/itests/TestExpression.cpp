@@ -11,7 +11,7 @@ namespace QtSqlLibTest
  * @test: Constructs various Expr and checks the resulting strings.
  * @expected: The strings match excactly.
  */
-TEST(ExpressionTest, validity)
+TEST(TextExpression, validity)
 {
   auto sanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
   Schema schema;
@@ -44,7 +44,7 @@ TEST(ExpressionTest, validity)
  * @test: Constructs various invalid expressions.
  * @expected: Exceptions will be thrown.
  */
-TEST(ExpressionTest, exceptions)
+TEST(TextExpression, exceptions)
 {
   auto sanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
   Schema schema;

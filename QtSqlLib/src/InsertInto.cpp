@@ -12,7 +12,7 @@ InsertInto::~InsertInto() = default;
 
 InsertInto& InsertInto::value(const API::IID& columnId, const QVariant& value)
 {
-  addColumnId(columnId);
+  addColumn(columnId);
   m_values.emplace_back(value);
   return *this;
 }
@@ -25,7 +25,7 @@ void InsertInto::bindQueryValues(QSqlQuery& query) const
   }
 }
 
-API::IQuery::SqlQuery InsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery InsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& /*previousQueryResults*/)
 {
   return { getQSqlQuery(db, schema), QueryMode::Single };
 }

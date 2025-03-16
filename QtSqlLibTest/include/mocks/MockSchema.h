@@ -19,12 +19,12 @@ public:
   MOCK_METHOD((QtSqlLib::API::IID::Type), getManyToManyLinkTableId, (QtSqlLib::API::IID::Type), (const override));
   MOCK_METHOD((void), configureRelationships, (), (override));
   MOCK_METHOD((void), validateAndPrepareIndices, (), (override));
-  MOCK_METHOD((QtSqlLib::API::IID::Type), validatePrimaryKeysAndGetTableId, (const QtSqlLib::API::TupleValues&), (const override));
-  MOCK_METHOD((QtSqlLib::API::IID::Type), validatePrimaryKeysListAndGetTableId, (const std::vector<QtSqlLib::API::TupleValues>&), (const override));
+  MOCK_METHOD((void), validatePrimaryKeys, (const QtSqlLib::PrimaryKey&), (const override));
+  MOCK_METHOD((void), validatePrimaryKeysList, (const std::vector<QtSqlLib::PrimaryKey>&), (const override));
   MOCK_METHOD((std::pair<QtSqlLib::API::IID::Type, QtSqlLib::API::IID::Type>), verifyOneToOneRelationshipPrimaryKeysAndGetTableIds,
-    (QtSqlLib::API::IID::Type, const QtSqlLib::API::TupleValues&, const QtSqlLib::API::TupleValues&), (const override));
+    (QtSqlLib::API::IID::Type, const QtSqlLib::PrimaryKey&, const QtSqlLib::PrimaryKey&), (const override));
   MOCK_METHOD((std::pair<QtSqlLib::API::IID::Type, QtSqlLib::API::IID::Type>), verifyOneToManyRelationshipPrimaryKeysAndGetTableIds,
-    (QtSqlLib::API::IID::Type, const QtSqlLib::API::TupleValues&, const std::vector<QtSqlLib::API::TupleValues>&), (const override));
+    (QtSqlLib::API::IID::Type, const QtSqlLib::PrimaryKey&, const std::vector<QtSqlLib::PrimaryKey>&), (const override));
 
 };
 

@@ -5,91 +5,191 @@
 namespace QtSqlLib
 {
 
-ResultSet ResultSet::create(const TupleList& tuples)
+ResultSet::ResultSet(
+    QSqlQuery&& query,
+    API::QueryMetaInfo&& queryMetaInfo,
+    std::vector<API::QueryMetaInfo>&& joinMetaInfo) :
+  m_sqlQuery(std::move(query)),
+  m_queryMetaInfo(std::move(queryMetaInfo)),
+  m_joinMetaInfo(std::move(joinMetaInfo)),
+  m_isValid(true),
+  m_nextTupleResult({ false, false, std::vector<bool>(m_joinMetaInfo.size(), false) })
 {
-  return ResultSet(Validity::Valid, tuples);
 }
 
-ResultSet ResultSet::invalid()
+ResultSet::ResultSet() :
+  m_isValid(false)
 {
-  return ResultSet(Validity::Invalid);
+}
+
+ResultSet::ResultSet(ResultSet&& rhs) :
+  ResultSet(std::move(rhs.m_sqlQuery), std::move(rhs.m_queryMetaInfo), std::move(rhs.m_joinMetaInfo))
+{
+  m_isValid = std::move(rhs.m_isValid);
+  m_nextTupleResult = std::move(rhs.m_nextTupleResult);
+  m_retrievedResultKeys = std::move(rhs.m_retrievedResultKeys);
+  m_retrievedJoinResultKeys = std::move(rhs.m_retrievedJoinResultKeys);
+}
+
+ResultSet& ResultSet::operator=(ResultSet&& rhs)
+{
+  m_sqlQuery = std::move(rhs.m_sqlQuery);
+  m_queryMetaInfo = std::move(rhs.m_queryMetaInfo);
+  m_joinMetaInfo = std::move(rhs.m_joinMetaInfo);
+  m_isValid = std::move(rhs.m_isValid);
+  m_nextTupleResult = std::move(rhs.m_nextTupleResult);
+  m_retrievedResultKeys = std::move(rhs.m_retrievedResultKeys);
+  m_retrievedJoinResultKeys = std::move(rhs.m_retrievedJoinResultKeys);
+  return *this;
 }
 
 ResultSet::~ResultSet() = default;
 
 bool ResultSet::isValid() const
 {
-  return m_validity == Validity::Valid;
+  return m_isValid;
 }
 
-void ResultSet::resetIteration() const
+void ResultSet::resetIteration()
 {
-  m_currentTupleIndex = -1;
-  m_currentJoinedTupleIndex = -1;
-}
-
-size_t ResultSet::getNumResults() const
-{
-  return m_tuples.size();
-}
-
-bool ResultSet::hasNext() const
-{
-  return m_currentTupleIndex < (static_cast<long long>(m_tuples.size()) - 1);
-}
-
-const API::TupleValues& ResultSet::next() const
-{
-  if (!hasNext())
+  if (!m_isValid)
   {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "ResultSet has no further tuples.");
+    return;
   }
 
-  m_currentTupleIndex++;
-  m_currentJoinedTupleIndex = -1;
-
-  return m_tuples.at(m_currentTupleIndex).values;
+  m_sqlQuery.seek(-1);
+  resetNextTupleResult();
+  m_retrievedResultKeys.clear();
+  m_retrievedJoinResultKeys.clear();
 }
 
-size_t ResultSet::getCurrentNumJoinedResults(API::IID::Type relationshipId) const
+bool ResultSet::hasNextTuple()
 {
-  const auto& currentTuple = m_tuples.at(m_currentTupleIndex);
-  if (currentTuple.joinedTuples.count(relationshipId) == 0)
+  searchNextTuple(SearchMode::MAIN_TUPLE);
+  return m_nextTupleResult.hasNext;
+}
+
+bool ResultSet::hasNextJoinedTuple()
+{
+  searchNextTuple(SearchMode::JOIN_TUPLE);
+  return !m_nextTupleResult.hasNext && m_nextTupleResult.hasNextJoin;
+}
+
+TupleView ResultSet::nextTuple()
+{
+  searchNextTuple(SearchMode::MAIN_TUPLE);
+  if (!m_nextTupleResult.hasNext)
   {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Invalid relationship id for result set.");
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "No next tuple found.");
   }
 
-  return currentTuple.joinedTuples.at(relationshipId).size();
+  m_nextTupleResult.hasNext = false;
+  return TupleView(m_sqlQuery, m_queryMetaInfo);
 }
 
-bool ResultSet::hasNextJoinedTuple(API::IID::Type relationshipId) const
+TupleView ResultSet::nextJoinedTuple()
 {
-  const auto& currentTuple = m_tuples.at(m_currentTupleIndex);
-  if (currentTuple.joinedTuples.count(relationshipId) == 0)
+  if (m_nextTupleResult.hasNext)
   {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Invalid relationship id for result set.");
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Retreive next tuple first.");
   }
 
-  return m_currentJoinedTupleIndex < (static_cast<long long>(currentTuple.joinedTuples.at(relationshipId).size()) - 1);
-}
-
-const API::TupleValues& ResultSet::nextJoinedTuple(API::IID::Type relationshipId) const
-{
-  if (!hasNextJoinedTuple(relationshipId))
+  searchNextTuple(SearchMode::JOIN_TUPLE);
+  if (!m_nextTupleResult.hasNextJoin)
   {
-    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Joined data has no further tuples.");
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "No next join tuple found.");
   }
 
-  m_currentJoinedTupleIndex++;
-  return m_tuples.at(m_currentTupleIndex).joinedTuples.at(relationshipId).at(m_currentJoinedTupleIndex);
+  for (size_t i=0; i<m_joinMetaInfo.size(); ++i)
+  {
+    if (m_nextTupleResult.nextJoinsMask.at(i))
+    {
+      m_nextTupleResult.nextJoinsMask[i] = false;
+      m_nextTupleResult.hasNextJoin = std::any_of(m_nextTupleResult.nextJoinsMask.cbegin()+i+1, m_nextTupleResult.nextJoinsMask.cend(),
+        [](bool value) { return value; });
+
+      return TupleView(m_sqlQuery, m_joinMetaInfo.at(i));
+    }
+  }
+
+  throw DatabaseException(DatabaseException::Type::UnexpectedError, "Error due to inconsistent join data.");
 }
 
-ResultSet::ResultSet(Validity validity, const TupleList& tuples) :
-  m_validity(validity),
-  m_tuples(tuples),
-  m_currentTupleIndex(-1),
-  m_currentJoinedTupleIndex(-1)
+void ResultSet::searchNextTuple(SearchMode searchMode)
 {
+  if (!m_isValid || m_nextTupleResult.hasNext ||
+    (searchMode == SearchMode::JOIN_TUPLE && m_nextTupleResult.hasNextJoin))
+  {
+    return;
+  }
+
+  while (m_sqlQuery.next())
+  {
+    if (m_joinMetaInfo.empty())
+    {
+      m_nextTupleResult.hasNext = true;
+      return;
+    }
+
+    TupleView tuple(m_sqlQuery, m_queryMetaInfo);
+    const auto tupleKey = tuple.primaryKey();
+
+    if (m_retrievedResultKeys.count(tupleKey) == 0)
+    {
+      m_retrievedResultKeys.emplace(tupleKey);
+      m_nextTupleResult.hasNext = true;
+      clearNextJoinsMask();
+    }
+
+    if (searchMode == SearchMode::JOIN_TUPLE || m_nextTupleResult.hasNext)
+    {
+      findNextJoinTuple(tupleKey);
+
+      if (searchMode == SearchMode::MAIN_TUPLE || m_nextTupleResult.hasNext || m_nextTupleResult.hasNextJoin)
+      {
+        return;
+      }
+    }
+  }
+
+  resetNextTupleResult();
+}
+
+void ResultSet::findNextJoinTuple(const PrimaryKey& tupleKey)
+{
+  for (size_t i=0; i<m_joinMetaInfo.size(); ++i)
+  {
+    const auto& join = m_joinMetaInfo.at(i);
+    const auto key = std::make_pair(join.relationshipId.value(), tupleKey);
+    auto& retreivedJoinResultKeys = m_retrievedJoinResultKeys[key];
+
+    TupleView joinTuple(m_sqlQuery, join);
+    const auto joinKeyTuple = joinTuple.primaryKey();
+
+    if (joinKeyTuple.isNull())
+    {
+      continue;
+    }
+
+    if (retreivedJoinResultKeys.count(joinKeyTuple) == 0)
+    {
+      retreivedJoinResultKeys.emplace(joinKeyTuple);
+      m_nextTupleResult.hasNextJoin = true;
+      m_nextTupleResult.nextJoinsMask[i] = true;
+    }
+  }
+}
+
+void ResultSet::resetNextTupleResult()
+{
+  m_nextTupleResult.hasNext = false;
+  clearNextJoinsMask();
+}
+
+void ResultSet::clearNextJoinsMask()
+{
+  m_nextTupleResult.hasNextJoin = false;
+  std::fill(m_nextTupleResult.nextJoinsMask.begin(), m_nextTupleResult.nextJoinsMask.end(), false);
 }
 
 }

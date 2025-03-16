@@ -24,18 +24,18 @@ public:
   void configureRelationships() override;
   void validateAndPrepareIndices() override;
 
-  API::IID::Type validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const override;
-  API::IID::Type validatePrimaryKeysListAndGetTableId(const std::vector<API::TupleValues>& tupleKeyValuesList) const override;
+  void validatePrimaryKeys(const PrimaryKey& tupleKeyValues) const override;
+  void validatePrimaryKeysList(const std::vector<PrimaryKey>& tupleKeyValuesList) const override;
 
   std::pair<API::IID::Type, API::IID::Type> verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
     API::IID::Type relationshipId,
-    const API::TupleValues& fromTupleKeyValues,
-    const API::TupleValues& toTupleKeyValues) const override;
+    const PrimaryKey& fromTupleKeyValues,
+    const PrimaryKey& toTupleKeyValues) const override;
 
   std::pair<API::IID::Type, API::IID::Type> verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
     API::IID::Type relationshipId,
-    const API::TupleValues& fromTupleKeyValues,
-    const std::vector<API::TupleValues>& toTupleKeyValuesList) const override;
+    const PrimaryKey& fromTupleKeyValues,
+    const std::vector<PrimaryKey>& toTupleKeyValuesList) const override;
 
   void setSanityChecker(std::unique_ptr<API::ISanityChecker> sanityChecker);
 
@@ -51,8 +51,8 @@ private:
   std::pair<API::IID::Type, API::IID::Type> verifyRelationshipPrimaryKeysAndGetTableIds(
     bool bIsOneToMany,
     API::IID::Type relationshipId,
-    const API::TupleValues& fromTupleKeyValues,
-    const std::vector<API::TupleValues>& toTupleKeyValuesList) const;
+    const PrimaryKey& fromTupleKeyValues,
+    const std::vector<PrimaryKey>& toTupleKeyValuesList) const;
 
   static bool isTableIdsMatching(const API::Relationship& relationship, API::IID::Type tableFromId,
                                  API::IID::Type tableToId, bool bIgnoreFromKeys);

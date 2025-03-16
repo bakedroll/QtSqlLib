@@ -4,6 +4,8 @@
 #include "QtSqlLib/API/ISchema.h"
 #include "QtSqlLib/DatabaseException.h"
 
+#include <numeric>
+
 namespace QtSqlLib::Query
 {
 
@@ -15,7 +17,7 @@ QueryInsertedIDs::QueryInsertedIDs(API::IID::Type tableId)
 
 QueryInsertedIDs::~QueryInsertedIDs() = default;
 
-API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -32,7 +34,7 @@ API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API:
     db) };
 }
 
-ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
+ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery&& query)
 {
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -41,16 +43,17 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& que
     throw DatabaseException(DatabaseException::Type::QueryError, 
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
+  query.seek(-1);
 
-  ResultSet::Tuple tuple;
-  auto currentValue = 1;
-  for (const auto& primaryKey : table.primaryKeys)
-  {
-    tuple.values[{ m_tableId, primaryKey }] = query.value(currentValue);
-    currentValue++;
-  }
+  ColumnList columns(table.primaryKeys);
+  std::vector<size_t> columnQueryIndices(table.primaryKeys.size());
+  std::vector<size_t> primaryKeyColumnIndices(table.primaryKeys.size());
 
-  return ResultSet::create({ tuple });
+  std::iota(columnQueryIndices.begin(), columnQueryIndices.end(), 1);
+  std::iota(primaryKeyColumnIndices.begin(), primaryKeyColumnIndices.end(), 0);
+
+  API::QueryMetaInfo queryMetaInfo { m_tableId, std::nullopt, columns, columnQueryIndices, primaryKeyColumnIndices };
+  return ResultSet(std::move(query), std::move(queryMetaInfo), {} );
 }
 
 }

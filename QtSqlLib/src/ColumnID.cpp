@@ -3,47 +3,52 @@
 namespace QtSqlLib
 {
 
-ColumnID::ColumnID()
-  : ColumnID("", {0U, 0U}, false)
+ColumnID::ColumnID() :
+  ColumnID("", std::nullopt, 0)
 {
 }
 
-ColumnID::ColumnID(const API::TableColumnId& tableColumnId)
-  : ColumnID("", tableColumnId, true)
+ColumnID::ColumnID(const API::IID& columnId) :
+  ColumnID("", std::nullopt, columnId.get())
 {
 }
 
-ColumnID::ColumnID(const API::IID& columnId)
-  : ColumnID("", {0U, columnId.get()}, false)
+ColumnID::ColumnID(const API::IID& tableId, const API::IID& columnId)
+  : ColumnID("", tableId.get(), columnId.get())
 {
 }
 
-ColumnID::ColumnID(const QString& tableAlias, const API::TableColumnId& tableColumnId)
-  : ColumnID(tableAlias, tableColumnId, true)
+ColumnID::ColumnID(const QString& tableAlias, const API::IID& tableId, const API::IID& columnId)
+  : ColumnID(tableAlias, tableId.get(), columnId.get())
 {
 }
 
 ColumnID::~ColumnID() = default;
 
-const API::TableColumnId& ColumnID::get() const
-{
-  return m_tableColumnId;
-}
-
 bool ColumnID::isTableIdValid() const
 {
-  return m_bIsTableIdValid;
+  return m_tableId.has_value();
 }
 
-QString ColumnID::getTableAlias() const
+API::IID::Type ColumnID::tableId() const
+{
+  return m_tableId.value();
+}
+
+API::IID::Type ColumnID::columnId() const
+{
+  return m_columnId;
+}
+
+QString ColumnID::tableAlias() const
 {
   return m_tableAlias;
 }
 
-ColumnID::ColumnID(const QString& tableAlias, const API::TableColumnId& tableColumnId, bool bIsTableIdValid) :
+ColumnID::ColumnID(const QString& tableAlias, const std::optional<API::IID::Type>& tableId, API::IID::Type columnId) :
   m_tableAlias(tableAlias),
-  m_tableColumnId(tableColumnId),
-  m_bIsTableIdValid(bIsTableIdValid)
+  m_tableId(tableId),
+  m_columnId(columnId)
 {
 }
 

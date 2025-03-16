@@ -82,10 +82,10 @@ void Schema::configureRelationships()
         relationship.second.onDeleteAction,
         {} };
 
-      std::vector<API::IID::Type> indexedColumns;
+      ColumnList indexedColumns;
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
-        auto nextAvailableChildTableColid = 0U;
+        API::IID::Type nextAvailableChildTableColid = 0;
         while (childTable.columns.count(nextAvailableChildTableColid) > 0)
         {
           nextAvailableChildTableColid++;
@@ -99,11 +99,11 @@ void Schema::configureRelationships()
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-        foreignKeyReference.primaryForeignKeyColIdMap[{ parentTableId, parentKeyColId }] = nextAvailableChildTableColid;
+        foreignKeyReference.primaryForeignKeyColIdMap[parentKeyColId] = nextAvailableChildTableColid;
 
         if (relationship.second.bForeignKeyIndexingEnabled)
         {
-          indexedColumns.emplace_back(nextAvailableChildTableColid);
+          indexedColumns.data().emplace_back(nextAvailableChildTableColid);
         }
       }
 
@@ -111,7 +111,8 @@ void Schema::configureRelationships()
       {
         API::Index index;
         index.tableId = childTableId;
-        index.columnIds = indexedColumns;
+        index.columns = indexedColumns;
+        index.columns.data().shrink_to_fit();
         m_indices.emplace_back(index);
       }
 
@@ -139,7 +140,7 @@ void Schema::configureRelationships()
           relationship.second.onDeleteAction,
           {} };
 
-        std::vector<API::IID::Type> indexedColumns;
+        ColumnList indexedColumns;
         for (const auto& refColId : refTable.primaryKeys)
         {
           const auto& refCol = refTable.columns.at(refColId);
@@ -148,13 +149,13 @@ void Schema::configureRelationships()
           col.name = QString("%1_%2_%3").arg(refTable.name).arg(refCol.name).arg(currentColId);
           col.type = refCol.type;
 
-          foreignKeyReference.primaryForeignKeyColIdMap[{ refTableId, refColId }] = currentColId;
+          foreignKeyReference.primaryForeignKeyColIdMap[refColId] = currentColId;
           linkTable.columns[currentColId] = col;
-          linkTable.primaryKeys.insert(currentColId);
+          linkTable.primaryKeys.emplace_back(currentColId);
 
           if (relationship.second.bForeignKeyIndexingEnabled)
           {
-            indexedColumns.emplace_back(currentColId);
+            indexedColumns.data().emplace_back(currentColId);
           }
 
           currentColId++;
@@ -166,7 +167,8 @@ void Schema::configureRelationships()
         {
           API::Index index;
           index.tableId = nextAvailableTableId;
-          index.columnIds = indexedColumns;
+          index.columns = indexedColumns;
+          index.columns.data().shrink_to_fit();
           m_indices.emplace_back(index);
         }
       };
@@ -193,7 +195,7 @@ void Schema::validateAndPrepareIndices()
     }
 
     const auto& table = m_tables.at(index.tableId);
-    for (const auto& colId : index.columnIds)
+    for (const auto& colId : index.columns.cdata())
     {
       if (table.columns.count(colId) == 0)
       {
@@ -210,34 +212,21 @@ void Schema::validateAndPrepareIndices()
   }
 }
 
-API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const API::TupleValues& tupleKeyValues) const
+void Schema::validatePrimaryKeys(const PrimaryKey& tupleKeyValues) const
 {
-  if (tupleKeyValues.empty())
+  if (tupleKeyValues.isNull())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "Expected at least one column.");
   }
 
-  auto firstTableIdSet = false;
-  API::IID::Type tableId = 0;
   std::set<API::IID::Type> colIds;
-
-  for (const auto& value : tupleKeyValues)
+  for (const auto& value : tupleKeyValues.values())
   {
-    if (!firstTableIdSet)
-    {
-      tableId = value.first.tableId;
-      firstTableIdSet = true;
-    }
-    else if (tableId != value.first.tableId)
-    {
-      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
-        "Inconsistent table ids detected. Columns should reference only a single table.");
-    }
-
-    colIds.insert(value.first.columnId);
+    colIds.insert(value.columnId);
   }
 
+  const auto tableId = tupleKeyValues.tableId();
   m_sanityChecker->throwIfTableIdNotExisting(tableId);
   const auto& table = m_tables.at(tableId);
 
@@ -255,11 +244,9 @@ API::IID::Type Schema::validatePrimaryKeysAndGetTableId(const API::TupleValues& 
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "Wrong number of primary keys given.");
   }
-
-  return tableId;
 }
 
-API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<API::TupleValues>& tupleKeyValuesList) const
+void Schema::validatePrimaryKeysList(const std::vector<PrimaryKey>& tupleKeyValuesList) const
 {
   if (tupleKeyValuesList.empty())
   {
@@ -268,40 +255,37 @@ API::IID::Type Schema::validatePrimaryKeysListAndGetTableId(const std::vector<AP
   }
 
   auto firstTableIdSet = false;
-  API::IID::Type tableId = 0;
+  API::IID::Type lastTableId = 0;
   for (const auto& tupleKeyValues : tupleKeyValuesList)
   {
-    if (!firstTableIdSet)
-    {
-      tableId = validatePrimaryKeysAndGetTableId(tupleKeyValues);
-      firstTableIdSet = true;
-      continue;
-    }
+    validatePrimaryKeys(tupleKeyValues);
+    const auto currentTableId = tupleKeyValues.tableId();
 
-    if (tableId != validatePrimaryKeysAndGetTableId(tupleKeyValues))
+    if (firstTableIdSet && lastTableId != currentTableId)
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Primary keys should belong to a single table.");
     }
+
+    firstTableIdSet = true;
+    lastTableId = currentTableId;
   }
 
-  m_sanityChecker->throwIfTableIdNotExisting(tableId);
-
-  return tableId;
+  m_sanityChecker->throwIfTableIdNotExisting(lastTableId);
 }
 
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(
   API::IID::Type relationshipId,
-  const API::TupleValues& fromTupleKeyValues,
-  const API::TupleValues& toTupleKeyValues) const
+  const PrimaryKey& fromTupleKeyValues,
+  const PrimaryKey& toTupleKeyValues) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(false, relationshipId, fromTupleKeyValues, { toTupleKeyValues });
 }
 
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyOneToManyRelationshipPrimaryKeysAndGetTableIds(
   API::IID::Type relationshipId,
-  const API::TupleValues& fromTupleKeyValues,
-  const std::vector<API::TupleValues>& toTupleKeyValuesList) const
+  const PrimaryKey& fromTupleKeyValues,
+  const std::vector<PrimaryKey>& toTupleKeyValuesList) const
 {
   return verifyRelationshipPrimaryKeysAndGetTableIds(true, relationshipId, fromTupleKeyValues, toTupleKeyValuesList);
 }
@@ -314,21 +298,31 @@ void Schema::setSanityChecker(std::unique_ptr<API::ISanityChecker> sanityChecker
 std::pair<API::IID::Type, API::IID::Type> Schema::verifyRelationshipPrimaryKeysAndGetTableIds(
   bool bIsOneToMany,
   API::IID::Type relationshipId,
-  const API::TupleValues& fromTupleKeyValues,
-  const std::vector<API::TupleValues>& toTupleKeyValuesList) const
+  const PrimaryKey& fromTupleKeyValues,
+  const std::vector<PrimaryKey>& toTupleKeyValuesList) const
 {
   m_sanityChecker->throwIfRelationshipIsNotExisting(relationshipId);
   const auto& relationship = m_relationships.at(relationshipId);
-  const auto bIgnoreFromKeys = fromTupleKeyValues.empty();
+  const auto bIgnoreFromKeys = fromTupleKeyValues.isNull();
 
-  const auto tableToId = validatePrimaryKeysListAndGetTableId(toTupleKeyValuesList);
+  validatePrimaryKeysList(toTupleKeyValuesList);
+
+  const auto tableToId = toTupleKeyValuesList.at(0).tableId();
   const auto expectedTableFromId = (tableToId == relationship.tableToId
     ? relationship.tableFromId
     : relationship.tableToId);
 
-  const auto tableFromId = (!bIgnoreFromKeys
-    ? validatePrimaryKeysAndGetTableId(fromTupleKeyValues)
-    : expectedTableFromId);
+  
+  auto tableFromId = 0;
+  if (bIgnoreFromKeys)
+  {
+    tableFromId = expectedTableFromId;
+  }
+  else
+  {
+    validatePrimaryKeys(fromTupleKeyValues);
+    tableFromId = fromTupleKeyValues.tableId();
+  }
 
   const auto isOneToMany = (relationship.type == API::RelationshipType::OneToMany);
   const auto isManyToOne = (relationship.type == API::RelationshipType::ManyToOne);

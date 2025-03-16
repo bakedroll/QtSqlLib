@@ -32,7 +32,7 @@ DeleteFrom& DeleteFrom::where(Expr& expr)
 API::IQuery::SqlQuery DeleteFrom::getSqlQuery(
   const QSqlDatabase& db,
   API::ISchema& schema,
-  const ResultSet& /*previousQueryResults*/)
+  ResultSet& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);

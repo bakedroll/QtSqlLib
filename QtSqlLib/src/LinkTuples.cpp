@@ -21,7 +21,7 @@ LinkTuples::LinkTuples(const API::IID& relationshipId) :
 
 LinkTuples::~LinkTuples() = default;
 
-LinkTuples& LinkTuples::fromOne(const API::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::fromOne(const PrimaryKey& tupleKeyValues)
 {
   m_relationshipPreparationData.fromOne(tupleKeyValues);
   return *this;
@@ -33,13 +33,13 @@ LinkTuples& LinkTuples::fromRemainingKey()
   return *this;
 }
 
-LinkTuples& LinkTuples::toOne(const API::TupleValues& tupleKeyValues)
+LinkTuples& LinkTuples::toOne(const PrimaryKey& tupleKeyValues)
 {
   m_relationshipPreparationData.toOne(tupleKeyValues);
   return *this;
 }
 
-LinkTuples& LinkTuples::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
+LinkTuples& LinkTuples::toMany(const std::vector<PrimaryKey>& tupleKeyValuesList)
 {
   m_relationshipPreparationData.toMany(tupleKeyValuesList);
   return *this;
@@ -58,9 +58,9 @@ void LinkTuples::prepare(API::ISchema& schema)
     std::map<API::IID::Type, QVariantList> colValuesMap;
     for (const auto& tuple : affectedData.affectedTuples)
     {
-      for (const auto& col : tuple.childKeyValues)
+      for (const auto& col : tuple.childKeyValues.values())
       {
-        colValuesMap[col.first.columnId].append(col.second);
+        colValuesMap[col.columnId].append(col.value);
       }
     }
 

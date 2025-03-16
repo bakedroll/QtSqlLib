@@ -14,13 +14,13 @@ CreateIndex::~CreateIndex() = default;
 
 API::IQuery::SqlQuery CreateIndex::getSqlQuery(
   const QSqlDatabase& /*db*/, API::ISchema& schema,
-  const ResultSet& /*previousQueryResults*/)
+  ResultSet& /*previousQueryResults*/)
 {
   const auto& table = schema.getTables().at(m_index.tableId);
 
   QString columns;
   auto isFirst = true;
-  for (const auto& colId : m_index.columnIds)
+  for (const auto& colId : m_index.columns.cdata())
   {
     if (!isFirst)
     {

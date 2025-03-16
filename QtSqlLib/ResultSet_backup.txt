@@ -1,0 +1,32 @@
+  while (m_sqlQuery.next())
+  {
+    if (m_joinMetaInfo.empty())
+    {
+      m_nextTupleResult.hasNext = true;
+      return;
+    }
+
+    TupleView tuple(m_sqlQuery, m_queryMetaInfo);
+    const auto tupleKey = tuple.primaryKey();
+
+    if (m_retrievedResultKeys.count(tupleKey) == 0)
+    {
+      m_retrievedResultKeys.emplace(tupleKey);
+      m_nextTupleResult.hasNext = true;
+      m_nextTupleResult.nextRelationshipIds.clear();
+    }
+
+    if (searchMode == SearchMode::MAIN_TUPLE && m_nextTupleResult.hasNext == false)
+    {
+      continue;
+    }
+
+    findNextJoinTuple(tupleKey);
+
+    if (searchMode == SearchMode::JOIN_TUPLE && !m_nextTupleResult.hasNext && m_nextTupleResult.nextRelationshipIds.empty())
+    {
+      continue;
+    }
+
+    return;
+  }

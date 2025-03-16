@@ -15,8 +15,10 @@ project(QtSqlLib)
 add_subdirectory(QtSqlLib)
 add_subdirectory(QtSqlLibTest)
 
+set(CMAKE_CXX_STANDARD 20)
+
 make_projects()
 
 if (MSVC)
-  qt_copy_plugins(platforms/qwindows styles/qwindowsvistastyle sqldrivers/qsqlite)
+  qt_copy_plugins(platforms/qwindows sqldrivers/qsqlite)
 endif()

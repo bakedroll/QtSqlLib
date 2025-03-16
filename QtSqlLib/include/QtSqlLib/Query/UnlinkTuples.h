@@ -18,10 +18,10 @@ public:
   UnlinkTuples(const API::IID& relationshipId);
   ~UnlinkTuples() override;
 
-  UnlinkTuples& fromOne(const API::TupleValues& tupleKeyValues);
+  UnlinkTuples& fromOne(const PrimaryKey& tupleKeyValues);
 
-  UnlinkTuples& toOne(const API::TupleValues& tupleKeyValues);
-  UnlinkTuples& toMany(const std::vector<API::TupleValues>& tupleKeyValuesList);
+  UnlinkTuples& toOne(const PrimaryKey& tupleKeyValues);
+  UnlinkTuples& toMany(const std::vector<PrimaryKey>& tupleKeyValuesList);
 
   void prepare(API::ISchema& schema) override;
 

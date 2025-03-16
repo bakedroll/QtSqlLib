@@ -12,15 +12,15 @@
 #define AUTO_INCREMENT autoIncrement()
 #define NOT_NULL notNull()
 
-#define PRIMARY_KEYS(X) primaryKeys(X)
-#define UNIQUE_COLS(X) uniqueCols(X)
+#define PRIMARY_KEYS(...) primaryKeys(QtSqlLib::ColumnList::make(__VA_ARGS__))
+#define UNIQUE_COLS(...) uniqueCols(QtSqlLib::ColumnList::make(__VA_ARGS__))
 
 #define ON_DELETE(X) onDelete(X)
 #define ON_UPDATE(X) onUpdate(X)
 #define ENABLE_FOREIGN_KEY_INDEXING enableForeignKeyIndexing()
 
 #define UNIQUE unique()
-#define COLUMNS(X) columns(X)
+#define COLUMNS(...) columns(QtSqlLib::ColumnList::make(__VA_ARGS__))
 
 // Expr
 #define EQUAL(A, B) equal(QtSqlLib::ID(A), QVariant(B))
@@ -58,7 +58,6 @@
 #define LINK_TUPLES(X) QtSqlLib::Query::LinkTuples(QtSqlLib::ID(X))
 #define UNLINK_TUPLES(X) QtSqlLib::Query::UnlinkTuples(QtSqlLib::ID(X))
 
-#define IDS(...) QtSqlLib::IDList::make(__VA_ARGS__)
 #define VALUES(X, Y) values(QtSqlLib::ID(X), Y)
 #define VALUE(X, Y) value(QtSqlLib::ID(X), Y)
 
@@ -67,10 +66,10 @@
 #define WHERE(X) where(QtSqlLib::Expr().X)
 
 #define SELECT_ALL selectAll()
-#define SELECT(X) select(X)
+#define SELECT(...) select(QtSqlLib::ColumnList::make(__VA_ARGS__))
 
 #define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
-#define JOIN(X, Y) join(QtSqlLib::ID(X), Y)
+#define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnList::make(__VA_ARGS__))
 
 #define LINK_TO_ONE_TUPLE(X, Y) linkToOneTuple(QtSqlLib::ID(X), Y)
 #define LINK_TO_MANY_TUPLES(X, ...) linkToManyTuples(QtSqlLib::ID(X), __VA_ARGS__)

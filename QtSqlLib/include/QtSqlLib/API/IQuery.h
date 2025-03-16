@@ -30,8 +30,8 @@ public:
   IQuery(const IQuery& other) = delete;
   IQuery& operator= (const IQuery& other) = delete;
 
-  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, const ResultSet& previousQueryResults) = 0;
-  virtual ResultSet getQueryResults(ISchema& /*schema*/, QSqlQuery& /*query*/) const { return ResultSet::invalid(); }
+  virtual SqlQuery getSqlQuery(const QSqlDatabase& db, ISchema& schema, ResultSet& previousQueryResults) = 0;
+  virtual ResultSet getQueryResults(ISchema& /*schema*/, QSqlQuery&& /*query*/) { return {}; }
 
 };
 

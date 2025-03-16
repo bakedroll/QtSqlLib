@@ -35,14 +35,14 @@ QString Comparison::toQString(API::ISchema& schema, const OptionalIID& defaultTa
         schema.getSanityChecker().throwIfTableIdNotExisting(defaultTableId->get().get());
       }
 
-      const auto colId = columnId.get().columnId;
+      const auto colId = columnId.columnId();
       const auto& table = schema.getTables().at(columnId.isTableIdValid()
-        ? columnId.get().tableId
+        ? columnId.tableId()
         : defaultTableId->get().get());
 
       schema.getSanityChecker().throwIfColumnIdNotExisting(table, colId);
 
-      const auto tableAlias = columnId.getTableAlias();
+      const auto tableAlias = columnId.tableAlias();
 
       return QString("'%1'.'%2'").arg(tableAlias.isEmpty() ? table.name : tableAlias).arg(table.columns.at(colId).name);
     }

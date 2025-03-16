@@ -6,6 +6,11 @@
 namespace QtSqlLib::Query
 {
 
+static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+{
+  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+}
+
 static QString getDataTypeName(API::DataType type, int varcharLength)
 {
   switch (type)
@@ -56,14 +61,14 @@ CreateTable::~CreateTable() = default;
 
 API::IQuery::SqlQuery CreateTable::getSqlQuery(
   const QSqlDatabase& /*db*/, API::ISchema& schema,
-  const ResultSet& /*previousQueryResults*/)
+  ResultSet& /*previousQueryResults*/)
 {
   const auto cutTailingComma = [](QString& str)
   {
     str = str.left(str.length() - 2);
   };
 
-  const auto listColumns = [this, &cutTailingComma](const std::set<API::IID::Type>& colIds)
+  const auto listColumns = [this, &cutTailingComma](const std::vector<API::IID::Type>& colIds)
   {
     QString colNames;
     for (const auto& colId : colIds)
@@ -83,7 +88,7 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
       .arg(column.second.name)
       .arg(getDataTypeName(column.second.type, column.second.varcharLength));
 
-    if (bIsSinglePrimaryKey && (m_table.primaryKeys.count(column.first) > 0))
+    if (bIsSinglePrimaryKey && (contains(m_table.primaryKeys, column.first)))
     {
       columns += " PRIMARY KEY";
     }
@@ -126,7 +131,7 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
         for (const auto& refKeyColumn : foreignKeyRef.primaryForeignKeyColIdMap)
         {
           foreignKeyColNames += QString("%1, ").arg(m_table.columns.at(refKeyColumn.second).name);
-          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first.columnId).name);
+          parentKeyColNames += QString("%1, ").arg(parentTable.columns.at(refKeyColumn.first).name);
         }
         cutTailingComma(foreignKeyColNames);
         cutTailingComma(parentKeyColNames);

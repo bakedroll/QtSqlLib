@@ -24,7 +24,7 @@ public:
   void visit(API::IQuery& query) override;
   void visit(API::IQuerySequence& query) override;
 
-  ResultSet getLastQueryResults() const;
+  ResultSet takeLastQueryResults();
 
 private:
   const QSqlDatabase& m_sqlDb;

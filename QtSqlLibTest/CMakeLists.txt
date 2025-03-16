@@ -20,3 +20,5 @@ add_source_directory(src)
 add_source_directory(include)
 
 add_include_directory(include)
+
+add_project_definitions(-DGTEST_LINKED_AS_SHARED_LIBRARY)

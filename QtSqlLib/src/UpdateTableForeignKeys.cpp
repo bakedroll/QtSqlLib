@@ -24,36 +24,36 @@ void UpdateTableForeignKeys::setRemainingKeysMode(RelationshipPreparationData::R
   m_remainingKeysMode = mode;
 }
 
-void UpdateTableForeignKeys::setForeignKeyValues(const API::TupleValues& parentKeyValues)
+void UpdateTableForeignKeys::setForeignKeyValues(const PrimaryKey& parentKeyValues)
 {
-  for (const auto& parentKeyValue : parentKeyValues)
+  for (const auto& parentKeyValue : parentKeyValues.values())
   {
-    const auto childColId = m_primaryForeignKeyColIdMap.at(parentKeyValue.first);
-    set(ID(childColId), parentKeyValue.second);
+    const auto childColId = m_primaryForeignKeyColIdMap.at(parentKeyValue.columnId);
+    set(ID(childColId), parentKeyValue.value);
   }
 }
 
-void UpdateTableForeignKeys::makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues)
+void UpdateTableForeignKeys::makeAndAddWhereExpr(const PrimaryKey& affectedChildKeyValues)
 {
   Expr whereExpr;
-  for (const auto& childKeyValue : affectedChildKeyValues)
+  for (const auto& childKeyValue : affectedChildKeyValues.values())
   {
-    if (childKeyValue.first != affectedChildKeyValues.begin()->first)
+    if (childKeyValue.columnId != affectedChildKeyValues.values().begin()->columnId)
     {
       whereExpr.opAnd();
     }
-    whereExpr.equal(ID(childKeyValue.first.columnId), childKeyValue.second);
+    whereExpr.equal(ID(childKeyValue.columnId), childKeyValue.value);
   }
 
   where(whereExpr);
 }
 
 API::IQuery::SqlQuery UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-  const ResultSet& previousQueryResults)
+  ResultSet& previousQueryResults)
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
   {
-    if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
+    if (!previousQueryResults.isValid() || !previousQueryResults.hasNextTuple())
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Expected previous query results.");
@@ -63,12 +63,12 @@ API::IQuery::SqlQuery UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db
   if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingForeignKeys)
   {
     throwIfInvalidPreviousQueryResults();
-    setForeignKeyValues(previousQueryResults.next());
+    setForeignKeyValues(previousQueryResults.nextTuple().primaryKey());
   }
   else if (m_remainingKeysMode == RelationshipPreparationData::RemainingKeysMode::RemainingPrimaryKeys)
   {
     throwIfInvalidPreviousQueryResults();
-    makeAndAddWhereExpr(previousQueryResults.next());
+    makeAndAddWhereExpr(previousQueryResults.nextTuple().primaryKey());
   }
 
   previousQueryResults.resetIteration();

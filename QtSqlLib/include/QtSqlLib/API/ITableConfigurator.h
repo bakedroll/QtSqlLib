@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/SchemaTypes.h>
+#include <QtSqlLib/ColumnList.h>
 
 namespace QtSqlLib::API
 {
@@ -19,8 +20,8 @@ public:
   virtual ITableConfigurator& notNull() = 0;
   virtual ITableConfigurator& unique() = 0;
 
-  virtual ITableConfigurator& primaryKeys(const std::vector<API::IID::Type>& columnIds) = 0;
-  virtual ITableConfigurator& uniqueCols(const std::vector<API::IID::Type>& columnIds) = 0;
+  virtual ITableConfigurator& primaryKeys(const ColumnList& columns) = 0;
+  virtual ITableConfigurator& uniqueCols(const ColumnList& columns) = 0;
 
 };
 

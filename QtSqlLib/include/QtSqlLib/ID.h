@@ -12,7 +12,7 @@ class ID : public API::IID
 {
 public:
   static_assert(std::is_enum<TEnum>::value,
-    "TEnum must be an enum type");
+    "TEnum must be an enum type or underlying ID type");
 
   ID(TEnum id)
     : m_id(static_cast<Type>(static_cast<typename std::underlying_type<TEnum>::type>(id)))

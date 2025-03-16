@@ -12,8 +12,7 @@ namespace QtSqlLib
 
 QueryExecuteVisitor::QueryExecuteVisitor(const QSqlDatabase& sqlDb, API::ISchema& schema) :
   m_sqlDb(sqlDb),
-  m_schema(schema),
-  m_lastResults(ResultSet::invalid())
+  m_schema(schema)
 {
 }
 
@@ -30,10 +29,10 @@ void QueryExecuteVisitor::visit(API::IQuery& query)
       QString("Could not execute query: %1").arg(q.qtQuery.lastError().text()));
   }
 
-  const auto results = query.getQueryResults(m_schema, q.qtQuery);
+  auto results = query.getQueryResults(m_schema, std::move(q.qtQuery));
   if (results.isValid())
   {
-    m_lastResults = results;
+    m_lastResults = std::move(results);
   }
 }
 
@@ -42,9 +41,9 @@ void QueryExecuteVisitor::visit(API::IQuerySequence& query)
   query.traverse(*this);
 }
 
-ResultSet QueryExecuteVisitor::getLastQueryResults() const
+ResultSet QueryExecuteVisitor::takeLastQueryResults()
 {
-  return m_lastResults;
+  return std::move(m_lastResults);
 }
 
 }

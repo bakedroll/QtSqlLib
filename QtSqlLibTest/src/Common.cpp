@@ -10,56 +10,67 @@ QString Funcs::getDefaultDatabaseFilename()
   return "test.db";
 }
 
-bool Funcs::isResultTuplesContaining(const QtSqlLib::ResultSet& results, const IID& tableId,
-                                     const IID& columnId, QVariant value)
+size_t Funcs::numResults(QtSqlLib::ResultSet& results)
+{
+  size_t counter = 0;
+  results.resetIteration();
+  while (results.hasNextTuple())
+  {
+    static_cast<void>(results.nextTuple());
+    counter++;
+  }
+  return counter;
+}
+
+bool Funcs::isResultTuplesContaining(
+  QtSqlLib::ResultSet& results, IID::Type tableId,
+  IID::Type columnId, QVariant value)
 {
   results.resetIteration();
-  const QtSqlLib::API::TableColumnId colId{ tableId.get(), columnId.get() };
-  while (results.hasNext())
+  while (results.hasNextTuple())
   {
-    const auto& next = results.next();
-    if (next.count(colId) == 0)
+    const auto next = results.nextTuple();
+    if (next.tableId() == tableId && next.hasColumnValue(columnId))
     {
-      return false;
-    }
-    if (next.at(colId) == value)
-    {
-      return true;
+      if (next.columnValue(columnId) == value)
+      {
+        return true;
+      }
     }
   }
   return false;
 }
 
-void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relationshipId,
-                            const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
-                            const QVariant& fromValue, const QVariantList& toValues)
+void Funcs::expectRelations(
+  QtSqlLib::ResultSet& results, IID::Type relationshipId,
+  IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
+  const QVariant& fromValue, const QVariantList& toValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
 
   results.resetIteration();
 
   std::set<int> matchingToValuesIndices;
+  size_t totalJoinedTuples = 0;
 
-  const QtSqlLib::API::TableColumnId colId{ fromTableId.get(), fromColId.get() };
-  const QtSqlLib::API::TableColumnId valueColId{ toTableId.get(), toColId.get() };
-
-  while (results.hasNext())
+  while (results.hasNextTuple())
   {
-    const auto& next = results.next();
-    if (next.at(colId) == fromValue)
+    const auto next = results.nextTuple();
+    if (next.tableId() == fromTableId && next.columnValue(fromColId) == fromValue)
     {
-      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId.get()), toValues.size());
-      while (results.hasNextJoinedTuple(relationshipId.get()))
+      while (results.hasNextJoinedTuple())
       {
-        const auto& joinedTuple = results.nextJoinedTuple(relationshipId.get());
-        const auto& value = joinedTuple.at(valueColId);
-
-        for (int i=0; i<toValues.size(); ++i)
+        const auto nextJoined = results.nextJoinedTuple();
+        if (nextJoined.relationshipId() == relationshipId && nextJoined.tableId() == toTableId)
         {
-          if (value == toValues.at(i))
+          totalJoinedTuples++;
+          for (int i=0; i<toValues.size(); ++i)
           {
-            matchingToValuesIndices.insert(i);
-            break;
+            if (nextJoined.columnValue(toColId) == toValues.at(i))
+            {
+              matchingToValuesIndices.insert(i);
+              break;
+            }
           }
         }
       }
@@ -68,7 +79,8 @@ void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relat
     }
   }
 
-  EXPECT_EQ(toValues.size(), matchingToValuesIndices.size());
+  EXPECT_EQ(static_cast<size_t>(toValues.size()), matchingToValuesIndices.size());
+  EXPECT_EQ(static_cast<size_t>(toValues.size()), totalJoinedTuples);
 }
 
 }

@@ -17,7 +17,7 @@ RelationshipPreparationData::RelationshipPreparationData(const API::IID& relatio
 
 RelationshipPreparationData::~RelationshipPreparationData() = default;
 
-void RelationshipPreparationData::fromOne(const API::TupleValues& tupleKeyValues)
+void RelationshipPreparationData::fromOne(const PrimaryKey& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::From)
   {
@@ -41,7 +41,7 @@ void RelationshipPreparationData::fromRemainingKey()
   m_expectedCall = ExpectedCall::To;
 }
 
-void RelationshipPreparationData::toOne(const API::TupleValues& tupleKeyValues)
+void RelationshipPreparationData::toOne(const PrimaryKey& tupleKeyValues)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -54,7 +54,7 @@ void RelationshipPreparationData::toOne(const API::TupleValues& tupleKeyValues)
   m_expectedCall = ExpectedCall::Complete;
 }
 
-void RelationshipPreparationData::toMany(const std::vector<API::TupleValues>& tupleKeyValuesList)
+void RelationshipPreparationData::toMany(const std::vector<PrimaryKey>& tupleKeyValuesList)
 {
   if (m_expectedCall != ExpectedCall::To)
   {
@@ -75,7 +75,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
       "LinkTuples query incomplete.");
   }
 
-  if (!m_bRemainingFromKeys && m_fromTupleKeyValues.empty())
+  if (!m_bRemainingFromKeys && m_fromTupleKeyValues.isNull())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "From key must not be empty.");
@@ -93,7 +93,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
 
   if (relationship.type == API::RelationshipType::ManyToMany)
   {
-    return determineAffectedLinkTableData(schema, relationship, tableFromId, tableToId);
+    return determineAffectedLinkTableData(schema, tableFromId, tableToId);
   }
 
   return determineAffectedChildTableData(schema, relationship, tableFromId, tableToId);
@@ -115,7 +115,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
   const auto keyValuesToInsert = (isCorrectTableRelationDirection ? m_fromTupleKeyValues : m_toTupleKeyValuesList[0]);
   const auto affectedChildTupleKeys = (isCorrectTableRelationDirection
     ? m_toTupleKeyValuesList
-    : std::vector<API::TupleValues>{ m_fromTupleKeyValues });
+    : std::vector<PrimaryKey>{ m_fromTupleKeyValues });
 
   const auto& childTable = schema.getTables().at(childTableId);
   const auto& foreignKeyRefs = childTable.relationshipToForeignKeyReferencesMap.at({ m_relationshipId, parentTableId });
@@ -156,8 +156,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedLinkTableData(
-  API::ISchema& schema, const API::Relationship& /*relationship*/,
-  API::IID::Type fromTableId, API::IID::Type toTableId)
+  API::ISchema& schema, API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);
@@ -178,16 +177,16 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
   const auto& foreignKeyRefsTo = (isSelfRelationship ? foreignKeyRefsToList[1] : foreignKeyRefsToList[0]);
 
   const auto appendTuple = [&linkTableId](
-    AffectedTuple& tuple,
-    const API::TupleValues& values,
+    std::vector<PrimaryKey::ColumnValue>& columnValues,
+    const PrimaryKey& values,
     const API::ForeignKeyReference& foreignKeyRef)
   {
-    for (const auto& refColId : values)
+    for (const auto& refColId : values.values())
     {
-      if (foreignKeyRef.primaryForeignKeyColIdMap.count(refColId.first) > 0)
+      if (foreignKeyRef.primaryForeignKeyColIdMap.count(refColId.columnId) > 0)
       {
-        const auto& colId = foreignKeyRef.primaryForeignKeyColIdMap.at(refColId.first);
-        tuple.childKeyValues[API::TableColumnId{ linkTableId, colId }] = refColId.second;
+        const auto& colId = foreignKeyRef.primaryForeignKeyColIdMap.at(refColId.columnId);
+        columnValues.emplace_back(PrimaryKey::ColumnValue { colId, refColId.value });
       }
     }
   };
@@ -200,9 +199,13 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 
   for (const auto& toRowIds : m_toTupleKeyValuesList)
   {
+    std::vector<PrimaryKey::ColumnValue> columnValues;
+    appendTuple(columnValues, m_fromTupleKeyValues, foreignKeyRefsFrom);
+    appendTuple(columnValues, toRowIds, foreignKeyRefsTo);
+
     AffectedTuple affectedTuple;
-    appendTuple(affectedTuple, m_fromTupleKeyValues, foreignKeyRefsFrom);
-    appendTuple(affectedTuple, toRowIds, foreignKeyRefsTo);
+    affectedTuple.childKeyValues = PrimaryKey(linkTableId, std::move(columnValues));
+
     affectedData.affectedTuples.emplace_back(affectedTuple);
   }
 

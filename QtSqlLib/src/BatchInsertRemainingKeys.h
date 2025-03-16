@@ -14,7 +14,7 @@ public:
     const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColIdMap);
   ~BatchInsertRemainingKeys() override;
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& previousQueryResults) override;
 
 private:
   int m_numRelations;
