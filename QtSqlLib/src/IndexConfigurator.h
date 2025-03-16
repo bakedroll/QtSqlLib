@@ -13,7 +13,7 @@ public:
   IndexConfigurator(API::Index& index);
   ~IndexConfigurator() override;
 
-  IIndexConfigurator& columns(const std::vector<API::IID::Type>& columnIds) override;
+  IIndexConfigurator& columns(const ColumnList& columns) override;
   IIndexConfigurator& unique() override;
 
 private:

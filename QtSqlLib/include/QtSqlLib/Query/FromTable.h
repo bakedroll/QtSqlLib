@@ -3,6 +3,7 @@
 #include <QtSqlLib/Query/Query.h>
 
 #include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/ColumnList.h>
 
 #include <vector>
 
@@ -21,10 +22,10 @@ public:
   ~FromTable() override;
 
   FromTable& selectAll();
-  FromTable& select(const std::vector<API::IID::Type>& columnIds);
+  FromTable& select(const ColumnList& columns);
 
   FromTable& joinAll(const API::IID& relationshipId);
-  FromTable& join(const API::IID& relationshipId, const std::vector<API::IID::Type>& columnIds);
+  FromTable& join(const API::IID& relationshipId, const ColumnList& columns);
 
   FromTable& where(Expr& expr);
 

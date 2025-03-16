@@ -14,19 +14,19 @@ IndexConfigurator::IndexConfigurator(API::Index& index) :
 
 IndexConfigurator::~IndexConfigurator() = default;
 
-API::IIndexConfigurator& IndexConfigurator::columns(const std::vector<API::IID::Type>& columnIds)
+API::IIndexConfigurator& IndexConfigurator::columns(const ColumnList& columns)
 {
   if (m_columnsConfigured)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "columns() should only be called once.");
   }
 
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "columns() must specify at least one column id.");
   }
 
-  m_index.columnIds = columnIds;
+  m_index.columns = columns;
   m_columnsConfigured = true;
   return *this;
 }

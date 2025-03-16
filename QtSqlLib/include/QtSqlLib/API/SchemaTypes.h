@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/ColumnList.h>
 
 #include <QVariant>
 
@@ -74,6 +75,8 @@ struct Table
   QString name;
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
+
+  // TODO: vector
   std::set<IID::Type> primaryKeys;
   std::set<IID::Type> uniqueColIds;
 };
@@ -99,7 +102,7 @@ struct Index
 {
   IID::Type tableId = 0;
   QString name;
-  std::vector<IID::Type> columnIds;
+  ColumnList columns;
   bool isUnique = false;
 };
 

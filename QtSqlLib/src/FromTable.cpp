@@ -118,16 +118,16 @@ FromTable& FromTable::selectAll()
   return *this;
 }
 
-FromTable& FromTable::select(const std::vector<API::IID::Type>& columnIds)
+FromTable& FromTable::select(const ColumnList& columns)
 {
   throwIfMultipleSelects();
 
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
 
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
     m_columnSelectionInfo.columnInfos.emplace_back(ColumnInfo{ id, -1 });
   }
@@ -146,17 +146,17 @@ FromTable& FromTable::joinAll(const API::IID& relationshipId)
   return *this;
 }
 
-FromTable& FromTable::join(const API::IID& relationshipId, const std::vector<API::IID::Type>& columnIds)
+FromTable& FromTable::join(const API::IID& relationshipId, const ColumnList& columns)
 {
   throwIfMultipleJoins(relationshipId.get());
 
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
 
   auto& joinData = m_joins[relationshipId.get()];
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
     joinData.columnInfos.emplace_back(ColumnInfo{ id, -1 });
   }

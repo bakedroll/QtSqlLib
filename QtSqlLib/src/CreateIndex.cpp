@@ -20,7 +20,7 @@ API::IQuery::SqlQuery CreateIndex::getSqlQuery(
 
   QString columns;
   auto isFirst = true;
-  for (const auto& colId : m_index.columnIds)
+  for (const auto& colId : m_index.columns.cdata())
   {
     if (!isFirst)
     {

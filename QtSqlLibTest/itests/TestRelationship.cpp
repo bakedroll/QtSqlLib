@@ -22,257 +22,257 @@ public:
 
 static void expectStudentsConfidantStudents(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(QtSqlLib::ID(Relationships::StudentsConfidant)),
-    QtSqlLib::ID(QtSqlLib::ID(TableIds::Students)), QtSqlLib::ID(QtSqlLib::ID(StudentsCols::Name)), QtSqlLib::ID(QtSqlLib::ID(TableIds::Professors)), QtSqlLib::ID(QtSqlLib::ID(ProfessorsCols::Name)),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "John", QVariantList() << "Prof. Smith");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(QtSqlLib::ID(Relationships::StudentsConfidant)),
-    QtSqlLib::ID(QtSqlLib::ID(TableIds::Students)), QtSqlLib::ID(QtSqlLib::ID(StudentsCols::Name)), QtSqlLib::ID(QtSqlLib::ID(TableIds::Professors)), QtSqlLib::ID(QtSqlLib::ID(ProfessorsCols::Name)),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "Mary", QVariantList() << "Prof. Smith");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(QtSqlLib::ID(Relationships::StudentsConfidant)),
-    QtSqlLib::ID(QtSqlLib::ID(TableIds::Students)), QtSqlLib::ID(QtSqlLib::ID(StudentsCols::Name)), QtSqlLib::ID(QtSqlLib::ID(TableIds::Professors)), QtSqlLib::ID(QtSqlLib::ID(ProfessorsCols::Name)),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "Paul", QVariantList() << "Dr. Evans");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "Sarah", QVariantList() << "Prof. Adams");
 }
 
 static void expectStudentsConfidantProfessors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "Prof. Smith", QVariantList() << "John" << "Mary");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "Dr. Evans", QVariantList() << "Paul");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "Prof. Adams", QVariantList() << "Sarah");
 }
 
 static void expectLecturerProfessors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Prof. Smith", QVariantList() << "Programming");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Dr. Evans", QVariantList() << "Math");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Prof. Adams", QVariantList() << "Operating systems" << "Database systems");
 }
 
 static void expectLecturerLectures(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Professors, ProfessorsCols::Name,
     "Programming", QVariantList() << "Prof. Smith");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Professors, ProfessorsCols::Name,
     "Math", QVariantList() << "Dr. Evans");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Professors, ProfessorsCols::Name,
     "Operating systems", QVariantList() << "Prof. Adams");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Professors, ProfessorsCols::Name,
     "Database systems", QVariantList() << "Prof. Adams");
 }
 
 static void expectLectureParticipantLectures(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Operating systems", QVariantList() << "Sarah");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Database systems", QVariantList() << "Paul" << "Sarah");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Math", QVariantList() << "John" << "Mary" << "Paul");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Programming", QVariantList() << "John" << "Mary" << "Sarah");
 }
 
 static void expectLectureParticipantStudents(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "John", QVariantList() << "Math" << "Programming");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Mary", QVariantList() << "Math" << "Programming");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Paul", QVariantList() << "Database systems" << "Math");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Sarah", QVariantList() << "Operating systems" << "Database systems" << "Programming");
 }
 
 static void expectSpecialRelation1Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student1", QVariantList() << "professor1" << "professor2");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student2", QVariantList());
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student3", QVariantList());
 }
 
 static void expectSpecialRelation1Professors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor1", QVariantList() << "student1");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor2", QVariantList() << "student1");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special1),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor3", QVariantList());
 }
 
 static void expectSpecialRelation2Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student1", QVariantList() << "professor1" << "professor2");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student2", QVariantList() << "professor3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student3", QVariantList());
 }
 
 static void expectSpecialRelation2Professors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor1", QVariantList() << "student1");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor2", QVariantList() << "student1");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special2),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special2,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor3", QVariantList() << "student2");
 }
 
 static void expectSpecialRelation3Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student1", QVariantList() << "professor1" << "professor2" << "professor3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student2", QVariantList() << "professor1");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student3", QVariantList() << "professor1" << "professor2");
 }
 
 static void expectSpecialRelation3Professors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor1", QVariantList() << "student1" << "student2" << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor2", QVariantList() << "student1" << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special3),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special3,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor3", QVariantList() << "student1");
 }
 
 static void expectSpecialRelation4Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student1", QVariantList() << "professor3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student2", QVariantList());
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "student3", QVariantList() << "professor1" << "professor2" << "professor3");
 }
 
 static void expectSpecialRelation4Professors(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor1", QVariantList() << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor2", QVariantList() << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special4),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special4,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "professor3", QVariantList() << "student1" << "student3");
 }
 
 static void expectSpecialRelation5Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special5),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special5,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student1", QVariantList() << "student1" << "student2");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special5),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special5,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student2", QVariantList() << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special5),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special5,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student3", QVariantList());
 }
 
 static void expectSpecialRelation6Students(const QtSqlLib::ResultSet& results)
 {
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special6),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special6,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student1", QVariantList() << "student2" << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special6),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special6,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student2", QVariantList() << "student3");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Special6),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::Special6,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
     "student3", QVariantList());
 }
 
@@ -431,8 +431,8 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Students, StudentsCols::Name, TableIds::Professors, ProfessorsCols::Name,
     "Sarah", QVariantList() << "Prof. Adams");
 
   // (2)
@@ -440,8 +440,8 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::StudentsConfidant),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::StudentsConfidant,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Students, StudentsCols::Name,
     "Prof. Adams", QVariantList() << "Sarah");
 
   // (3)
@@ -449,8 +449,8 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Professors, ProfessorsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Dr. Evans", QVariantList() << "Math");
 
   // (4)
@@ -458,8 +458,8 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::Lecturer),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Professors), QtSqlLib::ID(ProfessorsCols::Name),
+  Funcs::expectRelations(results, Relationships::Lecturer,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Professors, ProfessorsCols::Name,
     "Math", QVariantList() << "Dr. Evans");
 
   // (5)
@@ -467,20 +467,20 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::LectureParticipant));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Operating systems", QVariantList() << "Sarah");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Database systems", QVariantList() << "Paul" << "Sarah");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Math", QVariantList() << "Paul");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic), QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Lectures, LecturesCols::Topic, TableIds::Students, StudentsCols::Name,
     "Programming", QVariantList() << "John" << "Sarah");
 
   // (6)
@@ -488,16 +488,16 @@ static void expectUnlinkedRelations(QtSqlLib::API::IDatabase& m_db)
     .SELECT_ALL
     .JOIN_ALL(Relationships::LectureParticipant));
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "John", QVariantList() << "Programming");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Paul", QVariantList() << "Database systems" << "Math");
 
-  Funcs::expectRelations(results, QtSqlLib::ID(Relationships::LectureParticipant),
-    QtSqlLib::ID(TableIds::Students), QtSqlLib::ID(StudentsCols::Name), QtSqlLib::ID(TableIds::Lectures), QtSqlLib::ID(LecturesCols::Topic),
+  Funcs::expectRelations(results, Relationships::LectureParticipant,
+    TableIds::Students, StudentsCols::Name, TableIds::Lectures, LecturesCols::Topic,
     "Sarah", QVariantList() << "Operating systems" << "Database systems" << "Programming");
 }
 
@@ -922,12 +922,12 @@ TEST_F(TestRelationship, specialRelationships)
   configurator.CONFIGURE_TABLE(TableIds::Students, "students")
     .COLUMN(StudentsCols::Id, "id", DataType::Integer).NOT_NULL
     .COLUMN_VARCHAR(StudentsCols::Name, "name", 128)
-    .PRIMARY_KEYS(IDS(QtSqlLib::ID(StudentsCols::Id), QtSqlLib::ID(StudentsCols::Name)));
+    .PRIMARY_KEYS(StudentsCols::Id, StudentsCols::Name);
 
   configurator.CONFIGURE_TABLE(TableIds::Professors, "professors")
     .COLUMN(ProfessorsCols::Id, "id", DataType::Integer).NOT_NULL
     .COLUMN_VARCHAR(ProfessorsCols::Name, "name", 128)
-    .PRIMARY_KEYS(IDS(QtSqlLib::ID(ProfessorsCols::Id), QtSqlLib::ID(ProfessorsCols::Name)));
+    .PRIMARY_KEYS(ProfessorsCols::Id, ProfessorsCols::Name);
 
   configurator.CONFIGURE_RELATIONSHIP(Relationships::Special1, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::OneToMany);
   configurator.CONFIGURE_RELATIONSHIP(Relationships::Special2, TableIds::Students, TableIds::Professors, QtSqlLib::API::RelationshipType::OneToMany);
@@ -1035,8 +1035,8 @@ TEST_F(TestRelationship, specialRelationships)
 
   // (14)
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Students)
-    .SELECT(IDS(QtSqlLib::ID(StudentsCols::Name)))
-    .JOIN(Relationships::Special1, IDS(QtSqlLib::ID(ProfessorsCols::Name))));
+    .SELECT(StudentsCols::Name)
+    .JOIN(Relationships::Special1, ProfessorsCols::Name));
 
   expectSpecialRelation1Students(results);
 

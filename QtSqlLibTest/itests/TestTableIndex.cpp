@@ -36,16 +36,16 @@ TEST_F(TestTableIndex, createMultipleIndicesWithoutException)
     .COLUMN_VARCHAR(Table2Cols::Text, "text", 128);
 
   configurator.CONFIGURE_INDEX(TableIds::Table1)
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text)));
+    .COLUMNS(Table1Cols::Id, Table1Cols::Text);
 
   configurator.CONFIGURE_INDEX(TableIds::Table1)
-    .UNIQUE.COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Text)));
+    .UNIQUE.COLUMNS(Table1Cols::Text);
 
   configurator.CONFIGURE_INDEX(TableIds::Table2)
-    .COLUMNS(IDS(QtSqlLib::ID(Table2Cols::Id), QtSqlLib::ID(Table2Cols::Text)));
+    .COLUMNS(Table2Cols::Id, Table2Cols::Text);
 
   configurator.CONFIGURE_INDEX(TableIds::Table2)
-    .UNIQUE.COLUMNS(IDS(QtSqlLib::ID(Table2Cols::Text), QtSqlLib::ID(Table2Cols::Id)));
+    .UNIQUE.COLUMNS(Table2Cols::Text, Table2Cols::Id);
 
   m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 }
@@ -91,16 +91,16 @@ TEST_F(TestTableIndex, exceptionsMustThrowOnInvalidBehavior)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128);
 
   // (1)
-  EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1).COLUMNS({}), DatabaseException);
+  EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1).columns(QtSqlLib::ColumnList{}), DatabaseException);
 
   // (2)
   EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1)
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Text)))
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Id))), DatabaseException);
+    .COLUMNS(Table1Cols::Text)
+    .COLUMNS(Table1Cols::Id), DatabaseException);
 
   // (3)
   EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1)
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Text)))
+    .COLUMNS(Table1Cols::Text)
     .UNIQUE
     .UNIQUE, DatabaseException);
 
@@ -112,7 +112,7 @@ TEST_F(TestTableIndex, exceptionsMustThrowOnInvalidBehavior)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128);
 
   configurator1.CONFIGURE_INDEX(TableIds::Table2)
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text)));
+    .COLUMNS(Table1Cols::Id, Table1Cols::Text);
 
   EXPECT_THROW(db1.initialize(configurator1, Funcs::getDefaultDatabaseFilename()), DatabaseException);
 
@@ -124,7 +124,7 @@ TEST_F(TestTableIndex, exceptionsMustThrowOnInvalidBehavior)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128);
 
   configurator2.CONFIGURE_INDEX(TableIds::Table1)
-    .COLUMNS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Number)));
+    .COLUMNS(Table1Cols::Id, Table1Cols::Number);
 
   EXPECT_THROW(db2.initialize(configurator2, Funcs::getDefaultDatabaseFilename()), DatabaseException);
 }

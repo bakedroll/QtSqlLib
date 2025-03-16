@@ -82,7 +82,7 @@ void Schema::configureRelationships()
         relationship.second.onDeleteAction,
         {} };
 
-      std::vector<API::IID::Type> indexedColumns;
+      ColumnList indexedColumns;
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
         auto nextAvailableChildTableColid = 0U;
@@ -103,7 +103,7 @@ void Schema::configureRelationships()
 
         if (relationship.second.bForeignKeyIndexingEnabled)
         {
-          indexedColumns.emplace_back(nextAvailableChildTableColid);
+          indexedColumns.data().emplace_back(nextAvailableChildTableColid);
         }
       }
 
@@ -111,7 +111,8 @@ void Schema::configureRelationships()
       {
         API::Index index;
         index.tableId = childTableId;
-        index.columnIds = indexedColumns;
+        index.columns = indexedColumns;
+        index.columns.data().shrink_to_fit();
         m_indices.emplace_back(index);
       }
 
@@ -139,7 +140,7 @@ void Schema::configureRelationships()
           relationship.second.onDeleteAction,
           {} };
 
-        std::vector<API::IID::Type> indexedColumns;
+        ColumnList indexedColumns;
         for (const auto& refColId : refTable.primaryKeys)
         {
           const auto& refCol = refTable.columns.at(refColId);
@@ -154,7 +155,7 @@ void Schema::configureRelationships()
 
           if (relationship.second.bForeignKeyIndexingEnabled)
           {
-            indexedColumns.emplace_back(currentColId);
+            indexedColumns.data().emplace_back(currentColId);
           }
 
           currentColId++;
@@ -166,7 +167,8 @@ void Schema::configureRelationships()
         {
           API::Index index;
           index.tableId = nextAvailableTableId;
-          index.columnIds = indexedColumns;
+          index.columns = indexedColumns;
+          index.columns.data().shrink_to_fit();
           m_indices.emplace_back(index);
         }
       };
@@ -193,7 +195,7 @@ void Schema::validateAndPrepareIndices()
     }
 
     const auto& table = m_tables.at(index.tableId);
-    for (const auto& colId : index.columnIds)
+    for (const auto& colId : index.columns.cdata())
     {
       if (table.columns.count(colId) == 0)
       {

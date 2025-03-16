@@ -10,11 +10,12 @@ QString Funcs::getDefaultDatabaseFilename()
   return "test.db";
 }
 
-bool Funcs::isResultTuplesContaining(const QtSqlLib::ResultSet& results, const IID& tableId,
-                                     const IID& columnId, QVariant value)
+bool Funcs::isResultTuplesContaining(
+  const QtSqlLib::ResultSet& results, IID::Type tableId,
+  IID::Type columnId, QVariant value)
 {
   results.resetIteration();
-  const QtSqlLib::API::TableColumnId colId{ tableId.get(), columnId.get() };
+  const QtSqlLib::API::TableColumnId colId{ tableId, columnId };
   while (results.hasNext())
   {
     const auto& next = results.next();
@@ -30,9 +31,10 @@ bool Funcs::isResultTuplesContaining(const QtSqlLib::ResultSet& results, const I
   return false;
 }
 
-void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relationshipId,
-                            const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
-                            const QVariant& fromValue, const QVariantList& toValues)
+void Funcs::expectRelations(
+  const QtSqlLib::ResultSet& results, IID::Type relationshipId,
+  IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
+  const QVariant& fromValue, const QVariantList& toValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
 
@@ -40,18 +42,18 @@ void Funcs::expectRelations(const QtSqlLib::ResultSet& results, const IID& relat
 
   std::set<int> matchingToValuesIndices;
 
-  const QtSqlLib::API::TableColumnId colId{ fromTableId.get(), fromColId.get() };
-  const QtSqlLib::API::TableColumnId valueColId{ toTableId.get(), toColId.get() };
+  const QtSqlLib::API::TableColumnId colId{ fromTableId, fromColId };
+  const QtSqlLib::API::TableColumnId valueColId{ toTableId, toColId };
 
   while (results.hasNext())
   {
     const auto& next = results.next();
     if (next.at(colId) == fromValue)
     {
-      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId.get()), toValues.size());
-      while (results.hasNextJoinedTuple(relationshipId.get()))
+      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId), toValues.size());
+      while (results.hasNextJoinedTuple(relationshipId))
       {
-        const auto& joinedTuple = results.nextJoinedTuple(relationshipId.get());
+        const auto& joinedTuple = results.nextJoinedTuple(relationshipId);
         const auto& value = joinedTuple.at(valueColId);
 
         for (int i=0; i<toValues.size(); ++i)

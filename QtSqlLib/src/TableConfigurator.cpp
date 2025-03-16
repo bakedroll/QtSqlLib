@@ -122,7 +122,7 @@ API::ITableConfigurator& TableConfigurator::unique()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::IID::Type>& columnIds)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& columns)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -130,13 +130,13 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::I
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
     m_table.primaryKeys.emplace(id);
   }
@@ -144,15 +144,15 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const std::vector<API::I
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::uniqueCols(const std::vector<API::IID::Type>& columnIds)
+API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnList& columns)
 {
-  if (columnIds.empty())
+  if (columns.cdata().empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columnIds)
+  for (const auto& id : columns.cdata())
   {
     m_table.uniqueColIds.emplace(id);
   }

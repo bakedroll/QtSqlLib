@@ -10,7 +10,7 @@
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>
 #include <QtSqlLib/ID.h>
-#include <QtSqlLib/IDList.h>
+#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/Query/BatchInsertInto.h>
 #include <QtSqlLib/Query/DeleteFrom.h>
 #include <QtSqlLib/Query/FromTable.h>
@@ -114,12 +114,31 @@ public:
 
   static bool isResultTuplesContaining(
     const QtSqlLib::ResultSet& results,
-    const IID& tableId, const IID& columnId, QVariant value);
+    IID::Type tableId, IID::Type columnId, QVariant value);
 
-  static void expectRelations(const QtSqlLib::ResultSet& results,
-    const IID& relationshipId,
-    const IID& fromTableId, const IID& fromColId, const IID& toTableId, const IID& toColId,
+  static void expectRelations(
+    const QtSqlLib::ResultSet& results, IID::Type relationshipId,
+    IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
     const QVariant& fromValue, const QVariantList& toValues);
+
+  template<typename TTableId, typename TColumnId>
+  static bool isResultTuplesContaining(
+    const QtSqlLib::ResultSet& results,
+    const TTableId& tableId, const TColumnId& columnId, QVariant value)
+  {
+    return isResultTuplesContaining(results, QtSqlLib::ID(tableId).get(), QtSqlLib::ID(columnId).get(), value);
+  }
+
+  template<typename TRelationshipId, typename TTableId, typename TColumnAId, typename TColumnBId>
+  static void expectRelations(
+    const QtSqlLib::ResultSet& results, const TRelationshipId& relationshipId,
+    const TTableId& fromTableId, const TColumnAId& fromColId, const TTableId& toTableId, const TColumnBId& toColId,
+    const QVariant& fromValue, const QVariantList& toValues)
+  {
+    return expectRelations(
+      results, QtSqlLib::ID(relationshipId).get(), QtSqlLib::ID(fromTableId).get(), QtSqlLib::ID(fromColId).get(),
+      QtSqlLib::ID(toTableId).get(), QtSqlLib::ID(toColId).get(), fromValue, toValues);
+  }
 
 
 };

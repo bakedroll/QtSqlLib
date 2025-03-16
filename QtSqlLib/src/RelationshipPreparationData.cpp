@@ -93,7 +93,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
 
   if (relationship.type == API::RelationshipType::ManyToMany)
   {
-    return determineAffectedLinkTableData(schema, relationship, tableFromId, tableToId);
+    return determineAffectedLinkTableData(schema, tableFromId, tableToId);
   }
 
   return determineAffectedChildTableData(schema, relationship, tableFromId, tableToId);
@@ -156,8 +156,7 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedLinkTableData(
-  API::ISchema& schema, const API::Relationship& /*relationship*/,
-  API::IID::Type fromTableId, API::IID::Type toTableId)
+  API::ISchema& schema, API::IID::Type fromTableId, API::IID::Type toTableId)
 {
   const auto linkTableId = schema.getManyToManyLinkTableId(m_relationshipId);
   const auto& linkTable = schema.getTables().at(linkTableId);

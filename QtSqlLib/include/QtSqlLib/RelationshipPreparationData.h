@@ -73,8 +73,7 @@ private:
     API::ISchema& schema, const API::Relationship& relationship,
     API::IID::Type fromTableId, API::IID::Type toTableId);
   AffectedData determineAffectedLinkTableData(
-    API::ISchema& schema, const API::Relationship& relationship,
-    API::IID::Type fromTableId, API::IID::Type toTableId);
+    API::ISchema& schema, API::IID::Type fromTableId, API::IID::Type toTableId);
 
 };
 

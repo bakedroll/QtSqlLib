@@ -46,14 +46,14 @@ TEST_F(TestBasicQueries, insertAndRead)
     .VALUES(Table1Cols::Number, QVariantList() << 0.6 << 0.7 << 0.8));
 
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
-    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
+    .SELECT(Table1Cols::Text, Table1Cols::Number));
 
   EXPECT_EQ(results.getNumResults(), 4);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test2"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test3"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test2"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test3"));
 
   results.resetIteration();
   const auto& tuple = results.next();
@@ -67,14 +67,14 @@ TEST_F(TestBasicQueries, insertAndRead)
   EXPECT_DOUBLE_EQ(resultColNr.toDouble(), 0.5);
 
   results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
-    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number)))
+    .SELECT(Table1Cols::Id, Table1Cols::Text, Table1Cols::Number)
     .WHERE(LESS(Table1Cols::Number, 0.75)));
 
   EXPECT_EQ(results.getNumResults(), 3);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "test2"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "test2"));
 
   results.resetIteration();
   while (results.hasNext())
@@ -117,13 +117,13 @@ TEST_F(TestBasicQueries, insertUpdateAndRead)
     .WHERE(EQUAL(Table1Cols::Number, 2)));
 
   const auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
-    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
+    .SELECT(Table1Cols::Text, Table1Cols::Number));
 
   EXPECT_EQ(results.getNumResults(), 3);
 
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value2_updated"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value3"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value2_updated"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value3"));
 }
 
 /**
@@ -149,14 +149,14 @@ TEST_F(TestBasicQueries, insertAndDelete)
     .WHERE(EQUAL(Table1Cols::Text, "value1").OR.GREATEREQUAL(Table1Cols::Number, 3)));
 
   const auto results = m_db.execQuery(FROM_TABLE(TableIds::Table1)
-    .SELECT(IDS(QtSqlLib::ID(Table1Cols::Text), QtSqlLib::ID(Table1Cols::Number))));
+    .SELECT(Table1Cols::Text, Table1Cols::Number));
 
   EXPECT_EQ(results.getNumResults(), 1);
 
-  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value1"));
-  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value2"));
-  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value3"));
-  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, QtSqlLib::ID(TableIds::Table1), QtSqlLib::ID(Table1Cols::Text), "value4"));
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value1"));
+  EXPECT_TRUE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value2"));
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value3"));
+  EXPECT_FALSE(Funcs::isResultTuplesContaining(results, TableIds::Table1, Table1Cols::Text, "value4"));
 }
 
 /**
@@ -170,7 +170,7 @@ TEST_F(TestBasicQueries, multiplePrimaryKeysTable)
   configurator.CONFIGURE_TABLE(TableIds::Table1, "table1")
     .COLUMN(Table1Cols::Id, "id", DataType::Integer).NOT_NULL
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128).NOT_NULL
-    .PRIMARY_KEYS(IDS(QtSqlLib::ID(Table1Cols::Id), QtSqlLib::ID(Table1Cols::Text)));
+    .PRIMARY_KEYS(Table1Cols::Id, Table1Cols::Text);
 
   m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
 
@@ -371,11 +371,11 @@ TEST_F(TestBasicQueries, databaseInitializationExceptions)
 TEST_F(TestBasicQueries, fromTableExceptions)
 {
   EXPECT_THROW(
-    FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT(IDS(QtSqlLib::ID(StudentsCols::Id))),
+    FROM_TABLE(TableIds::Students).SELECT(StudentsCols::Name).SELECT(StudentsCols::Id),
     DatabaseException);
 
   EXPECT_THROW(
-    FROM_TABLE(TableIds::Students).SELECT(IDS(QtSqlLib::ID(StudentsCols::Name))).SELECT_ALL,
+    FROM_TABLE(TableIds::Students).SELECT(StudentsCols::Name).SELECT_ALL,
     DatabaseException);
 
   EXPECT_THROW(
@@ -384,13 +384,13 @@ TEST_F(TestBasicQueries, fromTableExceptions)
 
   EXPECT_THROW(
     FROM_TABLE(TableIds::Students)
-      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Name)))
-      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Id))),
+      .JOIN(Relationships::StudentsConfidant, StudentsCols::Name)
+      .JOIN(Relationships::StudentsConfidant, StudentsCols::Id),
     DatabaseException);
 
   EXPECT_THROW(
     FROM_TABLE(TableIds::Students)
-      .JOIN(Relationships::StudentsConfidant, IDS(QtSqlLib::ID(StudentsCols::Name)))
+      .JOIN(Relationships::StudentsConfidant, StudentsCols::Name)
       .JOIN_ALL(Relationships::StudentsConfidant),
     DatabaseException);
 

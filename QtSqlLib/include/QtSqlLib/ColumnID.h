@@ -5,6 +5,7 @@
 namespace QtSqlLib
 {
 
+// TODO: refactor - TableColumnId should not be needed
 class ColumnID
 {
 public:
