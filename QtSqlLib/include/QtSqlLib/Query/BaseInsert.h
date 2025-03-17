@@ -1,6 +1,7 @@
 #pragma once
 #pragma once
 
+#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/Query/Query.h>
 
 #include <vector>
@@ -14,7 +15,7 @@ public:
   BaseInsert(const API::IID& tableId);
   ~BaseInsert() override;
 
-  void addColumnId(const API::IID& id);
+  void addColumn(const API::IID& id);
 
 protected:
   QSqlQuery getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema) const;
@@ -24,7 +25,7 @@ private:
   void throwIfColumnIdAlreadyExisting(API::IID::Type id) const;
 
   API::IID::Type m_tableId;
-  std::vector<API::IID::Type> m_columnIds;
+  ColumnList m_columns;
 
 };
 

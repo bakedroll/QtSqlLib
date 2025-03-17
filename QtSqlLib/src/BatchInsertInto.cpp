@@ -11,7 +11,7 @@ BatchInsertInto::~BatchInsertInto() = default;
 
 BatchInsertInto& BatchInsertInto::values(const API::IID& columnId, const QVariantList& value)
 {
-  addColumnId(columnId);
+  addColumn(columnId);
   m_values.emplace_back(value);
   return *this;
 }

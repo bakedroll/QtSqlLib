@@ -12,7 +12,7 @@ InsertInto::~InsertInto() = default;
 
 InsertInto& InsertInto::value(const API::IID& columnId, const QVariant& value)
 {
-  addColumnId(columnId);
+  addColumn(columnId);
   m_values.emplace_back(value);
   return *this;
 }

@@ -15,15 +15,15 @@ BaseInsert::BaseInsert(const API::IID& tableId)
 
 BaseInsert::~BaseInsert() = default;
 
-void BaseInsert::addColumnId(const API::IID& id)
+void BaseInsert::addColumn(const API::IID& id)
 {
   throwIfColumnIdAlreadyExisting(id.get());
-  m_columnIds.emplace_back(id.get());
+  m_columns.data().emplace_back(id.get());
 }
 
 void BaseInsert::throwIfColumnIdAlreadyExisting(API::IID::Type id) const
 {
-  for (const auto& cid : m_columnIds)
+  for (const auto& cid : m_columns.cdata())
   {
     if (cid == id)
     {
@@ -42,7 +42,7 @@ QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema)
   QString columnsString;
   QString valuesString;
 
-  for (const auto& id : m_columnIds)
+  for (const auto& id : m_columns.cdata())
   {
     schema.getSanityChecker().throwIfColumnIdNotExisting(table, id);
 

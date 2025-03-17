@@ -12,6 +12,7 @@
 namespace QtSqlLib::Query
 {
 
+  // TODO: remove
 static bool qVariantsLess(const QVariant& lhs, const QVariant& rhs)
 {
   if (lhs.userType() != rhs.userType())
@@ -33,6 +34,10 @@ static bool qVariantsLess(const QVariant& lhs, const QVariant& rhs)
     return lhs.toString() < rhs.toString();
   case QMetaType::QByteArray:
     return lhs.toByteArray() < rhs.toByteArray();
+  case QMetaType::Float:
+    return lhs.toFloat() < rhs.toFloat();
+  case QMetaType::Double:
+    return lhs.toDouble() < rhs.toDouble();
   default:
     break;
   }
@@ -40,6 +45,7 @@ static bool qVariantsLess(const QVariant& lhs, const QVariant& rhs)
   throw DatabaseException(DatabaseException::Type::UnexpectedError, "Tuple types not comparable.");
 }
 
+// TODO: remove
 class NTuple
 {
 public:
@@ -61,11 +67,7 @@ public:
     for (size_t i = 0; i<m_values.size(); ++i)
     {
       isLess = qVariantsLess(m_values.at(i), rhs.m_values.at(i));
-      if (!isLess)
-      {
-        continue;
-      }
-      else
+      if (isLess)
       {
         break;
       }
@@ -217,6 +219,9 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   return { QSqlQuery(queryStr, db) };
 }
 
+// TODO: refactor with PrimaryKey
+
+// TODO: allow tables without primary key
 ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query) const
 {
   using JoinKey = std::pair<API::IID::Type, NTuple>;

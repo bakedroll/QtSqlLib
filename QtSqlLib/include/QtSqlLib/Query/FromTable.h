@@ -46,6 +46,7 @@ private:
   
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
+    // TODO: std::vector<IID::Type>
     std::vector<int> primaryKeyColumnIndicesInQuery;
     std::vector<int> foreignKeyColumnIndicesInQuery;
   };

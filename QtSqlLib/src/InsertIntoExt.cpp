@@ -158,7 +158,7 @@ void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(API::ISchema& sc
         QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
     }
 
-    m_insertQuery->addColumnId(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at({ parentTableId, parentKeyCol })));
+    m_insertQuery->addColumn(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at({ parentTableId, parentKeyCol })));
     m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.at({ parentTableId, parentKeyCol }));
   }
 }

@@ -100,7 +100,8 @@ ResultSet Database::execQuery(API::IQueryElement& query)
   return execQueryForSchema(*m_schema, query);
 }
 
-std::vector<API::IID::Type> Database::foreinKeyColumnIds(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const
+// TODO: needed?
+ColumnList Database::foreinKeyColumns(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const
 {
   const auto& tables = m_schema->getTables();
   if (tables.count(tableId.get()) == 0)
@@ -112,16 +113,16 @@ std::vector<API::IID::Type> Database::foreinKeyColumnIds(const API::IID& tableId
   const auto& foreignKeys = m_schema->getTables().at(tableId.get()).relationshipToForeignKeyReferencesMap;
   const auto& foreignKeyReferences = foreignKeys.at({ relationshipId.get(), parentTableId.get() });
 
-  std::vector<API::IID::Type> ids;
+  ColumnList columns;
   for (const auto& ref : foreignKeyReferences)
   {
     for (const auto& colId : ref.primaryForeignKeyColIdMap)
     {
-      ids.emplace_back(colId.second);
+      columns.data().emplace_back(colId.second);
     }
   }
 
-  return ids;
+  return columns;
 }
 
 void Database::loadDatabaseFile(const QString& filename)
