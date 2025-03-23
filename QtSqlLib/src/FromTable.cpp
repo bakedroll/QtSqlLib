@@ -179,7 +179,7 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_columnSelectionInfo.tableId);
   const auto& table = schema.getTables().at(m_columnSelectionInfo.tableId);
@@ -222,14 +222,15 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
 // TODO: refactor with PrimaryKey
 
 // TODO: allow tables without primary key
-ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query) const
+// TODO: pass QSqlQuery to result set
+ResultSet_bak FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query) const
 {
   using JoinKey = std::pair<API::IID::Type, NTuple>;
 
   std::set<NTuple> retrievedResultKeys;
   std::map<JoinKey, std::set<NTuple>> retrievedRelationResultKeys;
 
-  ResultSet::TupleList resultTuples;
+  ResultSet_bak::TupleList resultTuples;
   std::map<NTuple, int> resultTupleIndices;
 
   while (query.next())
@@ -240,7 +241,7 @@ ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query)
     {
       retrievedResultKeys.emplace(keyTuple);
 
-      ResultSet::Tuple tuple;
+      ResultSet_bak::Tuple tuple;
       for (auto& info : m_columnSelectionInfo.columnInfos)
       {
         tuple.values[{ m_columnSelectionInfo.tableId, info.columnId }] = query.value(info.indexInQuery);
@@ -280,7 +281,7 @@ ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery& query)
     }
   }
 
-  return ResultSet::create(resultTuples);
+  return ResultSet_bak::create(resultTuples);
 }
 
 void FromTable::throwIfMultipleSelects() const

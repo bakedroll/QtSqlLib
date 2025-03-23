@@ -18,7 +18,7 @@ BatchInsertRemainingKeys::BatchInsertRemainingKeys(API::IID::Type tableId,
 BatchInsertRemainingKeys::~BatchInsertRemainingKeys() = default;
 
 API::IQuery::SqlQuery BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-  const ResultSet& previousQueryResults)
+  const ResultSet_bak& previousQueryResults)
 {
   if (!previousQueryResults.isValid() || !previousQueryResults.hasNext())
   {

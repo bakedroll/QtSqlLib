@@ -19,7 +19,7 @@ public:
   void setForeignKeyValues(const API::TupleValues& parentKeyValues);
   void makeAndAddWhereExpr(const API::TupleValues& affectedChildKeyValues);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& previousQueryResults) override;
 
 private:
   RelationshipPreparationData::RemainingKeysMode m_remainingKeysMode;

@@ -26,7 +26,7 @@ public:
     const QString& databaseName = QSqlDatabase::defaultConnection) override;
   void close() override;
 
-  ResultSet execQuery(API::IQueryElement& query) override;
+  ResultSet_bak execQuery(API::IQueryElement& query) override;
   ColumnList foreinKeyColumns(const API::IID& tableId, const API::IID& relationshipId, const API::IID& parentTableId) const override;
 
 private:
@@ -39,7 +39,7 @@ private:
   int  queryDatabaseVersion();
   void createOrMigrateTables(int currentVersion = 1);
 
-  ResultSet execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const;
+  ResultSet_bak execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const;
 
   bool isVersionTableExisting() const;
 

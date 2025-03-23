@@ -16,7 +16,7 @@ BatchInsertInto& BatchInsertInto::values(const API::IID& columnId, const QVarian
   return *this;
 }
 
-API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery BatchInsertInto::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& /*previousQueryResults*/)
 {
   return { getQSqlQuery(db, schema), QueryMode::Batch };
 }

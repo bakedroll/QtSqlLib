@@ -2,7 +2,7 @@
 
 #include <QtSqlLib/API/IQueryVisitor.h>
 
-#include <QtSqlLib/ResultSet.h>
+#include <QtSqlLib/ResultSet_bak.h>
 
 #include <QSqlDatabase>
 
@@ -24,13 +24,13 @@ public:
   void visit(API::IQuery& query) override;
   void visit(API::IQuerySequence& query) override;
 
-  ResultSet getLastQueryResults() const;
+  ResultSet_bak getLastQueryResults() const;
 
 private:
   const QSqlDatabase& m_sqlDb;
   API::ISchema& m_schema;
 
-  ResultSet m_lastResults;
+  ResultSet_bak m_lastResults;
 
 };
 

@@ -37,6 +37,7 @@ private:
   const PrimaryKey& m_primaryKey;
   const ColumnList& m_columns;
   const std::vector<QVariant>& m_values;
+  // TODO: only evalulate on selectAll
   const std::vector<ForeignKeyRef>& m_foreignKeyRefs;
 
 };

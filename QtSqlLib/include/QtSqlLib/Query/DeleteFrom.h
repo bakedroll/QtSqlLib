@@ -22,7 +22,7 @@ public:
 
   DeleteFrom& where(Expr& expr);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& previousQueryResults) override;
 
 private:
   API::IID::Type m_tableId;

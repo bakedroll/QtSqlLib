@@ -11,7 +11,7 @@ QString Funcs::getDefaultDatabaseFilename()
 }
 
 bool Funcs::isResultTuplesContaining(
-  const QtSqlLib::ResultSet& results, IID::Type tableId,
+  const QtSqlLib::ResultSet_bak& results, IID::Type tableId,
   IID::Type columnId, QVariant value)
 {
   results.resetIteration();
@@ -32,7 +32,7 @@ bool Funcs::isResultTuplesContaining(
 }
 
 void Funcs::expectRelations(
-  const QtSqlLib::ResultSet& results, IID::Type relationshipId,
+  const QtSqlLib::ResultSet_bak& results, IID::Type relationshipId,
   IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
   const QVariant& fromValue, const QVariantList& toValues)
 {

@@ -29,8 +29,8 @@ public:
 
   FromTable& where(Expr& expr);
 
-  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& previousQueryResults) override;
-  ResultSet getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
+  SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& previousQueryResults) override;
+  ResultSet_bak getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
 private:
   struct ColumnInfo

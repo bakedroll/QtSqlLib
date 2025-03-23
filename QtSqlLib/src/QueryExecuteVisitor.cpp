@@ -13,7 +13,7 @@ namespace QtSqlLib
 QueryExecuteVisitor::QueryExecuteVisitor(const QSqlDatabase& sqlDb, API::ISchema& schema) :
   m_sqlDb(sqlDb),
   m_schema(schema),
-  m_lastResults(ResultSet::invalid())
+  m_lastResults(ResultSet_bak::invalid())
 {
 }
 
@@ -42,7 +42,7 @@ void QueryExecuteVisitor::visit(API::IQuerySequence& query)
   query.traverse(*this);
 }
 
-ResultSet QueryExecuteVisitor::getLastQueryResults() const
+ResultSet_bak QueryExecuteVisitor::getLastQueryResults() const
 {
   return m_lastResults;
 }

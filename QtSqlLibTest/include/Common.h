@@ -113,17 +113,17 @@ public:
   static QString getDefaultDatabaseFilename();
 
   static bool isResultTuplesContaining(
-    const QtSqlLib::ResultSet& results,
+    const QtSqlLib::ResultSet_bak& results,
     IID::Type tableId, IID::Type columnId, QVariant value);
 
   static void expectRelations(
-    const QtSqlLib::ResultSet& results, IID::Type relationshipId,
+    const QtSqlLib::ResultSet_bak& results, IID::Type relationshipId,
     IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
     const QVariant& fromValue, const QVariantList& toValues);
 
   template<typename TTableId, typename TColumnId>
   static bool isResultTuplesContaining(
-    const QtSqlLib::ResultSet& results,
+    const QtSqlLib::ResultSet_bak& results,
     const TTableId& tableId, const TColumnId& columnId, QVariant value)
   {
     return isResultTuplesContaining(results, QtSqlLib::ID(tableId).get(), QtSqlLib::ID(columnId).get(), value);
@@ -131,7 +131,7 @@ public:
 
   template<typename TRelationshipId, typename TTableId, typename TColumnAId, typename TColumnBId>
   static void expectRelations(
-    const QtSqlLib::ResultSet& results, const TRelationshipId& relationshipId,
+    const QtSqlLib::ResultSet_bak& results, const TRelationshipId& relationshipId,
     const TTableId& fromTableId, const TColumnAId& fromColId, const TTableId& toTableId, const TColumnBId& toColId,
     const QVariant& fromValue, const QVariantList& toValues)
   {

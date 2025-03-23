@@ -95,7 +95,7 @@ void Database::close()
   }
 }
 
-ResultSet Database::execQuery(API::IQueryElement& query)
+ResultSet_bak Database::execQuery(API::IQueryElement& query)
 {
   return execQueryForSchema(*m_schema, query);
 }
@@ -202,7 +202,7 @@ void Database::createOrMigrateTables(int currentVersion)
   }
 }
 
-ResultSet Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
+ResultSet_bak Database::execQueryForSchema(API::ISchema& schema, API::IQueryElement& query) const
 {
   if (!m_db || !m_schema)
   {

@@ -49,7 +49,7 @@ void UpdateTableForeignKeys::makeAndAddWhereExpr(const API::TupleValues& affecte
 }
 
 API::IQuery::SqlQuery UpdateTableForeignKeys::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema,
-  const ResultSet& previousQueryResults)
+  const ResultSet_bak& previousQueryResults)
 {
   const auto throwIfInvalidPreviousQueryResults = [&previousQueryResults]()
   {

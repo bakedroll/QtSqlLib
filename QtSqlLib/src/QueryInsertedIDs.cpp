@@ -15,7 +15,7 @@ QueryInsertedIDs::QueryInsertedIDs(API::IID::Type tableId)
 
 QueryInsertedIDs::~QueryInsertedIDs() = default;
 
-API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet& /*previousQueryResults*/)
+API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, const ResultSet_bak& /*previousQueryResults*/)
 {
   schema.getSanityChecker().throwIfTableIdNotExisting(m_tableId);
   const auto& table = schema.getTables().at(m_tableId);
@@ -32,7 +32,7 @@ API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API:
     db) };
 }
 
-ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
+ResultSet_bak QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& query) const
 {
   const auto& table = schema.getTables().at(m_tableId);
 
@@ -42,7 +42,7 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& que
       QString("Could not query last inserted id from table '%1'.").arg(table.name));
   }
 
-  ResultSet::Tuple tuple;
+  ResultSet_bak::Tuple tuple;
   auto currentValue = 1;
   for (const auto& primaryKey : table.primaryKeys)
   {
@@ -50,7 +50,7 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery& que
     currentValue++;
   }
 
-  return ResultSet::create({ tuple });
+  return ResultSet_bak::create({ tuple });
 }
 
 }

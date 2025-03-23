@@ -14,7 +14,7 @@ CreateIndex::~CreateIndex() = default;
 
 API::IQuery::SqlQuery CreateIndex::getSqlQuery(
   const QSqlDatabase& /*db*/, API::ISchema& schema,
-  const ResultSet& /*previousQueryResults*/)
+  const ResultSet_bak& /*previousQueryResults*/)
 {
   const auto& table = schema.getTables().at(m_index.tableId);
 

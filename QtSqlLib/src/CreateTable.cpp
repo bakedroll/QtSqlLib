@@ -56,7 +56,7 @@ CreateTable::~CreateTable() = default;
 
 API::IQuery::SqlQuery CreateTable::getSqlQuery(
   const QSqlDatabase& /*db*/, API::ISchema& schema,
-  const ResultSet& /*previousQueryResults*/)
+  const ResultSet_bak& /*previousQueryResults*/)
 {
   const auto cutTailingComma = [](QString& str)
   {
