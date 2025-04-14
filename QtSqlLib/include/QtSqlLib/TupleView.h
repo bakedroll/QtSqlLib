@@ -14,31 +14,26 @@ namespace QtSqlLib
 class TupleView
 {
 public:
-  struct ForeignKeyRef
-  {
-    API::IID::Type relationshipId;
-    PrimaryKey key;
-  };
-
   explicit TupleView(
-    const PrimaryKey& primaryKey,
+    API::IID::Type tableId,
+    const std::vector<size_t>& primaryKeyColumnIndices,
     const ColumnList& columns,
-    const std::vector<QVariant>& values,
-    const std::vector<ForeignKeyRef>& foreignKeyRefs);
+    const std::vector<QVariant>& values);
 
   virtual ~TupleView();
 
+  API::IID::Type tableId() const;
   PrimaryKey primaryKey() const;
   const std::vector<QVariant>& values() const;
+
+  // TODO: use template for IDs
   QVariant columnValue(const API::IID& columnId) const;
-  PrimaryKey foreignKey(const API::IID& relationshipId) const;
 
 private:
-  const PrimaryKey& m_primaryKey;
+  API::IID::Type m_tableId;
+  const std::vector<size_t>& m_primaryKeyColumnIndices;
   const ColumnList& m_columns;
   const std::vector<QVariant>& m_values;
-  // TODO: only evalulate on selectAll
-  const std::vector<ForeignKeyRef>& m_foreignKeyRefs;
 
 };
 

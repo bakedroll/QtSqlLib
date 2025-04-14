@@ -41,6 +41,7 @@ API::IQuery::SqlQuery BatchInsertRemainingKeys::getSqlQuery(const QSqlDatabase& 
     values(ID(m_primaryForeignKeyColIdMap.at(value.first)), list);
   }
 
+  // TODO: refactor
   previousQueryResults.resetIteration();
   return BatchInsertInto::getSqlQuery(db, schema, previousQueryResults);
 }

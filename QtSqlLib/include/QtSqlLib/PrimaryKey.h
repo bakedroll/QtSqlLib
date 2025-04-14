@@ -14,7 +14,7 @@ class PrimaryKey
 public:
   struct ColumnValue
   {
-    API::IID::Type columnId;
+    API::IID::Type columnId = -1;
     QVariant value;
   };
 
@@ -27,6 +27,7 @@ public:
   virtual ~PrimaryKey();
 
   API::IID::Type tableId() const;
+  // TODO: template
   QVariant value(const API::IID& columnId) const;
   bool isNull() const;
 
@@ -38,6 +39,7 @@ public:
   bool operator!=(const PrimaryKey& rhs) const;
 
 private:
+  // TODO: tableId needed?
   API::IID::Type m_tableId;
   std::vector<ColumnValue> m_values;
 

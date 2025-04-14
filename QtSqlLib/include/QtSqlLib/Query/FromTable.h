@@ -33,6 +33,8 @@ public:
   ResultSet_bak getQueryResults(API::ISchema& schema, QSqlQuery& query) const override;
 
 private:
+  // TODO: remove
+  ////////////////////////
   struct ColumnInfo
   {
     API::IID::Type columnId = 0;
@@ -46,10 +48,11 @@ private:
   
     std::vector<ColumnInfo> columnInfos;
     bool bColumnsSelected = false;
-    // TODO: std::vector<IID::Type>
+    // TODO: size_t
     std::vector<int> primaryKeyColumnIndicesInQuery;
     std::vector<int> foreignKeyColumnIndicesInQuery;
   };
+  /////////////////////
 
   struct TableAliasColumnId
   {

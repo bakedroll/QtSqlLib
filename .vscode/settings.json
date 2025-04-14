@@ -2,7 +2,8 @@
     "cmake.sourceDirectory": "${workspaceFolder}",
     "cmake.configureSettings":
     {
-        "CMAKE_SCRIPTS_DIRECTORY": "${workspaceFolder}/../CMake-Scripts"
+        "CMAKE_SCRIPTS_DIRECTORY": "${workspaceFolder}/../CMake-Scripts",
+        "CMAKE_GENERATOR": "Unix Makefiles"
     },
     "cmake.buildDirectory": "${workspaceFolder}/../../builds/vscode/${workspaceFolderBasename}-${buildKit}-${buildType}/",
     "cmake.buildEnvironment": {

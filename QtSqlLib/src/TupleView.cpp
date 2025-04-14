@@ -4,22 +4,41 @@ namespace QtSqlLib
 {
 
 TupleView::TupleView(
-    const PrimaryKey& primaryKey,
+    API::IID::Type tableId,
+    const std::vector<size_t>& primaryKeyColumnIndices,
     const ColumnList& columns,
-    const std::vector<QVariant>& values,
-    const std::vector<ForeignKeyRef>& foreignKeyRefs) :
-  m_primaryKey(primaryKey),
+    const std::vector<QVariant>& values) :
+  m_tableId(tableId),
+  m_primaryKeyColumnIndices(primaryKeyColumnIndices),
   m_columns(columns),
-  m_values(values),
-  m_foreignKeyRefs(foreignKeyRefs)
+  m_values(values)
 {
 }
 
 TupleView::~TupleView() = default;
 
+API::IID::Type TupleView::tableId() const
+{
+  return m_tableId;
+}
+
 PrimaryKey TupleView::primaryKey() const
 {
-  return m_primaryKey;
+  if (m_primaryKeyColumnIndices.empty())
+  {
+    return PrimaryKey();
+  }
+
+  std::vector<PrimaryKey::ColumnValue> values(m_primaryKeyColumnIndices.size());
+  for (size_t i=0; i<m_primaryKeyColumnIndices.size(); ++i)
+  {
+    auto& primaryKeyValue = values.at(i);
+    const auto columnIndex = m_primaryKeyColumnIndices.at(i);
+    primaryKeyValue.columnId = m_columns.cdata().at(columnIndex);
+    primaryKeyValue.value = m_values.at(columnIndex);
+  }
+
+  return PrimaryKey(m_tableId, std::move(values));
 }
 
 const std::vector<QVariant>& TupleView::values() const
@@ -40,7 +59,7 @@ QVariant TupleView::columnValue(const API::IID& columnId) const
   return {};
 }
 
-PrimaryKey TupleView::foreignKey(const API::IID& relationshipId) const
+/*PrimaryKey TupleView::foreignKey(const API::IID& relationshipId) const
 {
   for (const auto& ref : m_foreignKeyRefs)
   {
@@ -50,6 +69,6 @@ PrimaryKey TupleView::foreignKey(const API::IID& relationshipId) const
     }
   }
   return {};
-}
+}*/
 
 }
