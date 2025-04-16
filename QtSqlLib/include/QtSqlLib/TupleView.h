@@ -4,6 +4,8 @@
 #include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/PrimaryKey.h>
 
+#include <QPointer>
+#include <QSqlResult>
 #include <QVariant>
 
 #include <vector>
@@ -30,10 +32,14 @@ public:
   QVariant columnValue(const API::IID& columnId) const;
 
 private:
-  API::IID::Type m_tableId;
-  const std::vector<size_t>& m_primaryKeyColumnIndices;
-  const ColumnList& m_columns;
-  const std::vector<QVariant>& m_values;
+  QSqlResult* m_sqlResult;
+  const API::QueryMetaInfo& m_queryMetaInfo;
+  const std::vector<API::JoinMetaInfo>& m_joinsMetaInfo;
+  //API::IID::Type m_tableId;
+  //const std::vector<size_t>& m_primaryKeyColumnIndices;
+  //const ColumnList& m_columns;
+  //const std::vector<QVariant>& m_values;
+
 
 };
 
