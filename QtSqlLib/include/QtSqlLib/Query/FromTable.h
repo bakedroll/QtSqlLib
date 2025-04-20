@@ -5,6 +5,9 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/ColumnList.h>
 
+#include <QString>
+
+#include <memory>
 #include <vector>
 
 namespace QtSqlLib
