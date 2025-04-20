@@ -13,6 +13,13 @@ ResultSet::ResultSet(
 {
 }
 
+ResultSet::ResultSet(ResultSet&& rhs) :
+  m_sqlQuery(std::move(rhs.m_sqlQuery)),
+  m_queryMetaInfo(std::move(rhs.m_queryMetaInfo)),
+  m_joinMetaInfo(std::move(rhs.m_joinMetaInfo))
+{
+}
+
 ResultSet::~ResultSet() = default;
 
 bool ResultSet::hasNextTuple()

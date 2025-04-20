@@ -18,6 +18,11 @@ public:
     API::QueryMetaInfo&& queryMetaInfo,
     std::vector<API::QueryMetaInfo>&& joinMetaInfo);
 
+  ResultSet(const ResultSet& rhs) = delete;
+  ResultSet& operator=(const ResultSet& rhs) = delete;
+
+  ResultSet(ResultSet&& rhs);
+
   virtual ~ResultSet();
 
   bool hasNextTuple();
