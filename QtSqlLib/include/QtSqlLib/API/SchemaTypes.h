@@ -110,29 +110,12 @@ struct Index
 // TODO: needed?
 using TupleValues = std::map<TableColumnId, QVariant>;
 
-/*struct QueryColumnMapping
-{
-  API::IID::Type columnId = 0;
-  int indexInQuery = -1;
-};*/
-
 struct QueryMetaInfo
 {
-  //std::vector<QueryColumnMapping> queryColumns;
   API::IID::Type tableId;
   ColumnList columns;
   std::vector<size_t> columnQueryIndices;
-  std::vector<size_t> primaryKeyQueryIndices;
-  //std::vector<size_t> foreignKeyIndices;
-};
-
-struct JoinMetaInfo
-{
-  API::IID::Type relationshipId;
-  //std::vector<QueryColumnMapping> joinColumns;
-  //ColumnList columns;
-  //std::vector<size_t> columnQueryIndices;
-  std::vector<size_t> foreignKeyQueryIndices;
+  std::vector<size_t> primaryKeyColumnIndices;
 };
 
 }

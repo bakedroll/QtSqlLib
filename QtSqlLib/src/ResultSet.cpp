@@ -4,12 +4,10 @@ namespace QtSqlLib
 {
 
 ResultSet::ResultSet(
-    API::IID::Type tableId,
     QSqlQuery&& query,
     API::QueryMetaInfo&& queryMetaInfo,
-    std::vector<API::JoinMetaInfo>&& joinMetaInfo) :
-  m_tableId(tableId),
-  m_sqlQuery(query),
+    std::vector<API::QueryMetaInfo>&& joinMetaInfo) :
+  m_sqlQuery(std::move(query)),
   m_queryMetaInfo(std::move(queryMetaInfo)),
   m_joinMetaInfo(std::move(joinMetaInfo))
 {
@@ -29,12 +27,12 @@ bool ResultSet::hasNextJoinedTuple()
 
 TupleView ResultSet::nextTuple()
 {
-
+  throw std::exception("not yet implemented");
 }
 
 TupleView ResultSet::nextJoinedTuple()
 {
-
+  throw std::exception("not yet implemented");
 }
 
 }

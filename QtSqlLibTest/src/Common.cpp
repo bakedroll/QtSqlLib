@@ -50,7 +50,7 @@ void Funcs::expectRelations(
     const auto& next = results.next();
     if (next.at(colId) == fromValue)
     {
-      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId), toValues.size());
+      EXPECT_EQ(results.getCurrentNumJoinedResults(relationshipId), static_cast<size_t>(toValues.size()));
       while (results.hasNextJoinedTuple(relationshipId))
       {
         const auto& joinedTuple = results.nextJoinedTuple(relationshipId);
@@ -70,7 +70,7 @@ void Funcs::expectRelations(
     }
   }
 
-  EXPECT_EQ(toValues.size(), matchingToValuesIndices.size());
+  EXPECT_EQ(static_cast<size_t>(toValues.size()), matchingToValuesIndices.size());
 }
 
 }

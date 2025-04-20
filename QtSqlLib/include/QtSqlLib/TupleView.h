@@ -1,14 +1,11 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/PrimaryKey.h>
 
-#include <QPointer>
-#include <QSqlResult>
-#include <QVariant>
+#include <QSqlQuery>
 
-#include <vector>
+#include "API/SchemaTypes.h"
 
 namespace QtSqlLib
 {
@@ -17,29 +14,26 @@ class TupleView
 {
 public:
   explicit TupleView(
-    API::IID::Type tableId,
-    const std::vector<size_t>& primaryKeyColumnIndices,
-    const ColumnList& columns,
-    const std::vector<QVariant>& values);
+    const QSqlQuery& sqlQuery,
+    const API::QueryMetaInfo& queryMetaInfo,
+    API::IID::Type relationshipId = -1);
 
   virtual ~TupleView();
 
   API::IID::Type tableId() const;
+  API::IID::Type relationshipId() const;
+
   PrimaryKey primaryKey() const;
-  const std::vector<QVariant>& values() const;
+  // TOOD: implementation needed?
+  //const std::vector<QVariant>& values() const;
 
   // TODO: use template for IDs
   QVariant columnValue(const API::IID& columnId) const;
 
 private:
-  QSqlResult* m_sqlResult;
+  const QSqlQuery& m_sqlQuery;
   const API::QueryMetaInfo& m_queryMetaInfo;
-  const std::vector<API::JoinMetaInfo>& m_joinsMetaInfo;
-  //API::IID::Type m_tableId;
-  //const std::vector<size_t>& m_primaryKeyColumnIndices;
-  //const ColumnList& m_columns;
-  //const std::vector<QVariant>& m_values;
-
+  API::IID::Type m_relationshipId;
 
 };
 

@@ -14,10 +14,9 @@ class ResultSet
 {
 public:
   ResultSet(
-    API::IID::Type tableId,
     QSqlQuery&& query,
     API::QueryMetaInfo&& queryMetaInfo,
-    std::vector<API::JoinMetaInfo>&& joinMetaInfo);
+    std::vector<API::QueryMetaInfo>&& joinMetaInfo);
 
   virtual ~ResultSet();
 
@@ -28,10 +27,9 @@ public:
   TupleView nextJoinedTuple();
 
 private:
-  API::IID::Type m_tableId;
   QSqlQuery m_sqlQuery;
   API::QueryMetaInfo m_queryMetaInfo;
-  std::vector<API::JoinMetaInfo> m_joinMetaInfo;
+  std::vector<API::QueryMetaInfo> m_joinMetaInfo;
 
 };
 
