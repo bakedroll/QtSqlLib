@@ -1,5 +1,7 @@
 #include "QtSqlLib/ResultSet.h"
 
+#include <stdexcept>
+
 namespace QtSqlLib
 {
 
@@ -34,12 +36,12 @@ bool ResultSet::hasNextJoinedTuple()
 
 TupleView ResultSet::nextTuple()
 {
-  throw std::exception("not yet implemented");
+  throw std::runtime_error("not yet implemented");
 }
 
 TupleView ResultSet::nextJoinedTuple()
 {
-  throw std::exception("not yet implemented");
+  throw std::runtime_error("not yet implemented");
 }
 
 }
