@@ -42,8 +42,9 @@ enum class DataType
   Blob
 };
 
-struct Column
+struct ColumnMetaInfo
 {
+  API::IID::Type id = 0;
   QString name;
   DataType type = DataType::Integer;
   int varcharLength = 0;
@@ -74,7 +75,8 @@ using RelationshipToForeignKeyReferencesMap = std::map<RelationshipTableId, std:
 struct Table
 {
   QString name;
-  std::map<IID::Type, Column> columns;
+  std::vector<ColumnMetaInfo> columnsMetaInfo;
+
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
 
   // TODO: vector

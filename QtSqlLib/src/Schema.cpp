@@ -27,6 +27,19 @@ std::vector<API::Index>& Schema::getIndices()
   return m_indices;
 }
 
+API::ColumnMetaInfo Schema::getColumnMetaInfo(API::IID::Type tableId, API::IID::Type columnId) const
+{
+  const auto& table = m_tables.at(tableId);
+  for (const auto& columnMetaInfo : table.columnsMetaInfo)
+  {
+    if (columnMetaInfo.id == columnId)
+    {
+      return columnMetaInfo;
+    }
+  }
+  throw DatabaseException(DatabaseException::Type::InvalidId, QString("Column id %1 does not exist for table %2.").arg(columnId).arg(table.name));
+}
+
 const API::ISanityChecker& Schema::getSanityChecker() const
 {
   return *m_sanityChecker;

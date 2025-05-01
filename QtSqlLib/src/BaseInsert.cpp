@@ -42,11 +42,11 @@ QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema)
   QString columnsString;
   QString valuesString;
 
-  for (const auto& id : m_columns.cdata())
+  for (const auto& columnMetaInfo : table.columnsMetaInfo)
   {
-    schema.getSanityChecker().throwIfColumnIdNotExisting(table, id);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnMetaInfo.id);
 
-    columnsString += QString("'%1', ").arg(table.columns.at(id).name);
+    columnsString += QString("'%1', ").arg(columnMetaInfo.name);
     valuesString += "?, ";
   }
 

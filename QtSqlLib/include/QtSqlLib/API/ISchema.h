@@ -20,6 +20,8 @@ public:
   virtual std::map<IID::Type, Relationship>& getRelationships() = 0;
   virtual std::vector<Index>& getIndices() = 0;
 
+  virtual ColumnMetaInfo getColumnMetaInfo(API::IID::Type tableId, API::IID::Type columnId) const = 0;
+
   virtual const ISanityChecker& getSanityChecker() const = 0;
 
   virtual IID::Type getManyToManyLinkTableId(IID::Type relationshipId) const = 0;

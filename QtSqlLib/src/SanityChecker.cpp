@@ -35,11 +35,15 @@ void SanityChecker::throwIfRelationshipIsNotExisting(API::IID::Type relationship
 
 void SanityChecker::throwIfColumnIdNotExisting(const API::Table& table, API::IID::Type colId) const
 {
-  if (table.columns.count(colId) == 0)
+  for (const auto& columnMetaData : table.columnsMetaInfo)
   {
-    throw DatabaseException(DatabaseException::Type::InvalidId,
-      QString("Unknown column id %1 in table '%2'.").arg(colId).arg(table.name));
+    if (columnMetaData.id == colId)
+    {
+      return;
+    }
   }
+  throw DatabaseException(DatabaseException::Type::InvalidId,
+    QString("Unknown column id %1 in table '%2'.").arg(colId).arg(table.name));
 }
 
 }

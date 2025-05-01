@@ -35,16 +35,16 @@ QString Comparison::toQString(API::ISchema& schema, const OptionalIID& defaultTa
         schema.getSanityChecker().throwIfTableIdNotExisting(defaultTableId->get().get());
       }
 
-      const auto colId = columnId.get().columnId;
-      const auto& table = schema.getTables().at(columnId.isTableIdValid()
+      const auto tableId = columnId.isTableIdValid()
         ? columnId.get().tableId
-        : defaultTableId->get().get());
-
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, colId);
-
+        : defaultTableId->get().get();
+      const auto colId = columnId.get().columnId;
+      const auto& table = schema.getTables().at(tableId);
       const auto tableAlias = columnId.getTableAlias();
 
-      return QString("'%1'.'%2'").arg(tableAlias.isEmpty() ? table.name : tableAlias).arg(table.columns.at(colId).name);
+      return QString("'%1'.'%2'")
+        .arg(tableAlias.isEmpty() ? table.name : tableAlias)
+        .arg(schema.getColumnMetaInfo(tableId, colId).name);
     }
     case OperandType::Value:
     {

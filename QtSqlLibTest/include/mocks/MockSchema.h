@@ -15,6 +15,7 @@ public:
   MOCK_METHOD((std::map<QtSqlLib::API::IID::Type, QtSqlLib::API::Table>&), getTables, (), (override));
   MOCK_METHOD((std::map<QtSqlLib::API::IID::Type, QtSqlLib::API::Relationship>&), getRelationships, (), (override));
   MOCK_METHOD((std::vector<QtSqlLib::API::Index>&), getIndices, (), (override));
+  MOCK_METHOD((QtSqlLib::API::ColumnMetaInfo), getColumnMetaInfo, (QtSqlLib::API::IID::Type, QtSqlLib::API::IID::Type), (const override));
   MOCK_METHOD((const QtSqlLib::API::ISanityChecker&), getSanityChecker, (), (const override));
   MOCK_METHOD((QtSqlLib::API::IID::Type), getManyToManyLinkTableId, (QtSqlLib::API::IID::Type), (const override));
   MOCK_METHOD((void), configureRelationships, (), (override));

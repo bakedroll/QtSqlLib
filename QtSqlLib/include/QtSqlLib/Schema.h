@@ -17,6 +17,8 @@ public:
   std::map<API::IID::Type, API::Relationship>& getRelationships() override;
   std::vector<API::Index>& getIndices() override;
 
+  API::ColumnMetaInfo getColumnMetaInfo(API::IID::Type tableId, API::IID::Type columnId) const override;
+
   const API::ISanityChecker& getSanityChecker() const override;
 
   API::IID::Type getManyToManyLinkTableId(API::IID::Type relationshipId) const override;

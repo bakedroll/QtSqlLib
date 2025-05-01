@@ -63,12 +63,12 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
     str = str.left(str.length() - 2);
   };
 
-  const auto listColumns = [this, &cutTailingComma](const std::set<API::IID::Type>& colIds)
+  const auto listColumns = [this, &cutTailingComma, &schema](const std::set<API::IID::Type>& colIds)
   {
     QString colNames;
     for (const auto& colId : colIds)
     {
-      colNames += QString("'%1', ").arg(m_table.columns.at(colId).name);
+      colNames += QString("'%1', ").arg(schema.getColumnMetaInfo(m_table.) m_table.columns.at(colId).name);
     }
     cutTailingComma(colNames);
     return colNames;
