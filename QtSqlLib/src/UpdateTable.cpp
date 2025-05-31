@@ -66,19 +66,24 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISch
   QString queryStr;
   queryStr.append(QString("UPDATE '%1' SET %2").arg(table.name).arg(setString));
 
+  std::vector<QVariant> boundValues;
   if (m_whereExpr)
   {
     ID tid(m_tableId);
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, tid)));
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, boundValues, tid)));
   }
 
   queryStr.append(";");
+
   QSqlQuery query(db);
   query.prepare(queryStr);
-
   for (const auto& colValue : m_colIdNewValueMap)
   {
     query.addBindValue(colValue.second);
+  }
+  for (const auto& boundValue : boundValues)
+  {
+    query.addBindValue(boundValue);
   }
 
   return { std::move(query) };

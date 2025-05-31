@@ -17,7 +17,10 @@ public:
   explicit NestedExpression(Expr& expr);
   ~NestedExpression() override;
 
-  QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
+  QString toQueryString(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValuesOut,
+    const OptionalIID& defaultTableId) const override;
 
 private:
   std::unique_ptr<Expr> m_nestedExpr;

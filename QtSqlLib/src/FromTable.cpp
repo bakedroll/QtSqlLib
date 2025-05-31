@@ -126,7 +126,9 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
 
   prepareQueryMetaInfoColumns(m_queryMetaInfo, table);
   addToSelectedColumns(schema, table, m_queryMetaInfo);
-  const auto joinStr = processJoinsAndCreateQuerySubstring(schema, table);
+
+  std::vector<QVariant> boundValues;
+  const auto joinStr = processJoinsAndCreateQuerySubstring(schema, boundValues, table);
   const auto selectColsStr = createSelectString(schema);
 
   QString queryStr;
@@ -141,11 +143,19 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   if (m_whereExpr)
   {
     ID tid(m_queryMetaInfo.tableId);
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, tid)));
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, boundValues, tid)));
   }
 
   queryStr.append(";");
-  return { QSqlQuery(queryStr, db) };
+
+  QSqlQuery query(db);
+  query.prepare(queryStr);
+  for (const auto& value : boundValues)
+  {
+    query.addBindValue(value);
+  }
+
+  return { std::move(query) };
 }
 
 ResultSet FromTable::getQueryResults(API::ISchema& /*schema*/, QSqlQuery&& query)
@@ -281,7 +291,10 @@ void FromTable::addForeignKeyColumns(
   }
 }
 
-QString FromTable::processJoinsAndCreateQuerySubstring(API::ISchema& schema, const API::Table& table)
+QString FromTable::processJoinsAndCreateQuerySubstring(
+  API::ISchema& schema,
+  std::vector<QVariant>& boundValues,
+  const API::Table& table)
 {
   QString joinStr = "";
   for (auto& join : m_joins)
@@ -313,10 +326,10 @@ QString FromTable::processJoinsAndCreateQuerySubstring(API::ISchema& schema, con
 
       appendJoinQuerySubstring(
         joinStr, schema, relationshipId, parentFromTableId, parentFromTableAlias,
-        linkTableId, "", linkTable, "", foreignKeyReferences, 0);
+        linkTableId, "", linkTable, "", foreignKeyReferences, 0, boundValues);
       appendJoinQuerySubstring(
         joinStr, schema, relationshipId, parentToTableId, parentToTableAlias,
-        linkTableId, "", joinTable, joinTableAlias, foreignKeyReferences, secondForeignKeyRefIndex);
+        linkTableId, "", joinTable, joinTableAlias, foreignKeyReferences, secondForeignKeyRefIndex, boundValues);
     }
     else
     {
@@ -340,7 +353,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(API::ISchema& schema, con
 
       appendJoinQuerySubstring(
         joinStr, schema, relationshipId, parentTableColSelInfo->tableId, parentTableAlias,
-        childTableColSelInfo->tableId, childTableAlias, joinTable, joinTableAlias, foreignKeyReferences, 0);
+        childTableColSelInfo->tableId, childTableAlias, joinTable, joinTableAlias, foreignKeyReferences, 0, boundValues);
     }
   }
 
@@ -375,7 +388,8 @@ void FromTable::appendJoinQuerySubstring(
   API::IID::Type childTableId, const QString& childTableAlias,
   const API::Table& joinTable, const QString& joinTableAlias,
   const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
-  int foreignKeyReferencesIndex)
+  int foreignKeyReferencesIndex,
+  std::vector<QVariant>& boundValues)
 {
   if (foreignKeyReferences.count({ relationshipId, parentTableId }) == 0)
   {
@@ -418,7 +432,7 @@ void FromTable::appendJoinQuerySubstring(
     joinStrOut.append(QString(" AS '%1'").arg(joinTableAlias));
   }
 
-  joinStrOut.append(QString(" ON %1").arg(joinOnExpr.toQString(schema)));
+  joinStrOut.append(QString(" ON %1").arg(joinOnExpr.toQueryString(schema, boundValues)));
 }
 
 QString FromTable::tableAlias(const std::optional<API::IID::Type> relationshipId) const

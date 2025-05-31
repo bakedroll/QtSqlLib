@@ -40,14 +40,22 @@ API::IQuery::SqlQuery DeleteFrom::getSqlQuery(
   QString queryStr;
   queryStr.append(QString("DELETE FROM '%1'").arg(table.name));
 
+  std::vector<QVariant> boundValues;
   if (m_whereExpr)
   {
     ID tid(m_tableId);
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQString(schema, tid)));
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, boundValues, tid)));
   }
   queryStr.append(";");
 
-  return { QSqlQuery(queryStr, db) };
+  QSqlQuery query(db);
+  query.prepare(queryStr);
+  for (const auto& value : boundValues)
+  {
+    query.addBindValue(value);
+  }
+
+  return { std::move(query) };
 }
 
 }

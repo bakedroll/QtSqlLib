@@ -17,9 +17,12 @@ Comparison::Comparison(ComparisonOperator op, const Operand& lhs, const Operand&
 
 Comparison::~Comparison() = default;
 
-QString Comparison::toQString(API::ISchema& schema, const OptionalIID& defaultTableId = std::nullopt) const
+QString Comparison::toQueryString(
+  API::ISchema& schema,
+  std::vector<QVariant>& boundValuesOut,
+  const OptionalIID& defaultTableId = std::nullopt) const
 {
-  const auto getOperandString = [&schema, &defaultTableId](const Operand& operand) -> QString
+  const auto getOperandString = [&schema, &boundValuesOut, &defaultTableId](const Operand& operand) -> QString
   {
     switch (operand.type)
     {
@@ -48,12 +51,8 @@ QString Comparison::toQString(API::ISchema& schema, const OptionalIID& defaultTa
     }
     case OperandType::Value:
     {
-      if (operand.value.userType() == QMetaType::QString)
-      {
-        return QString("'%1'").arg(operand.value.toString());
-      }
-
-      return operand.value.toString();
+      boundValuesOut.emplace_back(operand.value);
+      return "?";
     }
     default:
       assert(false);

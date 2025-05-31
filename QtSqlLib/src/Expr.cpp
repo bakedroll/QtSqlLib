@@ -79,7 +79,10 @@ Expr& Expr::braces(Expr& nestedExpr)
   return *this;
 }
 
-QString Expr::toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const
+QString Expr::toQueryString(
+  API::ISchema& schema,
+  std::vector<QVariant>& boundValuesOut,
+  const OptionalIID& defaultTableId) const
 {
   if (m_termElements.size() == 0)
   {
@@ -99,7 +102,7 @@ QString Expr::toQString(API::ISchema& schema, const OptionalIID& defaultTableId)
       result.append(" ");
     }
 
-    result.append(term->toQString(schema, defaultTableId));
+    result.append(term->toQueryString(schema, boundValuesOut, defaultTableId));
   }
 
   return result;

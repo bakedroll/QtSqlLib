@@ -46,7 +46,10 @@ public:
 
   Expr& braces(Expr& nestedExpr);
 
-  QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId = std::nullopt) const;
+  QString toQueryString(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValuesOut,
+    const OptionalIID& defaultTableId = std::nullopt) const;
 
 private:
   enum class NextTermExpectation

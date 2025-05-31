@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QString>
+#include <QVariant>
 
 #include <optional>
+#include <vector>
 
 namespace QtSqlLib::API
 {
@@ -20,7 +22,10 @@ public:
 
   ITermElement() = default;
   virtual ~ITermElement() = default;
-  virtual QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId = std::nullopt) const = 0;
+  virtual QString toQueryString(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValuesOut,
+    const OptionalIID& defaultTableId = std::nullopt) const = 0;
 
 };
 

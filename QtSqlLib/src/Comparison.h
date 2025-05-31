@@ -27,7 +27,10 @@ public:
   Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs);
   ~Comparison() override;
 
-  QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
+  QString toQueryString(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValuesOut,
+    const OptionalIID& defaultTableId) const override;
 
 private:
   ComparisonOperator m_operator;

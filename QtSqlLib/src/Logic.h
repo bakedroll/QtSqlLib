@@ -13,7 +13,10 @@ public:
   explicit Logic(LogicalOperator op);
   ~Logic() override;
 
-  QString toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const override;
+  QString toQueryString(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValuesOut,
+    const OptionalIID& defaultTableId) const override;
 
 private:
   LogicalOperator m_operator;

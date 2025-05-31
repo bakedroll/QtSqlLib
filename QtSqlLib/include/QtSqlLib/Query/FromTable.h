@@ -76,7 +76,10 @@ private:
     API::IID::Type childTableId,
     const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap);
 
-  QString processJoinsAndCreateQuerySubstring(API::ISchema& schema, const API::Table& table);
+  QString processJoinsAndCreateQuerySubstring(
+    API::ISchema& schema,
+    std::vector<QVariant>& boundValues,
+    const API::Table& table);
 
   QString createSelectString(API::ISchema& schema) const;
   void appendJoinQuerySubstring(
@@ -85,7 +88,8 @@ private:
     API::IID::Type childTableId, const QString& childTableAlias,
     const API::Table& joinTable, const QString& joinTableAlias,
     const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
-    int foreignKeyReferencesIndex);
+    int foreignKeyReferencesIndex,
+    std::vector<QVariant>& boundValues);
 
   QString tableAlias(const std::optional<API::IID::Type> relationshipId = std::nullopt) const;
 

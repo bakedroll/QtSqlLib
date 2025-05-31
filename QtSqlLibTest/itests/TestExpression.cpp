@@ -27,17 +27,31 @@ TEST(TextExpression, validity)
   expr1.LESS(Table1Cols::Id, 2).AND.EQUAL(Table1Cols::Text, "test1");
 
   QtSqlLib::ID tid(TableIds::Table1);
-  EXPECT_EQ(expr1.toQString(schema, tid), "'test'.'id' < 2 AND 'test'.'test' == 'test1'");
+  std::vector<QVariant> boundValues1;
+  EXPECT_EQ(expr1.toQueryString(schema, boundValues1, tid), "'test'.'id' < ? AND 'test'.'test' == ?");
+
+  ASSERT_EQ(boundValues1.size(), 2);
+  EXPECT_EQ(boundValues1.at(0), 2);
+  EXPECT_EQ(boundValues1.at(1), "test1");
 
   Expr expr2;
   expr2._(UNEQUAL(Table1Cols::Id, 2).AND.UNEQUAL(Table1Cols::Text, "test1")).OR._(GREATER(Table1Cols::Id, 3));
 
-  EXPECT_EQ(expr2.toQString(schema, tid), "('test'.'id' != 2 AND 'test'.'test' != 'test1') OR ('test'.'id' > 3)");
+  std::vector<QVariant> boundValues2;
+  EXPECT_EQ(expr2.toQueryString(schema, boundValues2, tid), "('test'.'id' != ? AND 'test'.'test' != ?) OR ('test'.'id' > ?)");
+
+  ASSERT_EQ(boundValues2.size(), 3);
+  EXPECT_EQ(boundValues2.at(0), 2);
+  EXPECT_EQ(boundValues2.at(1), "test1");
+  EXPECT_EQ(boundValues2.at(2), 3);
 
   Expr expr3;
   expr3.LESS_COL(Table1Cols::Id, Table1Cols::Number);
 
-  EXPECT_EQ(expr3.toQString(schema, tid), "'test'.'id' < 'test'.'number'");
+  std::vector<QVariant> boundValues3;
+  EXPECT_EQ(expr3.toQueryString(schema, boundValues3, tid), "'test'.'id' < 'test'.'number'");
+
+  EXPECT_TRUE(boundValues3.empty());
 }
 
 /**
@@ -76,7 +90,8 @@ TEST(TextExpression, exceptions)
     expr.LESS(Table1Cols::Id, 2).AND;
 
     QtSqlLib::ID tid(TableIds::Table1);
-    expr.toQString(schema, tid);
+    std::vector<QVariant> boundValues;
+    expr.toQueryString(schema, boundValues, tid);
   };
 
   const auto assembleExpr4 = [&schema]()
@@ -84,7 +99,8 @@ TEST(TextExpression, exceptions)
     // Expressions must not be empty
     const Expr expr;
     QtSqlLib::ID tid(TableIds::Table1);
-    expr.toQString(schema, tid);
+    std::vector<QVariant> boundValues;
+    expr.toQueryString(schema, boundValues, tid);
   };
 
   EXPECT_THROW(assembleExpr1(), DatabaseException);

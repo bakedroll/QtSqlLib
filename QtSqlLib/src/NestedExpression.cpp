@@ -12,9 +12,12 @@ NestedExpression::NestedExpression(Expr& expr)
 
 NestedExpression::~NestedExpression() = default;
 
-QString NestedExpression::toQString(API::ISchema& schema, const OptionalIID& defaultTableId) const
+QString NestedExpression::toQueryString(
+  API::ISchema& schema,
+  std::vector<QVariant>& boundValuesOut,
+  const OptionalIID& defaultTableId) const
 {
-  return QString("(%1)").arg(m_nestedExpr->toQString(schema, defaultTableId));
+  return QString("(%1)").arg(m_nestedExpr->toQueryString(schema, boundValuesOut, defaultTableId));
 }
 
 }
