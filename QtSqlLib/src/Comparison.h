@@ -24,7 +24,7 @@ public:
     QVariant value;
   };
 
-  Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs);
+  Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs, bool noCase = false);
   ~Comparison() override;
 
   QString toQueryString(
@@ -33,6 +33,7 @@ public:
     const OptionalIID& defaultTableId) const override;
 
 private:
+  bool m_noCase;
   ComparisonOperator m_operator;
   Operand m_lhs;
   Operand m_rhs;

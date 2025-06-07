@@ -32,12 +32,12 @@ public:
 
   virtual ~Expr();
 
-  Expr& equal(const ColumnID& columnId, const QVariant& value);
-  Expr& unequal(const ColumnID& columnId, const QVariant& value);
-  Expr& lessEqual(const ColumnID& columnId, const QVariant& value);
-  Expr& less(const ColumnID& columnId, const QVariant& value);
-  Expr& greaterEqual(const ColumnID& columnId, const QVariant& value);
-  Expr& greater(const ColumnID& columnId, const QVariant& value);
+  Expr& equal(const ColumnID& columnId, const QVariant& value, bool noCase = false);
+  Expr& unequal(const ColumnID& columnId, const QVariant& value, bool noCase = false);
+  Expr& lessEqual(const ColumnID& columnId, const QVariant& value, bool noCase = false);
+  Expr& less(const ColumnID& columnId, const QVariant& value, bool noCase = false);
+  Expr& greaterEqual(const ColumnID& columnId, const QVariant& value, bool noCase = false);
+  Expr& greater(const ColumnID& columnId, const QVariant& value, bool noCase = false);
 
   Expr& isNull(const ColumnID& columnId);
 
@@ -58,7 +58,7 @@ private:
     LogicalOperator
   };
 
-  Expr& addComparison(ComparisonOperator op, const ColumnID& colIdLhs, const QVariant& value);
+  Expr& addComparison(ComparisonOperator op, const ColumnID& colIdLhs, const QVariant& value, bool noCase);
   Expr& addComparison(std::unique_ptr<ITermElement>&& comparison);
   Expr& addLogic(std::unique_ptr<ITermElement>&& logic);
 

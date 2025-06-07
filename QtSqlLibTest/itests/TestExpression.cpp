@@ -28,7 +28,7 @@ TEST(TextExpression, validity)
 
   QtSqlLib::ID tid(TableIds::Table1);
   std::vector<QVariant> boundValues1;
-  EXPECT_EQ(expr1.toQueryString(schema, boundValues1, tid), "'test'.'id' < ? AND 'test'.'test' == ?");
+  EXPECT_EQ(expr1.toQueryString(schema, boundValues1, tid), "'test'.'id' < ? AND 'test'.'test' = ?");
 
   ASSERT_EQ(boundValues1.size(), 2);
   EXPECT_EQ(boundValues1.at(0), 2);
@@ -46,12 +46,21 @@ TEST(TextExpression, validity)
   EXPECT_EQ(boundValues2.at(2), 3);
 
   Expr expr3;
-  expr3.LESS_COL(Table1Cols::Id, Table1Cols::Number);
+  expr3.EQUAL_NOCASE(Table1Cols::Text, "test1");
 
   std::vector<QVariant> boundValues3;
-  EXPECT_EQ(expr3.toQueryString(schema, boundValues3, tid), "'test'.'id' < 'test'.'number'");
+  EXPECT_EQ(expr3.toQueryString(schema, boundValues3, tid), "'test'.'test' = ? COLLATE NOCASE");
 
-  EXPECT_TRUE(boundValues3.empty());
+  ASSERT_EQ(boundValues3.size(), 1);
+  EXPECT_EQ(boundValues3.at(0), "test1");
+
+  Expr expr4;
+  expr4.LESS_COL(Table1Cols::Id, Table1Cols::Number);
+
+  std::vector<QVariant> boundValues4;
+  EXPECT_EQ(expr4.toQueryString(schema, boundValues4, tid), "'test'.'id' < 'test'.'number'");
+
+  EXPECT_TRUE(boundValues4.empty());
 }
 
 /**

@@ -21,39 +21,39 @@ Expr::Expr(Expr&& other) noexcept = default;
 
 Expr::~Expr() = default;
 
-Expr& Expr::equal(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::equal(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::Equal, columnId, value);
+  return addComparison(ComparisonOperator::Equal, columnId, value, noCase);
 }
 
-Expr& Expr::unequal(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::unequal(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::Unequal, columnId, value);
+  return addComparison(ComparisonOperator::Unequal, columnId, value, noCase);
 }
 
-Expr& Expr::lessEqual(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::lessEqual(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::LessEqual, columnId, value);
+  return addComparison(ComparisonOperator::LessEqual, columnId, value, noCase);
 }
 
-Expr& Expr::less(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::less(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::Less, columnId, value);
+  return addComparison(ComparisonOperator::Less, columnId, value, noCase);
 }
 
-Expr& Expr::greaterEqual(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::greaterEqual(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::GreaterEqual, columnId, value);
+  return addComparison(ComparisonOperator::GreaterEqual, columnId, value, noCase);
 }
 
-Expr& Expr::greater(const ColumnID& columnId, const QVariant& value)
+Expr& Expr::greater(const ColumnID& columnId, const QVariant& value, bool noCase)
 {
-  return addComparison(ComparisonOperator::Greater, columnId, value);
+  return addComparison(ComparisonOperator::Greater, columnId, value, noCase);
 }
 
 Expr& Expr::isNull(const ColumnID& columnId)
 {
-  return addComparison(ComparisonOperator::IsNull, columnId, QVariant::fromValue(ColumnID()));
+  return addComparison(ComparisonOperator::IsNull, columnId, QVariant::fromValue(ColumnID()), false);
 }
 
 Expr& Expr::opOr()
@@ -108,11 +108,12 @@ QString Expr::toQueryString(
   return result;
 }
 
-Expr& Expr::addComparison(ComparisonOperator op, const ColumnID& colIdLhs, const QVariant& value)
+Expr& Expr::addComparison(ComparisonOperator op, const ColumnID& colIdLhs, const QVariant& value, bool noCase)
 {
   return addComparison(std::make_unique<Comparison>(op,
     Comparison::Operand { Comparison::OperandType::ColumnId, QVariant::fromValue(colIdLhs) },
-    Comparison::Operand { value.canConvert<ColumnID>() ? Comparison::OperandType::ColumnId : Comparison::OperandType::Value, value }));
+    Comparison::Operand { value.canConvert<ColumnID>() ? Comparison::OperandType::ColumnId : Comparison::OperandType::Value, value },
+    noCase));
 }
 
 Expr& Expr::addComparison(std::unique_ptr<ITermElement>&& comparison)

@@ -41,6 +41,24 @@
 #define GREATER(A, B) greater(QtSqlLib::ID(A), QVariant(B))
 #define GREATER_COL(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))))
 
+#define EQUAL_NOCASE(A, B) equal(QtSqlLib::ID(A), QVariant(B), true)
+#define EQUAL_COL_NOCASE(A, B) equal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
+#define UNEQUAL_NOCASE(A, B) unequal(QtSqlLib::ID(A), QVariant(B), true)
+#define UNEQUAL_COL_NOCASE(A, B) unequal(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
+#define LESSEQUAL_NOCASE(A, B) lessEqual(QtSqlLib::ID(A), QVariant(B), true)
+#define LESSEQUAL_COL_NOCASE(A, B) lessEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
+#define LESS_NOCASE(A, B) less(QtSqlLib::ID(A), QVariant(B), true)
+#define LESS_COL_NOCASE(A, B) less(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
+#define GREATEREQUAL_NOCASE(A, B) greaterEqual(QtSqlLib::ID(A), QVariant(B), true)
+#define GREATEREQUAL_COL_NOCASE(A, B) greaterEqual(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
+#define GREATER_NOCASE(A, B) greater(QtSqlLib::ID(A), QVariant(B))
+#define GREATER_COL_NOCASE(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
+
 #define ISNULL(A, B) greater(QtSqlLib::ID(A))
 
 #define OR opOr()
