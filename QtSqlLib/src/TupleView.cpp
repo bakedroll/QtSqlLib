@@ -1,11 +1,14 @@
 #include "QtSqlLib/TupleView.h"
 
+#include "QtSqlLib/DatabaseException.h"
+
 namespace QtSqlLib
 {
 
 TupleView::TupleView(
     const QSqlQuery& sqlQuery,
     const API::QueryMetaInfo& queryMetaInfo) :
+  m_queryPos(sqlQuery.at()),
   m_sqlQuery(sqlQuery),
   m_queryMetaInfo(queryMetaInfo)
 {
@@ -25,6 +28,8 @@ std::optional<API::IID::Type> TupleView::relationshipId() const
 
 PrimaryKey TupleView::primaryKey() const
 {
+  throwIfInvalidated();
+
   const auto& primaryKeyIndices = m_queryMetaInfo.primaryKeyColumnIndices;
   if (primaryKeyIndices.empty())
   {
@@ -59,6 +64,8 @@ bool TupleView::hasColumnValueIntern(const API::IID& columnId) const
 
 QVariant TupleView::columnValueIntern(const API::IID& columnId) const
 {
+  throwIfInvalidated();
+
   auto& columns = m_queryMetaInfo.columns.cdata();
   for (size_t i=0; i<columns.size(); ++i)
   {
@@ -68,6 +75,14 @@ QVariant TupleView::columnValueIntern(const API::IID& columnId) const
     }
   }
   return {};
+}
+
+void TupleView::throwIfInvalidated() const
+{
+  if (m_queryPos != m_sqlQuery.at())
+  {
+    throw DatabaseException(DatabaseException::Type::UnexpectedError, "Queried tuple invalidated.");
+  }
 }
 
 }

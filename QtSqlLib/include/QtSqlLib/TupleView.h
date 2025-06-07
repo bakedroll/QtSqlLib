@@ -25,8 +25,6 @@ public:
   std::optional<API::IID::Type> relationshipId() const;
 
   PrimaryKey primaryKey() const;
-  // TOOD: implementation needed?
-  //const std::vector<QVariant>& values() const;
 
   template <typename T>
   bool hasColumnValue(const T& columnId) const
@@ -41,11 +39,14 @@ public:
   }
 
 private:
+  int m_queryPos;
   const QSqlQuery& m_sqlQuery;
   const API::QueryMetaInfo& m_queryMetaInfo;
 
   bool hasColumnValueIntern(const API::IID& columnId) const;
   QVariant columnValueIntern(const API::IID& columnId) const;
+
+  void throwIfInvalidated() const;
 
 };
 
