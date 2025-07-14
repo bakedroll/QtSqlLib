@@ -7,6 +7,7 @@
 #include <QtSqlLib/API/ITableConfigurator.h>
 #include <QtSqlLib/ColumnID.h>
 #include <QtSqlLib/ColumnList.h>
+#include <QtSqlLib/ColumnStatistics.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>
@@ -31,18 +32,19 @@ namespace QtSqlLibTest
 {
 
 using BatchInsertInto = QtSqlLib::Query::BatchInsertInto;
-using DatabaseException = QtSqlLib::DatabaseException;
+using ColumnStatistics = QtSqlLib::ColumnStatistics;
 using DataType = QtSqlLib::API::DataType;
+using DatabaseException = QtSqlLib::DatabaseException;
 using DeleteFrom = QtSqlLib::Query::DeleteFrom;
 using Expr = QtSqlLib::Expr;
 using FromTable = QtSqlLib::Query::FromTable;
 using IID = QtSqlLib::API::IID;
-using InsertInto = QtSqlLib::Query::InsertInto;
-using InsertIntoExt = QtSqlLib::Query::InsertIntoExt;
 using IQuery = QtSqlLib::API::IQuery;
 using IQuerySequence = QtSqlLib::API::IQuerySequence;
 using IQueryVisitor = QtSqlLib::API::IQueryVisitor;
 using ISchema = QtSqlLib::API::ISchema;
+using InsertInto = QtSqlLib::Query::InsertInto;
+using InsertIntoExt = QtSqlLib::Query::InsertIntoExt;
 using LinkTuples = QtSqlLib::Query::LinkTuples;
 using Query = QtSqlLib::Query::Query;
 using QuerySequence = QtSqlLib::Query::QuerySequence;
