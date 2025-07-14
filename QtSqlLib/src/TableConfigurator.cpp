@@ -5,6 +5,8 @@
 namespace QtSqlLib
 {
 
+static constexpr size_t sc_max27Bits = 0x7FFFFFF;
+
 static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
 {
   return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
@@ -18,10 +20,17 @@ TableConfigurator::TableConfigurator(API::Table& table)
 
 TableConfigurator::~TableConfigurator() = default;
 
-API::ITableConfigurator& TableConfigurator::column(const API::IID& columnId, const QString& columnName,
-                                                   API::DataType type, int varcharLength)
+API::ITableConfigurator& TableConfigurator::column(
+  const API::IID& columnId, const QString& columnName,
+  API::DataType type, int varcharLength)
 {
   const auto cid = columnId.get();
+  if (cid > sc_max27Bits)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Column with id %1 for table '%2' exceeds the maximum allowed range of 27 bits.").arg(cid).arg(m_table.name));
+  }
+
   if (m_table.columns.count(cid) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,

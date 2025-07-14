@@ -107,7 +107,42 @@ FromTable& FromTable::where(Expr& expr)
   return *this;
 }
 
-// TODO: optimize by preventing duplicate column selections
+FromTable& FromTable::having(Expr& expr)
+{
+  if (m_havingExpr)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "having() should only be called once.");
+  }
+
+  m_havingExpr = std::make_unique<Expr>(std::move(expr));
+  return *this;
+}
+
+FromTable& FromTable::groupBy(const GroupColumnList& columns)
+{
+  if (!m_groupColumns.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "groupBy() should only be called once.");
+  }
+
+  m_groupColumns = columns;
+  return *this;
+}
+
+FromTable& FromTable::orderBy(const OrderColumnList& columns)
+{
+  if (!m_orderColumns.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "orderBy() should only be called once.");
+  }
+
+  m_orderColumns = columns;
+  return *this;
+}
+
 API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& /*previousQueryResults*/)
 {
   if (!m_hasColumnsSelected)

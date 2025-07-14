@@ -4,6 +4,7 @@
 
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
+#include <QtSqlLib/ColumnID.h>
 #include <QtSqlLib/ColumnList.h>
 
 #include <QString>
@@ -23,6 +24,21 @@ namespace QtSqlLib::Query
 class FromTable : public Query
 {
 public:
+  enum class EOrder
+  {
+    Ascending,
+    Descending
+  };
+
+  struct OrderColumn
+  {
+    ColumnID columnId;
+    EOrder order = EOrder::Ascending;
+  };
+
+  using GroupColumnList = std::vector<ColumnID>;
+  using OrderColumnList = std::vector<ColumnID>;
+
   FromTable(const API::IID& tableId);
   ~FromTable() override;
 
@@ -33,6 +49,10 @@ public:
   FromTable& join(const API::IID& relationshipId, const ColumnList& columns);
 
   FromTable& where(Expr& expr);
+  FromTable& having(Expr& expr);
+
+  FromTable& groupBy(const GroupColumnList& columnIds);
+  FromTable& orderBy(const OrderColumnList& columnIds);
 
   SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& previousQueryResults) override;
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
@@ -61,6 +81,10 @@ private:
   std::vector<SelectedColumn> m_compiledColumnSelection;
 
   std::unique_ptr<Expr> m_whereExpr;
+  std::unique_ptr<Expr> m_havingExpr;
+
+  GroupColumnList m_groupColumns;
+  OrderColumnList m_orderColumns;
 
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(API::IID::Type relationshipId) const;

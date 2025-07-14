@@ -59,7 +59,7 @@
 #define GREATER_NOCASE(A, B) greater(QtSqlLib::ID(A), QVariant(B))
 #define GREATER_COL_NOCASE(A, B) greater(QtSqlLib::ID(A), QVariant::fromValue(QtSqlLib::ColumnID(QtSqlLib::ID(B))), true)
 
-#define ISNULL(A, B) greater(QtSqlLib::ID(A))
+#define ISNULL(A, B) isNull(QtSqlLib::ID(A))
 
 #define OR opOr()
 #define AND opAnd()
