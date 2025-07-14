@@ -3,7 +3,7 @@
 namespace QtSqlLib
 {
 
-enum class ComparisonOperator
+enum class EComparisonOperator
 {
   Equal,
   Unequal,

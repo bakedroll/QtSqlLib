@@ -1,7 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/API/IID.h>
-#include <QtSqlLib/ColumnList.h>
+#include <QtSqlLib/ColumnHelper.h>
 
 #include <QVariant>
 
@@ -60,8 +60,8 @@ struct Table
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
 
-  std::vector<IID::Type> primaryKeys;
-  std::vector<IID::Type> uniqueColIds;
+  ColumnHelper::SelectColumnList primaryKeys;
+  ColumnHelper::SelectColumnList uniqueColIds;
 };
 
 enum class RelationshipType
@@ -85,7 +85,7 @@ struct Index
 {
   IID::Type tableId = 0;
   QString name;
-  ColumnList columns;
+  ColumnHelper::SelectColumnList columns;
   bool isUnique = false;
 };
 
@@ -93,7 +93,7 @@ struct QueryMetaInfo
 {
   API::IID::Type tableId = 0;
   std::optional<API::IID::Type> relationshipId;
-  ColumnList columns;
+  ColumnHelper::SelectColumnList columns;
   std::vector<size_t> columnQueryIndices;
   std::vector<size_t> primaryKeyColumnIndices;
 };

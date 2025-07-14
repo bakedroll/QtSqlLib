@@ -5,9 +5,10 @@
 namespace QtSqlLib
 {
 
-static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
 {
-  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+  return std::find_if(columns.cbegin(), columns.cend(),
+    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
 }
 
 TableConfigurator::TableConfigurator(API::Table& table)
@@ -18,10 +19,17 @@ TableConfigurator::TableConfigurator(API::Table& table)
 
 TableConfigurator::~TableConfigurator() = default;
 
-API::ITableConfigurator& TableConfigurator::column(const API::IID& columnId, const QString& columnName,
-                                                   API::DataType type, int varcharLength)
+API::ITableConfigurator& TableConfigurator::column(
+  const API::IID& columnId, const QString& columnName,
+  API::DataType type, int varcharLength)
 {
   const auto cid = columnId.get();
+  if ((cid & API::IID::sc_columnIdReservedBits) != 0x0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Column with id %1 for table '%2' exceeds the maximum allowed range of 27 bits.").arg(cid).arg(m_table.name));
+  }
+
   if (m_table.columns.count(cid) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
@@ -127,7 +135,7 @@ API::ITableConfigurator& TableConfigurator::unique()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& columns)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::SelectColumnList& columns)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -135,32 +143,26 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& column
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columns.cdata())
-  {
-    m_table.primaryKeys.emplace_back(id);
-  }
+  m_table.primaryKeys = columns;
   m_bIsPrimaryKeysConfigured = true;
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnList& columns)
+API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::SelectColumnList& columns)
 {
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columns.cdata())
-  {
-    m_table.uniqueColIds.emplace_back(id);
-  }
+  m_table.uniqueColIds = columns;
   return *this;
 }
 

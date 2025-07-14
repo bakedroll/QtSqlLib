@@ -19,8 +19,8 @@ public:
 
   QString toQueryString(
     API::ISchema& schema,
-    std::vector<QVariant>& boundValuesOut,
-    const OptionalIID& defaultTableId) const override;
+    const API::IQueryIdentifiers& queryIdentifiers,
+    std::vector<QVariant>& boundValuesOut) const override;
 
 private:
   std::unique_ptr<Expr> m_nestedExpr;

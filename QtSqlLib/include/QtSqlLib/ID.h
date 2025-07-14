@@ -4,6 +4,8 @@
 
 #include <QtSqlLib/API/IID.h>
 
+#include <QtSqlLib/ColumnStatistics.h>
+
 namespace QtSqlLib
 {
 

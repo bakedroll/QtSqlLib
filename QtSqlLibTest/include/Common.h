@@ -5,8 +5,8 @@
 #include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/API/IRelationshipConfigurator.h>
 #include <QtSqlLib/API/ITableConfigurator.h>
-#include <QtSqlLib/ColumnID.h>
-#include <QtSqlLib/ColumnList.h>
+#include <QtSqlLib/ColumnHelper.h>
+#include <QtSqlLib/ColumnStatistics.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>
@@ -21,6 +21,7 @@
 #include <QtSqlLib/Query/QuerySequence.h>
 #include <QtSqlLib/Query/UnlinkTuples.h>
 #include <QtSqlLib/Query/UpdateTable.h>
+#include <QtSqlLib/QueryIdentifiers.h>
 #include <QtSqlLib/ResultSet.h>
 #include <QtSqlLib/Schema.h>
 #include <QtSqlLib/SchemaConfigurator.h>
@@ -31,18 +32,19 @@ namespace QtSqlLibTest
 {
 
 using BatchInsertInto = QtSqlLib::Query::BatchInsertInto;
-using DatabaseException = QtSqlLib::DatabaseException;
+using ColumnStatistics = QtSqlLib::ColumnStatistics;
 using DataType = QtSqlLib::API::DataType;
+using DatabaseException = QtSqlLib::DatabaseException;
 using DeleteFrom = QtSqlLib::Query::DeleteFrom;
 using Expr = QtSqlLib::Expr;
 using FromTable = QtSqlLib::Query::FromTable;
 using IID = QtSqlLib::API::IID;
-using InsertInto = QtSqlLib::Query::InsertInto;
-using InsertIntoExt = QtSqlLib::Query::InsertIntoExt;
 using IQuery = QtSqlLib::API::IQuery;
 using IQuerySequence = QtSqlLib::API::IQuerySequence;
 using IQueryVisitor = QtSqlLib::API::IQueryVisitor;
 using ISchema = QtSqlLib::API::ISchema;
+using InsertInto = QtSqlLib::Query::InsertInto;
+using InsertIntoExt = QtSqlLib::Query::InsertIntoExt;
 using LinkTuples = QtSqlLib::Query::LinkTuples;
 using Query = QtSqlLib::Query::Query;
 using QuerySequence = QtSqlLib::Query::QuerySequence;
@@ -57,7 +59,9 @@ enum class TableIds
   Table2,
   Students,
   Professors,
-  Lectures
+  Lectures,
+  Albums,
+  Tracks
 };
 
 enum class Table1Cols
@@ -93,10 +97,24 @@ enum class LecturesCols
   Topic = 8U
 };
 
+enum class AlbumsCols
+{
+  Id,
+  Name
+};
+
+enum class TracksCols
+{
+  Id,
+  Name,
+  Length
+};
+
 enum class Relationships
 {
   StudentsConfidant,
   LectureParticipant,
+  AlbumTracks,
   Lecturer,
   Special1,
   Special2,

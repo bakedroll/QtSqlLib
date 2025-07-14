@@ -5,6 +5,7 @@
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
+#include "QtSqlLib/QueryIdentifiers.h"
 
 namespace QtSqlLib::Query
 {
@@ -69,8 +70,9 @@ API::IQuery::SqlQuery UpdateTable::getSqlQuery(const QSqlDatabase& db, API::ISch
   std::vector<QVariant> boundValues;
   if (m_whereExpr)
   {
-    ID tid(m_tableId);
-    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, boundValues, tid)));
+    QueryIdentifiers identifiers;
+    identifiers.addTableIdentifier(std::nullopt, m_tableId);
+    queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, identifiers, boundValues)));
   }
 
   queryStr.append(";");

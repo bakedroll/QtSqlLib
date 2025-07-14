@@ -23,8 +23,8 @@ public:
   ITableConfigurator& notNull() override;
   ITableConfigurator& unique() override;
 
-  ITableConfigurator& primaryKeys(const ColumnList& columns) override;
-  ITableConfigurator& uniqueCols(const ColumnList& columns) override;
+  ITableConfigurator& primaryKeys(const ColumnHelper::SelectColumnList& columns) override;
+  ITableConfigurator& uniqueCols(const ColumnHelper::SelectColumnList& columns) override;
 
 private:
   API::Table& m_table;

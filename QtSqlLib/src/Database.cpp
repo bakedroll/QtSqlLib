@@ -2,8 +2,7 @@
 
 #include "QtSqlLib/API/ISchemaConfigurator.h"
 #include "QtSqlLib/API/ITableConfigurator.h"
-#include "QtSqlLib/ColumnID.h"
-#include "QtSqlLib/ColumnList.h"
+#include "QtSqlLib/ColumnHelper.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -37,12 +36,12 @@ static const QString s_versionTableName = "database_version";
 
 static void verifyPrimaryKeys(const API::Table& table)
 {
-  for (const auto& key : table.primaryKeys)
+  for (const auto& col : table.primaryKeys)
   {
     auto found = false;
     for (const auto& column : table.columns)
     {
-      if (column.first == key)
+      if (column.first == col.columnId)
       {
         found = true;
         break;
@@ -139,7 +138,7 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select(ColumnList{s_versionColId}));
+  auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select(ColumnHelper::SelectColumnList{s_versionColId}));
   if (!results.hasNextTuple())
   {
     return -1;
@@ -219,11 +218,11 @@ bool Database::isVersionTableExisting() const
 
   auto results = execQueryForSchema(sqliteMasterSchema,
     Query::FromTable(ID(s_sqliteMasterTableId))
-    .select(ColumnList{s_sqliteMasterNameColId})
+    .select(ColumnHelper::SelectColumnList{s_sqliteMasterNameColId})
     .where(Expr()
-      .equal(ID(s_sqliteMasterTypeColId), "table")
+      .equal(s_sqliteMasterTypeColId, QVariant("table"))
       .opAnd()
-      .equal(ID(s_sqliteMasterNameColId), s_versionTableName)));
+      .equal(s_sqliteMasterNameColId, QVariant(s_versionTableName))));
 
   return results.hasNextTuple();
 }

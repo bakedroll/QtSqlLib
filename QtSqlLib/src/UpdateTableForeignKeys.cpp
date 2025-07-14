@@ -1,6 +1,5 @@
 #include "UpdateTableForeignKeys.h"
 
-#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -42,7 +41,7 @@ void UpdateTableForeignKeys::makeAndAddWhereExpr(const PrimaryKey& affectedChild
     {
       whereExpr.opAnd();
     }
-    whereExpr.equal(ID(childKeyValue.columnId), childKeyValue.value);
+    whereExpr.equal(childKeyValue.columnId, childKeyValue.value);
   }
 
   where(whereExpr);

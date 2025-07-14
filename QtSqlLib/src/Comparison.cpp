@@ -1,18 +1,18 @@
 #include "Comparison.h"
 
+#include "QtSqlLib/API/IQueryIdentifiers.h"
 #include "QtSqlLib/API/ISanityChecker.h"
 #include "QtSqlLib/API/ISchema.h"
-#include "QtSqlLib/ColumnID.h"
 
 namespace QtSqlLib
 {
 
-Comparison::Comparison(ComparisonOperator op, const Operand& lhs, const Operand& rhs, bool noCase)
-  : ITermElement()
-  , m_noCase(noCase)
-  , m_operator(op)
-  , m_lhs(lhs)
-  , m_rhs(rhs)
+Comparison::Comparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs, bool noCase) :
+  ITermElement(),
+  m_noCase(noCase),
+  m_operator(op),
+  m_lhs(lhs),
+  m_rhs(rhs)
 {
 }
 
@@ -20,72 +20,48 @@ Comparison::~Comparison() = default;
 
 QString Comparison::toQueryString(
   API::ISchema& schema,
-  std::vector<QVariant>& boundValuesOut,
-  const OptionalIID& defaultTableId = std::nullopt) const
+  const API::IQueryIdentifiers& queryIdentifiers,
+  std::vector<QVariant>& boundValuesOut) const
 {
-  const auto getOperandString = [&schema, &boundValuesOut, &defaultTableId](const Operand& operand) -> QString
+  const auto getOperandString = [&schema, &queryIdentifiers, &boundValuesOut](const QVariant& operand) -> QString
   {
-    switch (operand.type)
+    if (operand.canConvert<ColumnHelper::ColumnData>())
     {
-    case OperandType::ColumnId:
-    {
-      const auto columnId = operand.value.value<ColumnID>();
-      if (!defaultTableId.has_value() && !columnId.isTableIdValid())
-      {
-        return "NULL";
-      }
-      else if (defaultTableId && !columnId.isTableIdValid())
-      {
-        schema.getSanityChecker().throwIfTableIdNotExisting(defaultTableId->get().get());
-      }
-
-      const auto colId = columnId.columnId();
-      const auto& table = schema.getTables().at(columnId.isTableIdValid()
-        ? columnId.tableId()
-        : defaultTableId->get().get());
-
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, colId);
-
-      const auto tableAlias = columnId.tableAlias();
-
-      return QString("'%1'.'%2'").arg(tableAlias.isEmpty() ? table.name : tableAlias).arg(table.columns.at(colId).name);
+      const auto columnData = operand.value<ColumnHelper::ColumnData>();
+      return queryIdentifiers.resolveColumnIdentifier(schema, columnData);
     }
-    case OperandType::Value:
+    if (operand.isNull())
     {
-      boundValuesOut.emplace_back(operand.value);
-      return "?";
-    }
-    default:
-      assert(false);
-      break;
+      return "NULL";
     }
 
-    return "";
+    boundValuesOut.emplace_back(operand);
+    return "?";
   };
 
   QString operatorStr;
   switch (m_operator)
   {
-  case ComparisonOperator::Equal:
+  case EComparisonOperator::Equal:
     operatorStr = "=";
     break;
-  case ComparisonOperator::Unequal:
+  case EComparisonOperator::Unequal:
     operatorStr = "!=";
     break;
-  case ComparisonOperator::LessEqual:
+  case EComparisonOperator::LessEqual:
     operatorStr = "<=";
     break;
-  case ComparisonOperator::Less:
+  case EComparisonOperator::Less:
     operatorStr = "<";
     break;
-  case ComparisonOperator::GreaterEqual:
+  case EComparisonOperator::GreaterEqual:
     operatorStr = ">=";
     break;
-  case ComparisonOperator::Greater:
+  case EComparisonOperator::Greater:
     operatorStr = ">";
     break;
-  case ComparisonOperator::IsNull:
-    operatorStr = "is";
+  case EComparisonOperator::IsNull:
+    operatorStr = "IS";
     break;
   default:
     assert(false);

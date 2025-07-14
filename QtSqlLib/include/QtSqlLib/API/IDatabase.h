@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/ResultSet.h>
 
 #include <QSqlDatabase>

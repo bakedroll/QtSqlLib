@@ -4,6 +4,8 @@
 
 #include <mocks/MockSanityChecker.h>
 
+#include <QtSqlLib/QueryIdentifiers.h>
+
 namespace QtSqlLibTest
 {
 
@@ -13,9 +15,9 @@ namespace QtSqlLibTest
  */
 TEST(TextExpression, validity)
 {
-  auto sanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
+  auto pMockSanityChecker = std::make_unique<NiceMock<MockSanityChecker>>();
   Schema schema;
-  schema.setSanityChecker(std::move(sanityChecker));
+  schema.setSanityChecker(std::move(pMockSanityChecker));
 
   auto& table = schema.getTables()[static_cast<int>(TableIds::Table1)];
   table.name = "test";
@@ -23,12 +25,14 @@ TEST(TextExpression, validity)
   table.columns[static_cast<int>(Table1Cols::Text)].name = "test";
   table.columns[static_cast<int>(Table1Cols::Number)].name = "number";
 
+  QtSqlLib::QueryIdentifiers queryIdentifiers;
+  queryIdentifiers.addTableIdentifier(std::nullopt, static_cast<QtSqlLib::API::IID::Type>(TableIds::Table1));
+
   Expr expr1;
   expr1.LESS(Table1Cols::Id, 2).AND.EQUAL(Table1Cols::Text, "test1");
 
-  QtSqlLib::ID tid(TableIds::Table1);
   std::vector<QVariant> boundValues1;
-  EXPECT_EQ(expr1.toQueryString(schema, boundValues1, tid), "'test'.'id' < ? AND 'test'.'test' = ?");
+  EXPECT_EQ(expr1.toQueryString(schema, queryIdentifiers, boundValues1), "'test'.'id' < ? AND 'test'.'test' = ?");
 
   ASSERT_EQ(boundValues1.size(), 2);
   EXPECT_EQ(boundValues1.at(0), 2);
@@ -38,7 +42,7 @@ TEST(TextExpression, validity)
   expr2._(UNEQUAL(Table1Cols::Id, 2).AND.UNEQUAL(Table1Cols::Text, "test1")).OR._(GREATER(Table1Cols::Id, 3));
 
   std::vector<QVariant> boundValues2;
-  EXPECT_EQ(expr2.toQueryString(schema, boundValues2, tid), "('test'.'id' != ? AND 'test'.'test' != ?) OR ('test'.'id' > ?)");
+  EXPECT_EQ(expr2.toQueryString(schema, queryIdentifiers, boundValues2), "('test'.'id' != ? AND 'test'.'test' != ?) OR ('test'.'id' > ?)");
 
   ASSERT_EQ(boundValues2.size(), 3);
   EXPECT_EQ(boundValues2.at(0), 2);
@@ -49,7 +53,7 @@ TEST(TextExpression, validity)
   expr3.EQUAL_NOCASE(Table1Cols::Text, "test1");
 
   std::vector<QVariant> boundValues3;
-  EXPECT_EQ(expr3.toQueryString(schema, boundValues3, tid), "'test'.'test' = ? COLLATE NOCASE");
+  EXPECT_EQ(expr3.toQueryString(schema, queryIdentifiers, boundValues3), "'test'.'test' = ? COLLATE NOCASE");
 
   ASSERT_EQ(boundValues3.size(), 1);
   EXPECT_EQ(boundValues3.at(0), "test1");
@@ -58,12 +62,20 @@ TEST(TextExpression, validity)
   expr4.LESS_COL(Table1Cols::Id, Table1Cols::Number);
 
   std::vector<QVariant> boundValues4;
-  EXPECT_EQ(expr4.toQueryString(schema, boundValues4, tid), "'test'.'id' < 'test'.'number'");
+  EXPECT_EQ(expr4.toQueryString(schema, queryIdentifiers, boundValues4), "'test'.'id' < 'test'.'number'");
 
   EXPECT_TRUE(boundValues4.empty());
+
+  Expr expr5;
+  expr5.ISNULL(Table1Cols::Number);
+
+  std::vector<QVariant> boundValues5;
+  EXPECT_EQ(expr5.toQueryString(schema, queryIdentifiers, boundValues5), "'test'.'number' IS NULL");
+
+  EXPECT_TRUE(boundValues5.empty());
 }
 
-/**
+/**w
  * @test: Constructs various invalid expressions.
  * @expected: Exceptions will be thrown.
  */
@@ -77,6 +89,9 @@ TEST(TextExpression, exceptions)
   table.name = "test";
   table.columns[static_cast<int>(Table1Cols::Id)].name = "id";
   table.columns[static_cast<int>(Table1Cols::Text)].name = "test";
+
+  QtSqlLib::QueryIdentifiers queryIdentifiers;
+  queryIdentifiers.addTableIdentifier(std::nullopt, static_cast<QtSqlLib::API::IID::Type>(TableIds::Table1));
 
   const auto assembleExpr1 = []()
   {
@@ -92,24 +107,23 @@ TEST(TextExpression, exceptions)
     expr.OR.LESS(Table1Cols::Id, 2);
   };
 
-  const auto assembleExpr3 = [&schema]()
+  const auto assembleExpr3 = [&schema, &queryIdentifiers]()
   {
     // Expressions must not end with a logical operator
     Expr expr;
     expr.LESS(Table1Cols::Id, 2).AND;
 
-    QtSqlLib::ID tid(TableIds::Table1);
     std::vector<QVariant> boundValues;
-    expr.toQueryString(schema, boundValues, tid);
+    expr.toQueryString(schema, queryIdentifiers, boundValues);
   };
 
-  const auto assembleExpr4 = [&schema]()
+  const auto assembleExpr4 = [&schema, &queryIdentifiers]()
   {
     // Expressions must not be empty
     const Expr expr;
     QtSqlLib::ID tid(TableIds::Table1);
     std::vector<QVariant> boundValues;
-    expr.toQueryString(schema, boundValues, tid);
+    expr.toQueryString(schema, queryIdentifiers, boundValues);
   };
 
   EXPECT_THROW(assembleExpr1(), DatabaseException);

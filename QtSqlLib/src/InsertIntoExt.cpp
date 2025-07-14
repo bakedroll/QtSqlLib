@@ -154,14 +154,14 @@ void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(
 
   for (const auto& parentKeyCol : parentTable.primaryKeys)
   {
-    if (!linkedPrimaryKeys.hasValue(parentKeyCol))
+    if (!linkedPrimaryKeys.hasValue(parentKeyCol.columnId))
     {
       throw DatabaseException(DatabaseException::Type::QueryError,
-        QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol).name));
+        QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol.columnId).name));
     }
 
-    m_insertQuery->addColumn(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at(parentKeyCol)));
-    m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.value(parentKeyCol));
+    m_insertQuery->addColumn(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at(parentKeyCol.columnId)));
+    m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.value(parentKeyCol.columnId));
   }
 }
 

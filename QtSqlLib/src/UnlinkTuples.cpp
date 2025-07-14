@@ -1,6 +1,5 @@
 #include "QtSqlLib/Query/UnlinkTuples.h"
 
-#include "QtSqlLib/ColumnID.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
 #include "QtSqlLib/Query/DeleteFrom.h"
@@ -18,8 +17,7 @@ static Expr createWhereExpression(const PrimaryKey& childKeyValues)
     {
       whereExpr.opAnd();
     }
-
-    whereExpr.equal(ColumnID(ID(col.columnId)), col.value);
+    whereExpr.equal(col.columnId, col.value);
   }
   return whereExpr;
 }
