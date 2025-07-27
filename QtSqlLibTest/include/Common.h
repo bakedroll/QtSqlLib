@@ -59,7 +59,9 @@ enum class TableIds
   Table2,
   Students,
   Professors,
-  Lectures
+  Lectures,
+  Albums,
+  Tracks
 };
 
 enum class Table1Cols
@@ -95,10 +97,24 @@ enum class LecturesCols
   Topic = 8U
 };
 
+enum class AlbumsCols
+{
+  Id,
+  Name
+};
+
+enum class TracksCols
+{
+  Id,
+  Name,
+  Length
+};
+
 enum class Relationships
 {
   StudentsConfidant,
   LectureParticipant,
+  AlbumTracks,
   Lecturer,
   Special1,
   Special2,

@@ -86,6 +86,16 @@
 #define SELECT_ALL selectAll()
 #define SELECT(...) select(QtSqlLib::ColumnList::make(__VA_ARGS__))
 
+#define MIN(X) QtSqlLib::ColumnStatistics::min(QtSqlLib::ID(X).get()).id()
+#define MAX(X) QtSqlLib::ColumnStatistics::max(QtSqlLib::ID(X).get()).id()
+#define SUM(X) QtSqlLib::ColumnStatistics::sum(QtSqlLib::ID(X).get()).id()
+#define SUM_DISTINCT(X) QtSqlLib::ColumnStatistics::sum(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
+#define COUNT_ALL QtSqlLib::ColumnStatistics::count().id()
+#define COUNT(X) QtSqlLib::ColumnStatistics::count(QtSqlLib::ID(X).get()).id()
+#define COUNT_DISTINCT(X) QtSqlLib::ColumnStatistics::count(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
+#define AVG(X) QtSqlLib::ColumnStatistics::avg(QtSqlLib::ID(X).get()).id()
+#define AVG_DISTINCT(X) QtSqlLib::ColumnStatistics::avg(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
+
 #define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
 #define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnList::make(__VA_ARGS__))
 

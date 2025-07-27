@@ -25,7 +25,7 @@ API::ITableConfigurator& TableConfigurator::column(
   API::DataType type, int varcharLength)
 {
   const auto cid = columnId.get();
-  if (cid > sc_max27Bits)
+  if (static_cast<size_t>(cid) > sc_max27Bits)
   {
     throw DatabaseException(DatabaseException::Type::InvalidId,
       QString("Column with id %1 for table '%2' exceeds the maximum allowed range of 27 bits.").arg(cid).arg(m_table.name));

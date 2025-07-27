@@ -60,6 +60,7 @@ private:
 
 };
 
+// TODO: remove?
 template <>
 class ID<ColumnStatistics> : public API::IID
 {

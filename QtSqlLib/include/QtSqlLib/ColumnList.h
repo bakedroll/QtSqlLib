@@ -37,6 +37,23 @@ public:
   }
 
 private:
+  template<typename T, bool is_fundamental>
+  struct underlying_base
+  {
+    using type = std::underlying_type<T>::type;
+  };
+
+  template <typename T>
+  struct underlying_base<T, true>
+  {
+    using type = T;
+  };
+
+  template <typename T>
+  struct underlying : public underlying_base<T, std::is_fundamental_v<T>>
+  {
+  };
+
   explicit ColumnList(size_t size);
 
   std::vector<API::IID::Type> m_data;
@@ -58,7 +75,7 @@ private:
   template <typename T>
   static API::IID::Type castId(const T& value)
   {
-    return static_cast<API::IID::Type>(static_cast<typename std::underlying_type<T>::type>(value));
+    return static_cast<API::IID::Type>(static_cast<typename underlying<T>::type>(value));
   }
 
 };
