@@ -128,6 +128,8 @@ TEST_F(TestAggregationAndSorting, countAlbums)
 
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(COUNT_ALL));
+
+  EXPECT_EQ(results.nextTuple().columnValue(COUNT_ALL).toInt(), 3);
 }
 
 }

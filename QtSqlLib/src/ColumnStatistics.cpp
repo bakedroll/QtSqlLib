@@ -1,5 +1,7 @@
 #include <QtSqlLib/ColumnStatistics.h>
 
+#include <QtSqlLib/DatabaseException.h>
+
 #include <bitset>
 #include <cstddef>
 #include <type_traits>
@@ -56,6 +58,31 @@ ColumnStatistics ColumnStatistics::fromId(API::IID::Type id)
     static_cast<EMethod>((id & (0x02 << bitsColumnId)) >> (s_bitsIdType - 4)),
     static_cast<bool>((id & (0x01 << bitsColumnId)) >> (s_bitsIdType - 5)),
     id & columnIdBitmask.to_ulong());
+}
+
+QString ColumnStatistics::toString(EType type, EMethod method, const std::optional<QString>& column)
+{
+  QString expression = column.has_value()
+    ? QString("%1 %2").arg(method == EMethod::All ? "ALL" : "DISTINCT").arg(column.value())
+    : "*";
+
+  switch (type)
+  {
+  case EType::Min:
+    return QString("MIN(%1)").arg(expression);
+  case EType::Max:
+    return QString("MAX(%1)").arg(expression);
+  case EType::Sum:
+    return QString("SUM(%1)").arg(expression);
+  case EType::Count:
+    return QString("COUNT(%1)").arg(expression);
+  case EType::Avg:
+    return QString("AVG(%1)").arg(expression);
+  default:
+    break;
+  }
+
+  throw DatabaseException(DatabaseException::Type::UnexpectedError, "Unknown column statistics type");
 }
 
 API::IID::Type ColumnStatistics::id() const

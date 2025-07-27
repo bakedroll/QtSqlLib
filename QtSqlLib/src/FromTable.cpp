@@ -3,6 +3,7 @@
 #include "QtSqlLib/API/ISanityChecker.h"
 #include "QtSqlLib/API/ISchema.h"
 #include "QtSqlLib/ColumnID.h"
+#include "QtSqlLib/ColumnStatistics.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -284,14 +285,23 @@ void FromTable::addToSelectedColumns(
   for (size_t i=0; i<queryMetaInfo.columns.cdata().size(); ++i)
   {
     const auto columnId = queryMetaInfo.columns.cdata().at(i);
-    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
+    if (ColumnStatistics::isColumnStatistics(columnId))
+    {
+      const auto columnStatistics = ColumnStatistics::fromId(columnId);
+      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
+    }
+    else
+    {
+      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
+
+      if (contains(table.primaryKeys, columnId))
+      {
+        queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
+      }
+    }
 
     const auto indexInQuery = m_compiledColumnSelection.size();
     queryMetaInfo.columnQueryIndices[i] = indexInQuery;
-    if (contains(table.primaryKeys, columnId))
-    {
-      queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
-    }
 
     m_compiledColumnSelection.emplace_back(
       SelectedColumn{ alias, queryMetaInfo.tableId, columnId });
@@ -397,8 +407,6 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
 
 QString FromTable::createSelectString(API::ISchema& schema) const
 {
-  const auto& tables = schema.getTables();
-
   QString selectColsStr = "";
   for (const auto& selectedColumn : m_compiledColumnSelection)
   {
@@ -407,11 +415,23 @@ QString FromTable::createSelectString(API::ISchema& schema) const
       selectColsStr.append(", ");
     }
 
-    const auto& table = tables.at(selectedColumn.tableId);
-    const auto& alias = selectedColumn.tableAlias;
-
-    const auto tableName = (m_isTableAliasesNeeded && !alias.isEmpty() ? alias : table.name);
-    selectColsStr.append(QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(selectedColumn.columnId).name));
+    if (ColumnStatistics::isColumnStatistics(selectedColumn.columnId))
+    {
+      const auto columnStatistics = ColumnStatistics::fromId(selectedColumn.columnId);
+      if (columnStatistics.hasColumn())
+      {
+        selectColsStr.append(ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
+          resolveColumnName(schema, SelectedColumn { selectedColumn.tableAlias, selectedColumn.tableId, columnStatistics.columnId() })));
+      }
+      else
+      {
+        selectColsStr.append(ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method()));
+      }
+    }
+    else
+    {
+      selectColsStr.append(resolveColumnName(schema, selectedColumn));
+    }
   }
 
   return selectColsStr;
@@ -480,6 +500,15 @@ QString FromTable::tableAlias(const std::optional<API::IID::Type> relationshipId
     }
   }
   return "";
+}
+
+QString FromTable::resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const
+{
+  const auto& table = schema.getTables().at(selectedColumn.tableId);
+  const auto& alias = selectedColumn.tableAlias;
+
+  const auto tableName = (m_isTableAliasesNeeded && !alias.isEmpty() ? alias : table.name);
+  return QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(selectedColumn.columnId).name);
 }
 
 }

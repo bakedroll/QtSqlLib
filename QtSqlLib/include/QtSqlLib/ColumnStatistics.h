@@ -2,6 +2,10 @@
 
 #include <QtSqlLib/API/IID.h>
 
+#include <QString>
+
+#include <optional>
+
 namespace QtSqlLib
 {
 
@@ -32,6 +36,8 @@ public:
 
   static bool isColumnStatistics(API::IID::Type id);
   static ColumnStatistics fromId(API::IID::Type id);
+
+  static QString toString(EType type, EMethod method, const std::optional<QString>& column = std::nullopt);
 
   API::IID::Type id() const;
 

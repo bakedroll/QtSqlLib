@@ -116,6 +116,7 @@ private:
     std::vector<QVariant>& boundValues);
 
   QString tableAlias(const std::optional<API::IID::Type> relationshipId = std::nullopt) const;
+  QString resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
 
 };
 
