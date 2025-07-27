@@ -132,4 +132,47 @@ TEST_F(TestAggregationAndSorting, countAlbums)
   EXPECT_EQ(results.nextTuple().columnValue(COUNT_ALL).toInt(), 3);
 }
 
+/**
+ * @test: Test grouping by album and counting tracks per album.
+ * @expected: Expects the correct number of tracks per album.
+ */
+TEST_F(TestAggregationAndSorting, groupByAlbums)
+{
+  setupTestDatabase(m_db);
+
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
+    .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
+    .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name)
+    .GROUP_BY(G_COLID(AlbumsCols::Id)));
+
+  auto numRows = 0;
+  while (results.hasNextTuple())
+  {
+    const auto& tuple = results.nextTuple();
+    const auto albumName = tuple.columnValue(AlbumsCols::Name);
+    const auto numTracks = tuple.columnValue(COUNT(AlbumsCols::Id)).toInt();
+
+    if (albumName == "Album 1")
+    {
+      EXPECT_EQ(numTracks, 3);
+    }
+    else if (albumName == "Album 2")
+    {
+      EXPECT_EQ(numTracks, 4);
+    }
+    else if (albumName == "Album 3")
+    {
+      EXPECT_EQ(numTracks, 5);
+    }
+    else
+    {
+      FAIL() << "Unexpected album";
+    }
+
+    ++numRows;
+  }
+
+  EXPECT_EQ(numRows, 3);
+}
+
 }

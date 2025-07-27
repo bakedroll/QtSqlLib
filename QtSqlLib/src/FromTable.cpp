@@ -182,6 +182,16 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
     queryStr.append(QString(" WHERE %1").arg(m_whereExpr->toQueryString(schema, boundValues, tid)));
   }
 
+  if (!m_groupColumns.empty())
+  {
+    queryStr.append(QString(" GROUP BY %1").arg(createGroupByString(schema)));
+  }
+
+  if (!m_orderColumns.empty())
+  {
+    queryStr.append(QString(" ORDER BY %1").arg(createOrderByString(schema)));
+  }
+
   queryStr.append(";");
 
   QSqlQuery query(db);
@@ -415,26 +425,46 @@ QString FromTable::createSelectString(API::ISchema& schema) const
       selectColsStr.append(", ");
     }
 
-    if (ColumnStatistics::isColumnStatistics(selectedColumn.columnId))
-    {
-      const auto columnStatistics = ColumnStatistics::fromId(selectedColumn.columnId);
-      if (columnStatistics.hasColumn())
-      {
-        selectColsStr.append(ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
-          resolveColumnName(schema, SelectedColumn { selectedColumn.tableAlias, selectedColumn.tableId, columnStatistics.columnId() })));
-      }
-      else
-      {
-        selectColsStr.append(ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method()));
-      }
-    }
-    else
-    {
-      selectColsStr.append(resolveColumnName(schema, selectedColumn));
-    }
+    selectColsStr.append(columnNameFromSelectedColumn(schema, selectedColumn));
   }
 
   return selectColsStr;
+}
+
+QString FromTable::createGroupByString(API::ISchema& schema) const
+{
+  QString groupByStr = "";
+  for (const auto& groupCol : m_groupColumns)
+  {
+    if (!groupByStr.isEmpty())
+    {
+      groupByStr.append(", ");
+    }
+
+    const auto columnId = groupCol.columnId;
+    const auto tableId = tableIdFromRelationshipId(schema, groupCol.relationshipId);
+    const auto& table = schema.getTables().at(tableId);
+
+    if (ColumnStatistics::isColumnStatistics(columnId))
+    {
+      const auto columnStatistics = ColumnStatistics::fromId(columnId);
+      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
+    }
+    else
+    {
+      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
+    }
+
+    const auto alias = tableAlias(groupCol.relationshipId);
+    groupByStr.append(columnNameFromSelectedColumn(schema, SelectedColumn { alias, tableId, columnId }));
+  }
+
+  return groupByStr;
+}
+
+QString FromTable::createOrderByString(API::ISchema& schema) const
+{
+  // TODO
 }
 
 void FromTable::appendJoinQuerySubstring(
@@ -509,6 +539,35 @@ QString FromTable::resolveColumnName(API::ISchema& schema, const SelectedColumn&
 
   const auto tableName = (m_isTableAliasesNeeded && !alias.isEmpty() ? alias : table.name);
   return QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(selectedColumn.columnId).name);
+}
+
+API::IID::Type FromTable::tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const
+{
+  if (relationshipId.has_value())
+  {
+    const auto& relationship = schema.getRelationships().at(relationshipId.value());
+    const auto tableId = m_queryMetaInfo.tableId == relationship.tableFromId ? relationship.tableToId : relationship.tableFromId;
+    return tableId;
+  }
+
+  return m_queryMetaInfo.tableId;
+}
+
+QString FromTable::columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const
+{
+  if (ColumnStatistics::isColumnStatistics(selectedColumn.columnId))
+  {
+    const auto columnStatistics = ColumnStatistics::fromId(selectedColumn.columnId);
+    if (columnStatistics.hasColumn())
+    {
+      return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
+        resolveColumnName(schema, SelectedColumn { selectedColumn.tableAlias, selectedColumn.tableId, columnStatistics.columnId() }));
+    }
+
+    return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method());
+  }
+
+  return resolveColumnName(schema, selectedColumn);
 }
 
 }

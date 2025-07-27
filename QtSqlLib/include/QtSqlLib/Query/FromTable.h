@@ -30,14 +30,21 @@ public:
     Descending
   };
 
+  struct GroupColumn
+  {
+    std::optional<API::IID::Type> relationshipId;
+    API::IID::Type columnId;
+  };
+
   struct OrderColumn
   {
-    ColumnID columnId;
+    std::optional<API::IID::Type> relationshipId;
+    API::IID::Type columnId;
     EOrder order = EOrder::Ascending;
   };
 
-  using GroupColumnList = std::vector<ColumnID>;
-  using OrderColumnList = std::vector<ColumnID>;
+  using GroupColumnList = std::vector<GroupColumn>;
+  using OrderColumnList = std::vector<OrderColumn>;
 
   FromTable(const API::IID& tableId);
   ~FromTable() override;
@@ -106,6 +113,9 @@ private:
     const API::Table& table);
 
   QString createSelectString(API::ISchema& schema) const;
+  QString createGroupByString(API::ISchema& schema) const;
+  QString createOrderByString(API::ISchema& schema) const;
+
   void appendJoinQuerySubstring(
     QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId,
     API::IID::Type parentTableId, const QString& parentTableAlias,
@@ -117,6 +127,9 @@ private:
 
   QString tableAlias(const std::optional<API::IID::Type> relationshipId = std::nullopt) const;
   QString resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
+
+  API::IID::Type tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const;
+  QString columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
 
 };
 
