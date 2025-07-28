@@ -54,6 +54,14 @@ public:
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
 
+  template <typename TElem>
+  static std::vector<TElem> make(auto&&... args)
+  {
+    std::vector<TElem> list;
+    makeIntern(list, args...);
+    return list;
+  }
+
 private:
   template<typename T, bool is_fundamental>
   struct underlying_base
@@ -76,6 +84,56 @@ private:
   static API::IID::Type castId(const T& value)
   {
     return static_cast<API::IID::Type>(static_cast<typename underlying<T>::type>(value));
+  }
+
+
+
+
+  template<typename... Args>
+  static void makeIntern(std::vector<GroupColumn>& list, const GroupColumn& firstId, const Args&... tail)
+  {
+    list.emplace_back(firstId);
+    makeIntern(list, tail...);
+  }
+
+  static void makeIntern(std::vector<GroupColumn>& list, const GroupColumn& firstId)
+  {
+    list.emplace_back(firstId);
+  }
+
+
+
+
+  template<typename TID, typename... Args>
+  static void makeIntern(std::vector<GroupColumn>& list, const TID& id, const Args&... tail)
+  {
+    list.emplace_back(GroupColumn(id));
+    makeIntern(list, tail...);
+  }
+
+  template<typename TID>
+  static void makeIntern(std::vector<GroupColumn>& list, const TID& id)
+  {
+    list.emplace_back(GroupColumn(id));
+  }
+
+
+
+
+
+  // TODO
+  template<typename... Args>
+  static void makeIntern(std::vector<GroupColumn>& list, EOrder order, const Args&... tail)
+  {
+    //list.rbegin()->
+    //printf("order");
+    makeIntern(list, tail...);
+  }
+
+  static void makeIntern(std::vector<GroupColumn>& list, EOrder order)
+  {
+    //printf("order");
+    //list.rbegin()->m_a = "ASC";
   }
 
 };

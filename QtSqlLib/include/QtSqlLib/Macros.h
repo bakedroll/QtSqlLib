@@ -86,8 +86,9 @@
 #define SELECT_ALL selectAll()
 #define SELECT(...) select(QtSqlLib::ColumnList::make(__VA_ARGS__))
 
-#define G_COLID(X) QtSqlLib::Query::FromTable::GroupColumn { std::nullopt, QtSqlLib::ID(X).get() }
-#define G_JOINCOLID(X, Y) QtSqlLib::Query::FromTable::GroupColumn { QtSqlLib::ID(X).get(), QtSqlLib::ID(Y).get() }
+// TODO
+#define G_COLID(X) QtSqlLib::ColumnHelper::GroupColumn { std::nullopt, QtSqlLib::ID(X).get() }
+#define G_JOINCOLID(X, Y) QtSqlLib::ColumnHelper::GroupColumn { QtSqlLib::ID(X).get(), QtSqlLib::ID(Y).get() }
 
 #define GROUP_BY(...) groupBy({ __VA_ARGS__ })
 

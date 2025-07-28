@@ -25,34 +25,6 @@ namespace QtSqlLib::Query
 class FromTable : public Query
 {
 public:
-  // TODO: remove enum and structs
-  enum class EOrder
-  {
-    Ascending,
-    Descending
-  };
-
-  struct GroupColumn
-  {
-    std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId;
-  };
-
-  struct OrderColumn
-  {
-    std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId;
-    EOrder order = EOrder::Ascending;
-  };
-
-  using GroupColumnList = std::vector<GroupColumn>;
-  using OrderColumnList = std::vector<OrderColumn>;
-
-
-
-
-
-
   FromTable(const API::IID& tableId);
   ~FromTable() override;
 
@@ -65,8 +37,8 @@ public:
   FromTable& where(Expr& expr);
   FromTable& having(Expr& expr);
 
-  FromTable& groupBy(const GroupColumnList& columnIds);
-  FromTable& orderBy(const OrderColumnList& columnIds);
+  FromTable& groupBy(const ColumnHelper::GroupColumnList& columnIds);
+  FromTable& orderBy(const ColumnHelper::OrderColumnList& columnIds);
 
   SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& previousQueryResults) override;
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
@@ -97,8 +69,8 @@ private:
   std::unique_ptr<Expr> m_whereExpr;
   std::unique_ptr<Expr> m_havingExpr;
 
-  GroupColumnList m_groupColumns;
-  OrderColumnList m_orderColumns;
+  ColumnHelper::GroupColumnList m_groupColumns;
+  ColumnHelper::OrderColumnList m_orderColumns;
 
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(API::IID::Type relationshipId) const;

@@ -120,7 +120,7 @@ FromTable& FromTable::having(Expr& expr)
   return *this;
 }
 
-FromTable& FromTable::groupBy(const GroupColumnList& columns)
+FromTable& FromTable::groupBy(const ColumnHelper::GroupColumnList& columns)
 {
   if (!m_groupColumns.empty())
   {
@@ -132,7 +132,7 @@ FromTable& FromTable::groupBy(const GroupColumnList& columns)
   return *this;
 }
 
-FromTable& FromTable::orderBy(const OrderColumnList& columns)
+FromTable& FromTable::orderBy(const ColumnHelper::OrderColumnList& columns)
 {
   if (!m_orderColumns.empty())
   {

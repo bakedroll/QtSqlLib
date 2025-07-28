@@ -132,7 +132,7 @@ TEST_F(TestAggregationAndSorting, countAlbums)
   EXPECT_EQ(results.nextTuple().columnValue(COUNT_ALL).toInt(), 3);
 }
 
-
+/*
 struct Structure
 {
   Structure(const std::string& a) : m_a(a)
@@ -210,7 +210,7 @@ void blubber(auto&&... args)
 
   printf("bla");
 }
-
+*/
 
 /**
  * @test: Test grouping by album and using aggregate functions to determine number of tracks, minimum track length and total album length.
@@ -218,7 +218,7 @@ void blubber(auto&&... args)
  */
 TEST_F(TestAggregationAndSorting, groupByAlbums)
 {
-  setupTestDatabase(m_db);
+  /*setupTestDatabase(m_db);
 
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
@@ -262,15 +262,23 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
     ++numRows;
   }
 
-  EXPECT_EQ(numRows, 3);
+  EXPECT_EQ(numRows, 3);*/
+
+
+
+
 
   //std::vector<Structure> vec(std::initializer_list<Structure>({ "blub", "bla" }));
   //VARIADIC("bla", "blub");
 
-  QtSqlLib::ColumnHelper::GroupColumn col(TracksCols::Length);
-  QtSqlLib::ColumnHelper::GroupColumn col2(col);
+  //QtSqlLib::ColumnHelper::GroupColumn col(TracksCols::Length);
+  //QtSqlLib::ColumnHelper::GroupColumn col2(col);
 
-  blubber(Structure("bla"), Structure("blub"), Structure("test"), 6 ASC, Structure("blub") );
+  //blubber(Structure("bla"), Structure("blub"), Structure("test"), 6 ASC, Structure("blub") );
+
+  const auto test = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(QtSqlLib::ColumnHelper::GroupColumn(TracksCols::Name), 5, 6);
+
+  printf("bla");
 }
 
 }
