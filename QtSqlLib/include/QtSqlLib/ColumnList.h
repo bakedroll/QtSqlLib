@@ -8,6 +8,7 @@
 namespace QtSqlLib
 {
 
+// TODO: remove
 class ColumnList
 {
 public:

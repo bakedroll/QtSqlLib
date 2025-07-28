@@ -6,6 +6,7 @@
 #include <QtSqlLib/API/SchemaTypes.h>
 #include <QtSqlLib/ColumnID.h>
 #include <QtSqlLib/ColumnList.h>
+#include <QtSqlLib/ColumnHelper.h>
 
 #include <QString>
 
@@ -24,6 +25,7 @@ namespace QtSqlLib::Query
 class FromTable : public Query
 {
 public:
+  // TODO: remove enum and structs
   enum class EOrder
   {
     Ascending,
@@ -45,6 +47,11 @@ public:
 
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
+
+
+
+
+
 
   FromTable(const API::IID& tableId);
   ~FromTable() override;
