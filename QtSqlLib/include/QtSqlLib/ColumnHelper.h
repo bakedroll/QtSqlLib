@@ -18,6 +18,12 @@ public:
     Descending
   };
 
+  struct Column
+  {
+    std::optional<API::IID::Type> relationshipId;
+    API::IID::Type columnId;
+  };
+
   struct GroupColumn
   {
     GroupColumn(const GroupColumn& rhs);
@@ -86,54 +92,30 @@ private:
     return static_cast<API::IID::Type>(static_cast<typename underlying<T>::type>(value));
   }
 
-
-
-
-  template<typename... Args>
-  static void makeIntern(std::vector<GroupColumn>& list, const GroupColumn& firstId, const Args&... tail)
+  template<typename TElem, typename TID, typename... Args>
+  static void makeIntern(std::vector<TElem>& list, const TID& id, const Args&... tail)
   {
-    list.emplace_back(firstId);
+    list.emplace_back(TElem(id));
     makeIntern(list, tail...);
   }
 
-  static void makeIntern(std::vector<GroupColumn>& list, const GroupColumn& firstId)
+  template<typename TElem, typename TID>
+  static void makeIntern(std::vector<TElem>& list, const TID& id)
   {
-    list.emplace_back(firstId);
+    list.emplace_back(TElem(id));
   }
 
-
-
-
-  template<typename TID, typename... Args>
-  static void makeIntern(std::vector<GroupColumn>& list, const TID& id, const Args&... tail)
+  template<typename TElem, typename... Args>
+  static void makeIntern(std::vector<TElem>& list, EOrder order, const Args&... tail)
   {
-    list.emplace_back(GroupColumn(id));
+    list.rbegin()->order = order;
     makeIntern(list, tail...);
   }
 
-  template<typename TID>
-  static void makeIntern(std::vector<GroupColumn>& list, const TID& id)
+  template<typename TElem>
+  static void makeIntern(std::vector<TElem>& list, EOrder order)
   {
-    list.emplace_back(GroupColumn(id));
-  }
-
-
-
-
-
-  // TODO
-  template<typename... Args>
-  static void makeIntern(std::vector<GroupColumn>& list, EOrder order, const Args&... tail)
-  {
-    //list.rbegin()->
-    //printf("order");
-    makeIntern(list, tail...);
-  }
-
-  static void makeIntern(std::vector<GroupColumn>& list, EOrder order)
-  {
-    //printf("order");
-    //list.rbegin()->m_a = "ASC";
+    list.rbegin()->order = order;
   }
 
 };

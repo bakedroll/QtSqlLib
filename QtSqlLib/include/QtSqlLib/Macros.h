@@ -92,6 +92,9 @@
 
 #define GROUP_BY(...) groupBy({ __VA_ARGS__ })
 
+#define ASC ,QtSqlLib::ColumnHelper::EOrder::Ascending
+#define DESC ,QtSqlLib::ColumnHelper::EOrder::Descending
+
 #define MIN(X) QtSqlLib::ColumnStatistics::min(QtSqlLib::ID(X).get()).id()
 #define MAX(X) QtSqlLib::ColumnStatistics::max(QtSqlLib::ID(X).get()).id()
 #define SUM(X) QtSqlLib::ColumnStatistics::sum(QtSqlLib::ID(X).get()).id()

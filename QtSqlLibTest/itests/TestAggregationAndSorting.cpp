@@ -132,86 +132,6 @@ TEST_F(TestAggregationAndSorting, countAlbums)
   EXPECT_EQ(results.nextTuple().columnValue(COUNT_ALL).toInt(), 3);
 }
 
-/*
-struct Structure
-{
-  Structure(const std::string& a) : m_a(a)
-  {}
-
-  Structure(int a) : m_x(a)
-  {}
-
-  Structure(int a, const std::string& b) : m_x(a), m_a(b)
-  {}
-
-  int m_x;
-  std::string m_a;
-};
-
-// #define VARIADIC(args...) printf(toupper(args)...)
-
-#define ASC ,QtSqlLib::Query::FromTable::EOrder::Ascending
-
-
-
-
-template<typename... Args>
-void appendColumn(std::vector<Structure>& container, const Structure& structure, const Args&... tail)
-{
-  container.emplace_back(structure);
-  appendColumn(container, tail...);
-}
-
-void appendColumn(std::vector<Structure>& container, const Structure& structure)
-{
-  container.emplace_back(structure);
-}
-
-
-
-
-template<typename T, typename... Args>
-void appendColumn(std::vector<Structure>& container, const T& id, const Args&... tail)
-{
-  container.emplace_back(Structure(id));
-  appendColumn(container, tail...);
-}
-
-template<typename T>
-void appendColumn(std::vector<Structure>& container, const T& id)
-{
-  container.emplace_back(Structure(id));
-}
-
-
-
-
-
-template<typename... Args>
-void appendColumn(std::vector<Structure>& container, QtSqlLib::Query::FromTable::EOrder order, const Args&... tail)
-{
-  container.rbegin()->m_a = "ASC";
-  appendColumn(container, tail...);
-}
-
-void appendColumn(std::vector<Structure>& container, QtSqlLib::Query::FromTable::EOrder order)
-{
-  container.rbegin()->m_a = "ASC";
-}
-
-
-
-
-
-void blubber(auto&&... args)
-{
-  std::vector<Structure> vec; //({ Structure(args)... });
-  appendColumn(vec, args...);
-
-  printf("bla");
-}
-*/
-
 /**
  * @test: Test grouping by album and using aggregate functions to determine number of tracks, minimum track length and total album length.
  * @expected: Expects correct results returned by aggregate functions.
@@ -268,15 +188,10 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
 
 
 
-  //std::vector<Structure> vec(std::initializer_list<Structure>({ "blub", "bla" }));
-  //VARIADIC("bla", "blub");
 
-  //QtSqlLib::ColumnHelper::GroupColumn col(TracksCols::Length);
-  //QtSqlLib::ColumnHelper::GroupColumn col2(col);
+  const auto test1 = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(QtSqlLib::ColumnHelper::GroupColumn(TracksCols::Name), 5, 6);
 
-  //blubber(Structure("bla"), Structure("blub"), Structure("test"), 6 ASC, Structure("blub") );
-
-  const auto test = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(QtSqlLib::ColumnHelper::GroupColumn(TracksCols::Name), 5, 6);
+  const auto test2 = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::OrderColumn>(QtSqlLib::ColumnHelper::OrderColumn(TracksCols::Name), 5 DESC, 6);
 
   printf("bla");
 }
