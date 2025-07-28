@@ -78,7 +78,7 @@ static void setupTestDatabase(QtSqlLib::API::IDatabase& m_db)
 
   m_db.execQuery(INSERT_INTO_EXT(TableIds::Tracks)
       .VALUE(TracksCols::Name, "Track 2")
-      .VALUE(TracksCols::Length, 1)
+      .VALUE(TracksCols::Length, 5)
       .LINK_TO_ONE_TUPLE(Relationships::AlbumTracks, album2));
 
   m_db.execQuery(INSERT_INTO_EXT(TableIds::Tracks)
@@ -94,12 +94,12 @@ static void setupTestDatabase(QtSqlLib::API::IDatabase& m_db)
   // Album 3 tracks
   m_db.execQuery(INSERT_INTO_EXT(TableIds::Tracks)
       .VALUE(TracksCols::Name, "Track 1")
-      .VALUE(TracksCols::Length, 2)
+      .VALUE(TracksCols::Length, 3)
       .LINK_TO_ONE_TUPLE(Relationships::AlbumTracks, album3));
 
   m_db.execQuery(INSERT_INTO_EXT(TableIds::Tracks)
       .VALUE(TracksCols::Name, "Track 2")
-      .VALUE(TracksCols::Length, 1)
+      .VALUE(TracksCols::Length, 4)
       .LINK_TO_ONE_TUPLE(Relationships::AlbumTracks, album3));
 
   m_db.execQuery(INSERT_INTO_EXT(TableIds::Tracks)
@@ -133,8 +133,8 @@ TEST_F(TestAggregationAndSorting, countAlbums)
 }
 
 /**
- * @test: Test grouping by album and counting tracks per album.
- * @expected: Expects the correct number of tracks per album.
+ * @test: Test grouping by album and using aggregate functions to determine number of tracks, minimum track length and total album length.
+ * @expected: Expects correct results returned by aggregate functions.
  */
 TEST_F(TestAggregationAndSorting, groupByAlbums)
 {
@@ -142,7 +142,7 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
 
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
-    .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name)
+    .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name, MIN(TracksCols::Length), SUM(TracksCols::Length))
     .GROUP_BY(G_COLID(AlbumsCols::Id)));
 
   auto numRows = 0;
@@ -152,17 +152,27 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
     const auto albumName = tuple.columnValue(AlbumsCols::Name);
     const auto numTracks = tuple.columnValue(COUNT(AlbumsCols::Id)).toInt();
 
+    const auto& joinedTuple = results.nextJoinedTuple();
+    const auto minLength = joinedTuple.columnValue(MIN(TracksCols::Length)).toInt();
+    const auto totalLength = joinedTuple.columnValue(SUM(TracksCols::Length)).toInt();
+
     if (albumName == "Album 1")
     {
       EXPECT_EQ(numTracks, 3);
+      EXPECT_EQ(minLength, 1);
+      EXPECT_EQ(totalLength, 6);
     }
     else if (albumName == "Album 2")
     {
       EXPECT_EQ(numTracks, 4);
+      EXPECT_EQ(minLength, 2);
+      EXPECT_EQ(totalLength, 14);
     }
     else if (albumName == "Album 3")
     {
       EXPECT_EQ(numTracks, 5);
+      EXPECT_EQ(minLength, 3);
+      EXPECT_EQ(totalLength, 19);
     }
     else
     {
