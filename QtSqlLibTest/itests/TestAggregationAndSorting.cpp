@@ -138,12 +138,12 @@ TEST_F(TestAggregationAndSorting, countAlbums)
  */
 TEST_F(TestAggregationAndSorting, groupByAlbums)
 {
-  /*setupTestDatabase(m_db);
+  setupTestDatabase(m_db);
 
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
     .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name, MIN(TracksCols::Length), SUM(TracksCols::Length))
-    .GROUP_BY(G_COLID(AlbumsCols::Id)));
+    .GROUP_BY(AlbumsCols::Id));
 
   auto numRows = 0;
   while (results.hasNextTuple())
@@ -182,18 +182,7 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
     ++numRows;
   }
 
-  EXPECT_EQ(numRows, 3);*/
-
-
-
-
-
-
-  const auto test1 = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(QtSqlLib::ColumnHelper::GroupColumn(TracksCols::Name), 5, 6);
-
-  const auto test2 = QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::OrderColumn>(QtSqlLib::ColumnHelper::OrderColumn(TracksCols::Name), 5 DESC, 6);
-
-  printf("bla");
+  EXPECT_EQ(numRows, 3);
 }
 
 }

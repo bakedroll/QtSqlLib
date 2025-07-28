@@ -444,8 +444,8 @@ QString FromTable::createGroupByString(API::ISchema& schema) const
       groupByStr.append(", ");
     }
 
-    const auto columnId = groupCol.columnId;
-    const auto tableId = tableIdFromRelationshipId(schema, groupCol.relationshipId);
+    const auto columnId = groupCol.data.columnId;
+    const auto tableId = tableIdFromRelationshipId(schema, groupCol.data.relationshipId);
     const auto& table = schema.getTables().at(tableId);
 
     if (ColumnStatistics::isColumnStatistics(columnId))
@@ -458,7 +458,7 @@ QString FromTable::createGroupByString(API::ISchema& schema) const
       schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
     }
 
-    const auto alias = tableAlias(groupCol.relationshipId);
+    const auto alias = tableAlias(groupCol.data.relationshipId);
     groupByStr.append(columnNameFromSelectedColumn(schema, SelectedColumn { alias, tableId, columnId }));
   }
 

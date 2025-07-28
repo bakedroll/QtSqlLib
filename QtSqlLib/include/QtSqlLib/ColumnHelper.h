@@ -18,42 +18,43 @@ public:
     Descending
   };
 
-  struct Column
+  struct ColumnData
   {
+    template<typename T>
+    ColumnData(const std::optional<API::IID::Type>& relId, const T& id) :
+      relationshipId(relId),
+      columnId(castId(id))
+    {
+    }
+
     std::optional<API::IID::Type> relationshipId;
     API::IID::Type columnId;
   };
 
   struct GroupColumn
   {
-    GroupColumn(const GroupColumn& rhs);
-    GroupColumn(GroupColumn&& rhs);
-    void operator=(const GroupColumn& rhs);
+    GroupColumn(const ColumnData& data);
 
     template<typename T>
     GroupColumn(const T& id) :
-        columnId(castId(id))
+        data({ std::nullopt, castId(id) })
     {
     }
 
-    std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId;
+    ColumnData data;
   };
 
   struct OrderColumn
   {
-    OrderColumn(const OrderColumn& rhs);
-    OrderColumn(OrderColumn&& rhs);
-    void operator=(const OrderColumn& rhs);
+    OrderColumn(const ColumnData& data);
 
     template<typename T>
     OrderColumn(const T& id) :
-        columnId(castId(id))
+        data({ std::nullopt, castId(id) })
     {
     }
 
-    std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId;
+    ColumnData data;
     EOrder order = EOrder::Ascending;
   };
 
