@@ -20,6 +20,8 @@ public:
 
   struct ColumnData
   {
+    ColumnData();
+
     template<typename T>
     ColumnData(const std::optional<API::IID::Type>& relId, const T& id) :
       relationshipId(relId),
@@ -28,11 +30,12 @@ public:
     }
 
     std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId;
+    API::IID::Type columnId = 0;
   };
 
   struct GroupColumn
   {
+    GroupColumn();
     GroupColumn(const ColumnData& data);
 
     template<typename T>
@@ -46,6 +49,7 @@ public:
 
   struct OrderColumn
   {
+    OrderColumn();
     OrderColumn(const ColumnData& data);
 
     template<typename T>
@@ -65,9 +69,8 @@ public:
   static std::vector<TElem> make(const Args&... args)
   {
     const auto size = expectedSize(identity<TElem>(), args...);
-
-    std::vector<TElem> list;
-    makeIntern(list, args...);
+    std::vector<TElem> list(size);
+    makeIntern(list, 0, args...);
     return list;
   }
 
@@ -131,29 +134,29 @@ private:
   }
 
   template<typename TElem, typename TID, typename... Args>
-  static void makeIntern(std::vector<TElem>& list, const TID& id, const Args&... tail)
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const TID& id, const Args&... tail)
   {
-    list.emplace_back(TElem(id));
-    makeIntern(list, tail...);
+    list[currentIndex] = TElem(id);
+    makeIntern(list, currentIndex + 1, tail...);
   }
 
   template<typename TElem, typename TID>
-  static void makeIntern(std::vector<TElem>& list, const TID& id)
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const TID& id)
   {
-    list.emplace_back(TElem(id));
+    list[currentIndex] = TElem(id);
   }
 
   template<typename TElem, typename... Args>
-  static void makeIntern(std::vector<TElem>& list, EOrder order, const Args&... tail)
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, EOrder order, const Args&... tail)
   {
-    list.rbegin()->order = order;
-    makeIntern(list, tail...);
+    list[currentIndex - 1].order = order;
+    makeIntern(list, currentIndex, tail...);
   }
 
   template<typename TElem>
-  static void makeIntern(std::vector<TElem>& list, EOrder order)
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, EOrder order)
   {
-    list.rbegin()->order = order;
+    list[currentIndex - 1].order = order;
   }
 
 };
