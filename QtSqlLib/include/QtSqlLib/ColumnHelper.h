@@ -35,9 +35,15 @@ public:
   {
     ColumnData();
 
-    template<typename T>
-    ColumnData(const std::optional<API::IID::Type>& relId, const T& id) :
-      relationshipId(relId),
+    template<typename TRel, typename TID>
+    ColumnData(const TRel& relId, const TID& id) :
+      relationshipId(castId(relId)),
+      columnId(castId(id))
+    {
+    }
+
+    template<typename TID>
+    ColumnData(const TID& id) :
       columnId(castId(id))
     {
     }
@@ -53,7 +59,7 @@ public:
 
     template<typename T>
     GroupColumn(const T& id) :
-        data({ std::nullopt, castId(id) })
+        data({ castId(id) })
     {
     }
 
@@ -67,7 +73,7 @@ public:
 
     template<typename T>
     OrderColumn(const T& id) :
-        data({ std::nullopt, castId(id) })
+        data({ castId(id) })
     {
     }
 

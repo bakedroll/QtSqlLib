@@ -185,4 +185,43 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
   EXPECT_EQ(numRows, 3);
 }
 
+/**
+ * @test: Test ordering of track lengths of one album.
+ * @expected: Expects correct order of tracks.
+ */
+TEST_F(TestAggregationAndSorting, orderByTrackLength)
+{
+  setupTestDatabase(m_db);
+
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
+    .SELECT(AlbumsCols::Id, AlbumsCols::Name)
+    .WHERE(EQUAL(AlbumsCols::Name, "Album 1"))
+    .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name, TracksCols::Length)
+    .ORDER_BY(COL(Relationships::AlbumTracks, TracksCols::Length)));
+
+  EXPECT_TRUE(results.hasNextTuple());
+
+  const auto& albumTuple = results.nextTuple();
+  const auto albumName = albumTuple.columnValue(AlbumsCols::Name).toString();
+  EXPECT_EQ(albumName, "Album 1");
+
+  EXPECT_TRUE(results.hasNextJoinedTuple());
+  const auto& track1Tuple = results.nextJoinedTuple();
+  const auto track1Name = track1Tuple.columnValue(TracksCols::Name).toString();
+  EXPECT_EQ(track1Name, "Track 1");
+
+  EXPECT_TRUE(results.hasNextJoinedTuple());
+  const auto& track3Tuple = results.nextJoinedTuple();
+  const auto track3Name = track3Tuple.columnValue(TracksCols::Name).toString();
+  EXPECT_EQ(track3Name, "Track 3");
+
+  EXPECT_TRUE(results.hasNextJoinedTuple());
+  const auto& track2Tuple = results.nextJoinedTuple();
+  const auto track2Name = track2Tuple.columnValue(TracksCols::Name).toString();
+  EXPECT_EQ(track2Name, "Track 2");
+
+  EXPECT_FALSE(results.hasNextJoinedTuple());
+  EXPECT_FALSE(results.hasNextTuple());
+}
+
 }

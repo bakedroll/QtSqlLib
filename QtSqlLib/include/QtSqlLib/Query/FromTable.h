@@ -108,6 +108,7 @@ private:
 
   API::IID::Type tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const;
   QString columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
+  QString columnNameFromColumnData(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const;
 
 };
 

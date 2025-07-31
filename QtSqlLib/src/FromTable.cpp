@@ -443,23 +443,7 @@ QString FromTable::createGroupByString(API::ISchema& schema) const
     {
       groupByStr.append(", ");
     }
-
-    const auto columnId = groupCol.data.columnId;
-    const auto tableId = tableIdFromRelationshipId(schema, groupCol.data.relationshipId);
-    const auto& table = schema.getTables().at(tableId);
-
-    if (ColumnStatistics::isColumnStatistics(columnId))
-    {
-      const auto columnStatistics = ColumnStatistics::fromId(columnId);
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
-    }
-    else
-    {
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
-    }
-
-    const auto alias = tableAlias(groupCol.data.relationshipId);
-    groupByStr.append(columnNameFromSelectedColumn(schema, SelectedColumn { alias, tableId, columnId }));
+    groupByStr.append(columnNameFromColumnData(schema, groupCol.data));
   }
 
   return groupByStr;
@@ -467,7 +451,17 @@ QString FromTable::createGroupByString(API::ISchema& schema) const
 
 QString FromTable::createOrderByString(API::ISchema& schema) const
 {
-  // TODO
+  QString orderByStr = "";
+  for (const auto& orderCol : m_orderColumns)
+  {
+    if (!orderByStr.isEmpty())
+    {
+      orderByStr.append(", ");
+    }
+    orderByStr.append(columnNameFromColumnData(schema, orderCol.data));
+  }
+
+  return orderByStr;
 }
 
 void FromTable::appendJoinQuerySubstring(
@@ -571,6 +565,26 @@ QString FromTable::columnNameFromSelectedColumn(API::ISchema& schema, const Sele
   }
 
   return resolveColumnName(schema, selectedColumn);
+}
+
+QString FromTable::columnNameFromColumnData(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const
+{
+  const auto columnId = columnData.columnId;
+  const auto tableId = tableIdFromRelationshipId(schema, columnData.relationshipId);
+  const auto& table = schema.getTables().at(tableId);
+
+  if (ColumnStatistics::isColumnStatistics(columnId))
+  {
+    const auto columnStatistics = ColumnStatistics::fromId(columnId);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
+  }
+  else
+  {
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
+  }
+
+  const auto alias = tableAlias(columnData.relationshipId);
+  return columnNameFromSelectedColumn(schema, SelectedColumn { alias, tableId, columnId });
 }
 
 }
