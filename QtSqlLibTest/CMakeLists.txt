@@ -15,9 +15,10 @@ require_library(GTest)
 
 require_project(QtSqlLib)
 
+add_source_directory(include)
 add_source_directory(itests)
 add_source_directory(src)
-add_source_directory(include)
+add_source_directory(utests)
 
 add_include_directory(include)
 
