@@ -458,7 +458,9 @@ QString FromTable::createOrderByString(API::ISchema& schema) const
     {
       orderByStr.append(", ");
     }
-    orderByStr.append(columnNameFromColumnData(schema, orderCol.data));
+    orderByStr.append(QString("%1 %2")
+      .arg(columnNameFromColumnData(schema, orderCol.data))
+      .arg(orderCol.order == ColumnHelper::EOrder::Ascending ? "ASC" : "DESC"));
   }
 
   return orderByStr;
