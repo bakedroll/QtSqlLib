@@ -43,6 +43,7 @@ public:
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
 
 private:
+  // TODO: REMOVE
   struct SelectedColumn
   {
     QString tableAlias;
@@ -50,6 +51,7 @@ private:
     API::IID::Type columnId = 0;
   };
 
+  // TODO: REMOVER
   struct TableAlias
   {
     std::optional<API::IID::Type> relationshipId;
@@ -57,12 +59,17 @@ private:
   };
 
   bool m_hasColumnsSelected;
+
+  // TODO: CHECK
   bool m_isTableAliasesNeeded;
 
   API::QueryMetaInfo m_queryMetaInfo;
   std::vector<API::QueryMetaInfo> m_joins;
+
+  // TODO: REMOVE
   std::vector<TableAlias> m_aliases;
 
+  // TODO: CHECK
   std::vector<SelectedColumn> m_compiledColumnSelection;
 
   std::unique_ptr<Expr> m_whereExpr;
@@ -103,9 +110,13 @@ private:
     int foreignKeyReferencesIndex,
     std::vector<QVariant>& boundValues);
 
+  // TODO: REMOVE
   QString tableAlias(const std::optional<API::IID::Type> relationshipId = std::nullopt) const;
+  // TODO: REMOVE
   QString resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
 
+
+  // TODO: check
   API::IID::Type tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const;
   QString columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
   QString columnNameFromColumnData(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const;
