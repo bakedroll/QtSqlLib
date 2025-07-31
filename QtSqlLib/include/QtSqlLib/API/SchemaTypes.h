@@ -60,9 +60,8 @@ struct Table
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
 
-  // TODO: SelectColumnList
-  std::vector<IID::Type> primaryKeys;
-  std::vector<IID::Type> uniqueColIds;
+  ColumnHelper::SelectColumnList primaryKeys;
+  ColumnHelper::SelectColumnList uniqueColIds;
 };
 
 enum class RelationshipType

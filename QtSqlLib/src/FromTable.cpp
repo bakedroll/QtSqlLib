@@ -13,9 +13,10 @@
 namespace QtSqlLib::Query
 {
 
-static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
 {
-  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+  return std::find_if(columns.cbegin(), columns.cend(),
+    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
 }
 
 static ColumnHelper::SelectColumnList getAllTableColumnIds(const API::Table& table)
@@ -319,20 +320,20 @@ void FromTable::addToSelectedColumns(
       SelectedColumn{ alias, queryMetaInfo.tableId, columnId });
   }
 
-  for (const auto& keyColumnId : table.primaryKeys)
+  for (const auto& keyColumn : table.primaryKeys)
   {
     if (std::count_if(queryMetaInfo.columns.cbegin(), queryMetaInfo.columns.cend(),
-      [&keyColumnId](const ColumnHelper::SelectColumn& col) { return col.columnId == keyColumnId; }) == 0)
+      [&keyColumn](const ColumnHelper::SelectColumn& col) { return col.columnId == keyColumn.columnId; }) == 0)
     {
       const auto primeryKeyColumnIndex = queryMetaInfo.columns.size();
       const auto indexInQuery = m_compiledColumnSelection.size();
 
       queryMetaInfo.primaryKeyColumnIndices.emplace_back(primeryKeyColumnIndex);
-      queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumnId });
+      queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumn.columnId });
       queryMetaInfo.columnQueryIndices.emplace_back(indexInQuery);
 
       m_compiledColumnSelection.emplace_back(
-        SelectedColumn{ alias, queryMetaInfo.tableId, keyColumnId });
+        SelectedColumn{ alias, queryMetaInfo.tableId, keyColumn.columnId });
     }
   }
 }

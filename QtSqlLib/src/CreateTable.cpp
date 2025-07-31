@@ -6,9 +6,10 @@
 namespace QtSqlLib::Query
 {
 
-static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
 {
-  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+  return std::find_if(columns.cbegin(), columns.cend(),
+    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
 }
 
 static QString getDataTypeName(API::DataType type, int varcharLength)
@@ -68,12 +69,12 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
     str = str.left(str.length() - 2);
   };
 
-  const auto listColumns = [this, &cutTailingComma](const std::vector<API::IID::Type>& colIds)
+  const auto listColumns = [this, &cutTailingComma](const ColumnHelper::SelectColumnList& columns)
   {
     QString colNames;
-    for (const auto& colId : colIds)
+    for (const auto& col : columns)
     {
-      colNames += QString("'%1', ").arg(m_table.columns.at(colId).name);
+      colNames += QString("'%1', ").arg(m_table.columns.at(col.columnId).name);
     }
     cutTailingComma(colNames);
     return colNames;

@@ -37,12 +37,12 @@ static const QString s_versionTableName = "database_version";
 
 static void verifyPrimaryKeys(const API::Table& table)
 {
-  for (const auto& key : table.primaryKeys)
+  for (const auto& col : table.primaryKeys)
   {
     auto found = false;
     for (const auto& column : table.columns)
     {
-      if (column.first == key)
+      if (column.first == col.columnId)
       {
         found = true;
         break;

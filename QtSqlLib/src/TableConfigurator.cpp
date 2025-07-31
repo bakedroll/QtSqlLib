@@ -7,9 +7,10 @@ namespace QtSqlLib
 
 static constexpr size_t sc_max27Bits = 0x7FFFFFF;
 
-static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type value)
+static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
 {
-  return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
+  return std::find_if(columns.cbegin(), columns.cend(),
+    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
 }
 
 TableConfigurator::TableConfigurator(API::Table& table)
@@ -150,10 +151,7 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::Sele
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& col : columns)
-  {
-    m_table.primaryKeys.emplace_back(col.columnId);
-  }
+  m_table.primaryKeys = columns;
   m_bIsPrimaryKeysConfigured = true;
   return *this;
 }
@@ -166,10 +164,7 @@ API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::Selec
       QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& col : columns)
-  {
-    m_table.uniqueColIds.emplace_back(col.columnId);
-  }
+  m_table.uniqueColIds = columns;
   return *this;
 }
 
