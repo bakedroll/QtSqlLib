@@ -61,9 +61,11 @@ public:
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
 
-  template <typename TElem>
-  static std::vector<TElem> make(auto&&... args)
+  template <typename TElem, typename... Args>
+  static std::vector<TElem> make(const Args&... args)
   {
+    const auto size = expectedSize(identity<TElem>(), args...);
+
     std::vector<TElem> list;
     makeIntern(list, args...);
     return list;
@@ -87,10 +89,45 @@ private:
   {
   };
 
+  template<typename T>
+  struct identity
+  {
+    using type = T;
+  };
+
   template <typename T>
   static API::IID::Type castId(const T& value)
   {
     return static_cast<API::IID::Type>(static_cast<typename underlying<T>::type>(value));
+  }
+
+  template<typename TElem, typename... Args>
+  static size_t expectedSize(const identity<TElem>&, const Args&...)
+  {
+    return sizeof...(Args);
+  }
+
+  template<typename... Args>
+  static size_t expectedSize(const identity<OrderColumn>&, const Args&... args)
+  {
+    return countOrderColumns(args...);
+  }
+
+  template<typename TID, typename... Args>
+  static size_t countOrderColumns(const TID&, const Args&... tail)
+  {
+    return 1 + countOrderColumns(tail...);
+  }
+
+  template<typename... Args>
+  static size_t countOrderColumns(EOrder, const Args&... tail)
+  {
+    return countOrderColumns(tail...);
+  }
+
+  static size_t countOrderColumns()
+  {
+    return 0;
   }
 
   template<typename TElem, typename TID, typename... Args>
