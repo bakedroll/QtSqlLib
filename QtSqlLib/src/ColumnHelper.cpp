@@ -3,6 +3,8 @@
 namespace QtSqlLib
 {
 
+ColumnHelper::SelectColumn::SelectColumn() = default;
+
 ColumnHelper::ColumnData::ColumnData() = default;
 
 ColumnHelper::GroupColumn::GroupColumn() = default;

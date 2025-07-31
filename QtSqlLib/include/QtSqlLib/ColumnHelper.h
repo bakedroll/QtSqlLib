@@ -18,6 +18,19 @@ public:
     Descending
   };
 
+  struct SelectColumn
+  {
+    SelectColumn();
+
+    template<typename T>
+    SelectColumn(const T& id) :
+      columnId(castId(id))
+    {
+    }
+
+    API::IID::Type columnId = 0;
+  };
+
   struct ColumnData
   {
     ColumnData();
@@ -62,6 +75,7 @@ public:
     EOrder order = EOrder::Ascending;
   };
 
+  using SelectColumnList = std::vector<SelectColumn>;
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
 
