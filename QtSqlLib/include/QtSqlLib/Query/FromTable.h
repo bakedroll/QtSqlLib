@@ -5,7 +5,6 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
 #include <QtSqlLib/ColumnID.h>
-#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/ColumnHelper.h>
 
 #include <QString>
@@ -29,10 +28,10 @@ public:
   ~FromTable() override;
 
   FromTable& selectAll();
-  FromTable& select(const ColumnList& columns);
+  FromTable& select(const ColumnHelper::SelectColumnList& columns);
 
   FromTable& joinAll(const API::IID& relationshipId);
-  FromTable& join(const API::IID& relationshipId, const ColumnList& columns);
+  FromTable& join(const API::IID& relationshipId, const ColumnHelper::SelectColumnList& columns);
 
   FromTable& where(Expr& expr);
   FromTable& having(Expr& expr);

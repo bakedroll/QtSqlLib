@@ -5,8 +5,8 @@
 #include <QtSqlLib/API/IQueryVisitor.h>
 #include <QtSqlLib/API/IRelationshipConfigurator.h>
 #include <QtSqlLib/API/ITableConfigurator.h>
+#include <QtSqlLib/ColumnHelper.h>
 #include <QtSqlLib/ColumnID.h>
-#include <QtSqlLib/ColumnList.h>
 #include <QtSqlLib/ColumnStatistics.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>

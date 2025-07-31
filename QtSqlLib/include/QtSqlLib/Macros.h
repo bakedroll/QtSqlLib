@@ -12,15 +12,15 @@
 #define AUTO_INCREMENT autoIncrement()
 #define NOT_NULL notNull()
 
-#define PRIMARY_KEYS(...) primaryKeys(QtSqlLib::ColumnList::make(__VA_ARGS__))
-#define UNIQUE_COLS(...) uniqueCols(QtSqlLib::ColumnList::make(__VA_ARGS__))
+#define PRIMARY_KEYS(...) primaryKeys(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
+#define UNIQUE_COLS(...) uniqueCols(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
 #define ON_DELETE(X) onDelete(X)
 #define ON_UPDATE(X) onUpdate(X)
 #define ENABLE_FOREIGN_KEY_INDEXING enableForeignKeyIndexing()
 
 #define UNIQUE unique()
-#define COLUMNS(...) columns(QtSqlLib::ColumnList::make(__VA_ARGS__))
+#define COLUMNS(...) columns(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
 // Expr
 #define EQUAL(A, B) equal(QtSqlLib::ID(A), QVariant(B))
@@ -84,7 +84,7 @@
 #define WHERE(X) where(QtSqlLib::Expr().X)
 
 #define SELECT_ALL selectAll()
-#define SELECT(...) select(QtSqlLib::ColumnList::make(__VA_ARGS__))
+#define SELECT(...) select(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
 #define COL(X, Y) QtSqlLib::ColumnHelper::ColumnData(X, Y)
 
@@ -105,7 +105,7 @@
 #define AVG_DISTINCT(X) QtSqlLib::ColumnStatistics::avg(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
 
 #define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
-#define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnList::make(__VA_ARGS__))
+#define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
 #define LINK_TO_ONE_TUPLE(X, Y) linkToOneTuple(QtSqlLib::ID(X), Y)
 #define LINK_TO_MANY_TUPLES(X, ...) linkToManyTuples(QtSqlLib::ID(X), __VA_ARGS__)

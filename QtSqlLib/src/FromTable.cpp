@@ -18,25 +18,24 @@ static bool contains(const std::vector<API::IID::Type>& ids, API::IID::Type valu
   return std::find(ids.cbegin(), ids.cend(), value) != ids.cend();
 }
 
-static ColumnList getAllTableColumnIds(const API::Table& table)
+static ColumnHelper::SelectColumnList getAllTableColumnIds(const API::Table& table)
 {
-  ColumnList columns;
-  columns.data().resize(table.columns.size());
+  ColumnHelper::SelectColumnList columns(table.columns.size());
   size_t i=0;
   for (const auto& column : table.columns)
   {
-    columns.data()[i++] = column.first;
+    columns[i++] = column.first;
   }
   return columns;
 }
 
 static void prepareQueryMetaInfoColumns(API::QueryMetaInfo& queryMetaInfo, const API::Table& table)
 {
-  if (queryMetaInfo.columns.cdata().empty())
+  if (queryMetaInfo.columns.empty())
   {
     queryMetaInfo.columns = getAllTableColumnIds(table);
   }
-  queryMetaInfo.columnQueryIndices.resize(queryMetaInfo.columns.cdata().size(), 0);
+  queryMetaInfo.columnQueryIndices.resize(queryMetaInfo.columns.size(), 0);
 }
 
 FromTable::FromTable(const API::IID& tableId) :
@@ -57,11 +56,11 @@ FromTable& FromTable::selectAll()
   return *this;
 }
 
-FromTable& FromTable::select(const ColumnList& columns)
+FromTable& FromTable::select(const ColumnHelper::SelectColumnList& columns)
 {
   throwIfMultipleSelects();
 
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
@@ -82,11 +81,11 @@ FromTable& FromTable::joinAll(const API::IID& relationshipId)
   return *this;
 }
 
-FromTable& FromTable::join(const API::IID& relationshipId, const ColumnList& columns)
+FromTable& FromTable::join(const API::IID& relationshipId, const ColumnHelper::SelectColumnList& columns)
 {
   throwIfMultipleJoins(relationshipId.get());
 
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
@@ -295,9 +294,9 @@ void FromTable::addToSelectedColumns(
   API::QueryMetaInfo& queryMetaInfo)
 {
   const auto alias = tableAlias(queryMetaInfo.relationshipId);
-  for (size_t i=0; i<queryMetaInfo.columns.cdata().size(); ++i)
+  for (size_t i=0; i<queryMetaInfo.columns.size(); ++i)
   {
-    const auto columnId = queryMetaInfo.columns.cdata().at(i);
+    const auto columnId = queryMetaInfo.columns.at(i).columnId;
     if (ColumnStatistics::isColumnStatistics(columnId))
     {
       const auto columnStatistics = ColumnStatistics::fromId(columnId);
@@ -322,14 +321,14 @@ void FromTable::addToSelectedColumns(
 
   for (const auto& keyColumnId : table.primaryKeys)
   {
-    if (std::count_if(queryMetaInfo.columns.cdata().cbegin(), queryMetaInfo.columns.cdata().cend(),
-      [&keyColumnId](API::IID::Type colId) { return colId == keyColumnId; }) == 0)
+    if (std::count_if(queryMetaInfo.columns.cbegin(), queryMetaInfo.columns.cend(),
+      [&keyColumnId](const ColumnHelper::SelectColumn& col) { return col.columnId == keyColumnId; }) == 0)
     {
-      const auto primeryKeyColumnIndex = queryMetaInfo.columns.cdata().size();
+      const auto primeryKeyColumnIndex = queryMetaInfo.columns.size();
       const auto indexInQuery = m_compiledColumnSelection.size();
 
       queryMetaInfo.primaryKeyColumnIndices.emplace_back(primeryKeyColumnIndex);
-      queryMetaInfo.columns.data().emplace_back(keyColumnId);
+      queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumnId });
       queryMetaInfo.columnQueryIndices.emplace_back(indexInQuery);
 
       m_compiledColumnSelection.emplace_back(

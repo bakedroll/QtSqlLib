@@ -1,7 +1,7 @@
 #pragma once
 #pragma once
 
-#include <QtSqlLib/ColumnList.h>
+#include <QtSqlLib/ColumnHelper.h>
 #include <QtSqlLib/Query/Query.h>
 
 #include <vector>
@@ -25,7 +25,7 @@ private:
   void throwIfColumnIdAlreadyExisting(API::IID::Type id) const;
 
   API::IID::Type m_tableId;
-  ColumnList m_columns;
+  ColumnHelper::SelectColumnList m_columns;
 
 };
 

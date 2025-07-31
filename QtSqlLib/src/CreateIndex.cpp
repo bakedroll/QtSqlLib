@@ -20,14 +20,14 @@ API::IQuery::SqlQuery CreateIndex::getSqlQuery(
 
   QString columns;
   auto isFirst = true;
-  for (const auto& colId : m_index.columns.cdata())
+  for (const auto& col : m_index.columns)
   {
     if (!isFirst)
     {
       columns.append(", ");
     }
 
-    columns.append(QString("'%1'").arg(table.columns.at(colId).name));
+    columns.append(QString("'%1'").arg(table.columns.at(col.columnId).name));
     isFirst = false;
   }
 

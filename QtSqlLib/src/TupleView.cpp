@@ -42,7 +42,7 @@ PrimaryKey TupleView::primaryKey() const
     auto& primaryKeyValue = values.at(i);
     const auto columnIndex = primaryKeyIndices.at(i);
     const auto queryIndex = m_queryMetaInfo.columnQueryIndices.at(columnIndex);
-    primaryKeyValue.columnId = m_queryMetaInfo.columns.cdata().at(columnIndex);
+    primaryKeyValue.columnId = m_queryMetaInfo.columns.at(columnIndex).columnId;
     primaryKeyValue.value = m_sqlQuery.value(static_cast<int>(queryIndex));
   }
 
@@ -51,10 +51,10 @@ PrimaryKey TupleView::primaryKey() const
 
 bool TupleView::hasColumnValueIntern(const API::IID& columnId) const
 {
-  auto& columns = m_queryMetaInfo.columns.cdata();
+  auto& columns = m_queryMetaInfo.columns;
   for (size_t i=0; i<columns.size(); ++i)
   {
-    if (columns.at(i) == columnId.get())
+    if (columns.at(i).columnId == columnId.get())
     {
       return true;
     }
@@ -66,10 +66,10 @@ QVariant TupleView::columnValueIntern(const API::IID& columnId) const
 {
   throwIfInvalidated();
 
-  auto& columns = m_queryMetaInfo.columns.cdata();
+  auto& columns = m_queryMetaInfo.columns;
   for (size_t i=0; i<columns.size(); ++i)
   {
-    if (columns.at(i) == columnId.get())
+    if (columns.at(i).columnId == columnId.get())
     {
       return m_sqlQuery.value(static_cast<int>(m_queryMetaInfo.columnQueryIndices.at(i)));
     }

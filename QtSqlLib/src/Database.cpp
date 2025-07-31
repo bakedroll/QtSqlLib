@@ -2,8 +2,8 @@
 
 #include "QtSqlLib/API/ISchemaConfigurator.h"
 #include "QtSqlLib/API/ITableConfigurator.h"
+#include "QtSqlLib/ColumnHelper.h"
 #include "QtSqlLib/ColumnID.h"
-#include "QtSqlLib/ColumnList.h"
 #include "QtSqlLib/DatabaseException.h"
 #include "QtSqlLib/Expr.h"
 #include "QtSqlLib/ID.h"
@@ -139,7 +139,7 @@ void Database::loadDatabaseFile(const QString& filename)
 
 int Database::queryDatabaseVersion()
 {
-  auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select(ColumnList{s_versionColId}));
+  auto results = execQuery(Query::FromTable(ID(s_versionTableid)).select(ColumnHelper::SelectColumnList{s_versionColId}));
   if (!results.hasNextTuple())
   {
     return -1;
@@ -219,7 +219,7 @@ bool Database::isVersionTableExisting() const
 
   auto results = execQueryForSchema(sqliteMasterSchema,
     Query::FromTable(ID(s_sqliteMasterTableId))
-    .select(ColumnList{s_sqliteMasterNameColId})
+    .select(ColumnHelper::SelectColumnList{s_sqliteMasterNameColId})
     .where(Expr()
       .equal(ID(s_sqliteMasterTypeColId), "table")
       .opAnd()

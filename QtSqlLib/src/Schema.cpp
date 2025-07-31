@@ -82,7 +82,7 @@ void Schema::configureRelationships()
         relationship.second.onDeleteAction,
         {} };
 
-      ColumnList indexedColumns;
+      ColumnHelper::SelectColumnList indexedColumns;
       for (const auto& parentKeyColId : parentPrimaryKeyColIds)
       {
         API::IID::Type nextAvailableChildTableColid = 0;
@@ -103,7 +103,7 @@ void Schema::configureRelationships()
 
         if (relationship.second.bForeignKeyIndexingEnabled)
         {
-          indexedColumns.data().emplace_back(nextAvailableChildTableColid);
+          indexedColumns.emplace_back(ColumnHelper::SelectColumn { nextAvailableChildTableColid });
         }
       }
 
@@ -112,7 +112,7 @@ void Schema::configureRelationships()
         API::Index index;
         index.tableId = childTableId;
         index.columns = indexedColumns;
-        index.columns.data().shrink_to_fit();
+        index.columns.shrink_to_fit();
         m_indices.emplace_back(index);
       }
 
@@ -140,7 +140,7 @@ void Schema::configureRelationships()
           relationship.second.onDeleteAction,
           {} };
 
-        ColumnList indexedColumns;
+        ColumnHelper::SelectColumnList indexedColumns;
         for (const auto& refColId : refTable.primaryKeys)
         {
           const auto& refCol = refTable.columns.at(refColId);
@@ -155,7 +155,7 @@ void Schema::configureRelationships()
 
           if (relationship.second.bForeignKeyIndexingEnabled)
           {
-            indexedColumns.data().emplace_back(currentColId);
+            indexedColumns.emplace_back(ColumnHelper::SelectColumn { currentColId });
           }
 
           currentColId++;
@@ -168,7 +168,7 @@ void Schema::configureRelationships()
           API::Index index;
           index.tableId = nextAvailableTableId;
           index.columns = indexedColumns;
-          index.columns.data().shrink_to_fit();
+          index.columns.shrink_to_fit();
           m_indices.emplace_back(index);
         }
       };
@@ -195,12 +195,12 @@ void Schema::validateAndPrepareIndices()
     }
 
     const auto& table = m_tables.at(index.tableId);
-    for (const auto& colId : index.columns.cdata())
+    for (const auto& col : index.columns)
     {
-      if (table.columns.count(colId) == 0)
+      if (table.columns.count(col.columnId) == 0)
       {
         throw DatabaseException(DatabaseException::Type::InvalidId,
-          QString("Index cannot be created. Table with id '%1' has no column id '%2'").arg(index.tableId).arg(colId));
+          QString("Index cannot be created. Table with id '%1' has no column id '%2'").arg(index.tableId).arg(col.columnId));
       }
     }
 

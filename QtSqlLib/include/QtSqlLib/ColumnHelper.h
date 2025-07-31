@@ -92,7 +92,7 @@ private:
   template<typename T, bool is_fundamental>
   struct underlying_base
   {
-    using type = std::underlying_type<T>::type;
+    using type = typename std::underlying_type<T>::type;
   };
 
   template <typename T>

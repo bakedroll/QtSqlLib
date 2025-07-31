@@ -136,7 +136,7 @@ API::ITableConfigurator& TableConfigurator::unique()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& columns)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::SelectColumnList& columns)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -144,31 +144,31 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnList& column
       QString("Primary key configuration can only be called once for table '%1'").arg(m_table.name));
   }
 
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The primary key column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columns.cdata())
+  for (const auto& col : columns)
   {
-    m_table.primaryKeys.emplace_back(id);
+    m_table.primaryKeys.emplace_back(col.columnId);
   }
   m_bIsPrimaryKeysConfigured = true;
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnList& columns)
+API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::SelectColumnList& columns)
 {
-  if (columns.cdata().empty())
+  if (columns.empty())
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("The unique column set must not be empty for table table '%1'").arg(m_table.name));
   }
 
-  for (const auto& id : columns.cdata())
+  for (const auto& col : columns)
   {
-    m_table.uniqueColIds.emplace_back(id);
+    m_table.uniqueColIds.emplace_back(col.columnId);
   }
   return *this;
 }

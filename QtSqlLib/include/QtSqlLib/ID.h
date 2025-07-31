@@ -60,29 +60,4 @@ private:
 
 };
 
-// TODO: remove?
-template <>
-class ID<ColumnStatistics> : public API::IID
-{
-public:
-  ID(const ColumnStatistics& statistics)
-    : m_statistics(statistics)
-  {
-  }
-
-  Type get() const override
-  {
-    return m_statistics.id();
-  }
-
-  bool operator<(const IID& rhs) const override
-  {
-    return m_statistics.id() < rhs.get();
-  }
-
-private:
-  ColumnStatistics m_statistics;
-
-};
-
 }

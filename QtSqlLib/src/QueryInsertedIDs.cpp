@@ -45,7 +45,12 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery&& qu
   }
   query.seek(-1);
 
-  ColumnList columns(table.primaryKeys);
+  ColumnHelper::SelectColumnList columns;
+  columns.reserve(table.primaryKeys.size());
+  std::transform(table.primaryKeys.cbegin(), table.primaryKeys.cend(), std::back_inserter(columns), [](API::IID::Type id) -> ColumnHelper::SelectColumn {
+    return ColumnHelper::SelectColumn { id };
+  });
+
   std::vector<size_t> columnQueryIndices(table.primaryKeys.size());
   std::vector<size_t> primaryKeyColumnIndices(table.primaryKeys.size());
 
