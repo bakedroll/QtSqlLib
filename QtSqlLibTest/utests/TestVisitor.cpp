@@ -14,7 +14,7 @@ namespace QtSqlLibTest
  * @test: Checks the order in which the visitor traverses a nested QuerySequence.
  * @expected: A depth-first traversal.
  */
-TEST(VisitorTest, nestedQueriesExecutionOrder)
+TEST(TestVisitor, nestedQueriesExecutionOrder)
 {
   NiceMock<MockSchema> schema;
   QtSqlLib::QueryPrepareVisitor visitor(schema);
