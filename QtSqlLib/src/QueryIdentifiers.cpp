@@ -11,18 +11,12 @@ static const QString columnIdentifier(
   API::ISchema& schema,
   API::IID::Type tableId,
   const std::optional<QString>& tableAlias,
-  API::IID::Type columnId,
-  bool bUseTableName)
+  API::IID::Type columnId)
 {
   const auto& table = schema.getTables().at(tableId);
   schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
   const auto columnName = table.columns.at(columnId).name;
-
-  if (bUseTableName)
-  {
-    return QString("'%1'.'%2'").arg(tableAlias.has_value() ? tableAlias.value() : table.name).arg(columnName);
-  }
-  return QString("'%1'").arg(columnName);
+  return QString("'%1'.'%2'").arg(tableAlias.has_value() ? tableAlias.value() : table.name).arg(columnName);
 }
 
 QueryIdentifiers::QueryIdentifiers() = default;
@@ -50,12 +44,12 @@ QString QueryIdentifiers::resolveColumnIdentifier(API::ISchema& schema, const Co
         if (columnStatistics.hasColumn())
         {
           return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
-            columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnStatistics.columnId(), m_tableIdentifiers.size() > 1));
+            columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnStatistics.columnId()));
         }
         return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method());
       }
 
-      return columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnId, m_tableIdentifiers.size() > 1);
+      return columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnId);
     }
   }
 

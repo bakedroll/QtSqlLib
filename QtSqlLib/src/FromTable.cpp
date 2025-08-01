@@ -172,7 +172,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   generateQueryIdentifiers(schema);
 
   prepareQueryMetaInfoColumns(m_queryMetaInfo, table);
-  addToSelectedColumns(schema, table, m_queryMetaInfo);
+  addToSelectedColumns(table, m_queryMetaInfo);
 
   std::vector<QVariant> boundValues;
   const auto joinStr = processJoinsAndCreateQuerySubstring(schema, boundValues, table);
@@ -206,7 +206,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   queryStr.append(";");
 
   // TODO
-  printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
+  // printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
 
   QSqlQuery query(db);
   query.prepare(queryStr);
@@ -313,9 +313,7 @@ void FromTable::generateQueryIdentifiers(API::ISchema& schema)
   }
 }
 
-void FromTable::addToSelectedColumns(
-  const API::ISchema& schema, const API::Table& table,
-  API::QueryMetaInfo& queryMetaInfo)
+void FromTable::addToSelectedColumns(const API::Table& table, API::QueryMetaInfo& queryMetaInfo)
 {
   // TODO: receive table here from schema by queryMetaInfo.tableId
 
@@ -374,7 +372,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
     const QString joinTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema, relationshipId) : "";
 
     prepareQueryMetaInfoColumns(join, joinTable);
-    addToSelectedColumns(schema, joinTable, join);
+    addToSelectedColumns(joinTable, join);
 
     if (relationship.type == API::RelationshipType::ManyToMany)
     {

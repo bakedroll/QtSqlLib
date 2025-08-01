@@ -66,9 +66,7 @@ private:
   void verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema);
   void generateQueryIdentifiers(API::ISchema& schema);
 
-  void addToSelectedColumns(
-    const API::ISchema& schema, const API::Table& table,
-    API::QueryMetaInfo& queryMetaInfo);
+  void addToSelectedColumns(const API::Table& table, API::QueryMetaInfo& queryMetaInfo);
   void addForeignKeyColumns(
     const std::optional<API::IID::Type>& foreignKeyRelationshipId,
     const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap);
