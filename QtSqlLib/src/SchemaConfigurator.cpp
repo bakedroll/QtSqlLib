@@ -62,6 +62,12 @@ API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const 
                                                                           const API::IID& tableToId, API::RelationshipType type)
 {
   const auto relId = relationshipId.get();
+  if ((relId & API::IID::sc_relationshipIdReservedBits) != 0x0)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("Relationship with id %1 exceeds the maximum allowed range of 31 bits.").arg(relId));
+  }
+
   if (m_schema->getRelationships().count(relId) > 0)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,

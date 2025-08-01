@@ -1,30 +1,24 @@
 #pragma once
 
-#include <QtSqlLib/API/IID.h>
+#include <QtSqlLib/API/IQueryIdentifiers.h>
 
-#include <QtSqlLib/API/ISchema.h>
-#include <QtSqlLib/ColumnHelper.h>
-
-#include <QString>
-
-#include <optional>
 #include <vector>
 
 namespace QtSqlLib
 {
 
-class QueryIdentifiers
+class QueryIdentifiers : public API::IQueryIdentifiers
 {
 public:
   QueryIdentifiers();
-  virtual ~QueryIdentifiers();
+  ~QueryIdentifiers() override;
 
   void addTableIdentifier(
     const std::optional<API::IID::Type>& relationshipId,
     API::IID::Type tableId,
-    const QString& tableName = "");
+    const QString& tableName = "") override;
 
-  QString resolveColumnIdentifier(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const;
+  QString resolveColumnIdentifier(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const override;
 
 private:
   struct TableIdentifier

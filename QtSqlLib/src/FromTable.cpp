@@ -195,7 +195,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   queryStr.append(";");
 
   // TODO
-  printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
+  //printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
 
   QSqlQuery query(db);
   query.prepare(queryStr);
