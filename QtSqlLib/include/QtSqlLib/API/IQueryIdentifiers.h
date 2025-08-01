@@ -22,6 +22,7 @@ public:
     const std::optional<QString>& tableAlias = std::nullopt) = 0;
 
   virtual QString resolveColumnIdentifier(ISchema& schema, const ColumnHelper::ColumnData& columnData) const = 0;
+  virtual QString resolveTableIdentifier(ISchema& schema, const std::optional<IID::Type>& relationshipId = std::nullopt) const = 0;
 
 };
 

@@ -13,6 +13,20 @@
 namespace QtSqlLib::Query
 {
 
+static ColumnHelper::ColumnData makeColumnData(const std::optional<API::IID::Type>& relationshipId, API::IID::Type columnId)
+{
+  ColumnHelper::ColumnData data;
+  data.relationshipId = relationshipId;
+  data.columnId = columnId;
+  return data;
+}
+
+static API::IID::Type relationshipIdForLink(API::IID::Type relationshipId)
+{
+  constexpr auto idBits = sizeof(API::IID::Type) * 8;
+  return relationshipId | (0x1 << (idBits - 1));
+}
+
 static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
 {
   return std::find_if(columns.cbegin(), columns.cend(),
@@ -168,7 +182,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   queryStr.append(QString("SELECT %1 FROM '%2'").arg(selectColsStr).arg(table.name));
   if (m_isTableAliasesNeeded)
   {
-    queryStr.append(QString(" as '%1'").arg(tableAlias()));
+    queryStr.append(QString(" as '%1'").arg(m_queryIdentifiers.resolveTableIdentifier(schema)));
   }
 
   queryStr.append(joinStr);
@@ -192,7 +206,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   queryStr.append(";");
 
   // TODO
-  //printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
+  printf("##############\n\n%s\n\n", queryStr.toStdString().c_str());
 
   QSqlQuery query(db);
   query.prepare(queryStr);
@@ -284,19 +298,17 @@ void FromTable::generateQueryIdentifiers(API::ISchema& schema)
 
   for (auto& join : m_joins)
   {
-    const auto relationshipId = join.relationshipId.value();
-
-    m_queryIdentifiers.addTableIdentifier(join.relationshipId, m_queryMetaInfo.tableId,
+    m_queryIdentifiers.addTableIdentifier(join.relationshipId, join.tableId,
       m_isTableAliasesNeeded ? std::make_optional<QString>(getNextTableAlias()) : std::nullopt);
 
+    const auto relationshipId = join.relationshipId.value();
     auto& relationship = schema.getRelationships().at(relationshipId);
     if (relationship.type == API::RelationshipType::ManyToMany)
     {
       const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
       schema.getSanityChecker().throwIfTableIdNotExisting(linkTableId);
 
-      constexpr auto idBits = sizeof(API::IID::Type) * 8;
-      m_queryIdentifiers.addTableIdentifier(relationshipId | (0x1 << (idBits - 1)), linkTableId);
+      m_queryIdentifiers.addTableIdentifier(relationshipIdForLink(relationshipId), linkTableId);
     }
   }
 }
@@ -305,30 +317,20 @@ void FromTable::addToSelectedColumns(
   const API::ISchema& schema, const API::Table& table,
   API::QueryMetaInfo& queryMetaInfo)
 {
-  const auto alias = tableAlias(queryMetaInfo.relationshipId);
+  // TODO: receive table here from schema by queryMetaInfo.tableId
+
   for (size_t i=0; i<queryMetaInfo.columns.size(); ++i)
   {
     const auto columnId = queryMetaInfo.columns.at(i).columnId;
-    if (ColumnStatistics::isColumnStatistics(columnId))
+    if (contains(table.primaryKeys, columnId))
     {
-      const auto columnStatistics = ColumnStatistics::fromId(columnId);
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
-    }
-    else
-    {
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
-
-      if (contains(table.primaryKeys, columnId))
-      {
-        queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
-      }
+      queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
     }
 
     const auto indexInQuery = m_compiledColumnSelection.size();
     queryMetaInfo.columnQueryIndices[i] = indexInQuery;
 
-    m_compiledColumnSelection.emplace_back(
-      SelectedColumn{ alias, queryMetaInfo.tableId, columnId });
+    m_compiledColumnSelection.emplace_back(makeColumnData(queryMetaInfo.relationshipId, columnId));
   }
 
   for (const auto& keyColumn : table.primaryKeys)
@@ -343,20 +345,18 @@ void FromTable::addToSelectedColumns(
       queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumn.columnId });
       queryMetaInfo.columnQueryIndices.emplace_back(indexInQuery);
 
-      m_compiledColumnSelection.emplace_back(
-        SelectedColumn{ alias, queryMetaInfo.tableId, keyColumn.columnId });
+      m_compiledColumnSelection.emplace_back(makeColumnData(queryMetaInfo.relationshipId, keyColumn.columnId));
     }
   }
 }
 
 void FromTable::addForeignKeyColumns(
-  const QString& childTableAlias,
-  API::IID::Type childTableId,
+  const std::optional<API::IID::Type>& foreignKeyRelationshipId,
   const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap)
 {
   for (const auto& foreignKey : primaryForeignKeyColumnIdMap)
   {
-    m_compiledColumnSelection.emplace_back(SelectedColumn { childTableAlias, childTableId, foreignKey.second });
+    m_compiledColumnSelection.emplace_back(makeColumnData(foreignKeyRelationshipId, foreignKey.second));
   }
 }
 
@@ -371,7 +371,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
     const auto relationshipId = join.relationshipId.value();
     const auto& relationship = schema.getRelationships().at(relationshipId);
     const auto& joinTable = schema.getTables().at(join.tableId);
-    const auto joinTableAlias = tableAlias(relationshipId);
+    const QString joinTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema, relationshipId) : "";
 
     prepareQueryMetaInfoColumns(join, joinTable);
     addToSelectedColumns(schema, joinTable, join);
@@ -379,7 +379,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
     if (relationship.type == API::RelationshipType::ManyToMany)
     {
       const auto parentFromTableId = m_queryMetaInfo.tableId;
-      const auto parentFromTableAlias = tableAlias();
+      const QString parentFromTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema) : "";
 
       // TODO: remove (also checker)
       const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
@@ -388,17 +388,17 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
       const auto& linkTable = schema.getTables().at(linkTableId);
 
       const auto parentToTableId = join.tableId;
-      const auto parentToTableAlias = tableAlias(join.relationshipId);
+      const QString parentToTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema, join.relationshipId) : "";
 
       const auto& foreignKeyReferences = linkTable.relationshipToForeignKeyReferencesMap;
 
       const auto secondForeignKeyRefIndex = (parentFromTableId == parentToTableId ? 1 : 0);
 
       appendJoinQuerySubstring(
-        joinStr, schema, relationshipId, parentFromTableId, parentFromTableAlias,
+        joinStr, schema, relationshipId, relationshipIdForLink(relationshipId), parentFromTableId, parentFromTableAlias,
         linkTableId, "", linkTable, "", foreignKeyReferences, 0, boundValues);
       appendJoinQuerySubstring(
-        joinStr, schema, relationshipId, parentToTableId, parentToTableAlias,
+        joinStr, schema, relationshipId, relationshipIdForLink(relationshipId), parentToTableId, parentToTableAlias,
         linkTableId, "", joinTable, joinTableAlias, foreignKeyReferences, secondForeignKeyRefIndex, boundValues);
     }
     else
@@ -411,18 +411,21 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
         ? joinTable.relationshipToForeignKeyReferencesMap
         : table.relationshipToForeignKeyReferencesMap);
 
+      std::optional<API::IID::Type> foreignKeyRelationshipId = std::nullopt;
+
       auto* parentTableColSelInfo = &join;
       auto* childTableColSelInfo = &m_queryMetaInfo;
       if (needToSwapParentChild)
       {
+        foreignKeyRelationshipId = relationshipId;
         std::swap(parentTableColSelInfo, childTableColSelInfo);
       }
 
-      const auto parentTableAlias = tableAlias(parentTableColSelInfo->relationshipId);
-      const auto childTableAlias = tableAlias(childTableColSelInfo->relationshipId);
+      const QString parentTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema, parentTableColSelInfo->relationshipId) : "";
+      const QString childTableAlias = m_isTableAliasesNeeded ? m_queryIdentifiers.resolveTableIdentifier(schema, childTableColSelInfo->relationshipId) : "";
 
       appendJoinQuerySubstring(
-        joinStr, schema, relationshipId, parentTableColSelInfo->tableId, parentTableAlias,
+        joinStr, schema, relationshipId, foreignKeyRelationshipId, parentTableColSelInfo->tableId, parentTableAlias,
         childTableColSelInfo->tableId, childTableAlias, joinTable, joinTableAlias, foreignKeyReferences, 0, boundValues);
     }
   }
@@ -440,7 +443,7 @@ QString FromTable::createSelectString(API::ISchema& schema) const
       selectColsStr.append(", ");
     }
 
-    selectColsStr.append(columnNameFromSelectedColumn(schema, selectedColumn));
+    selectColsStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, selectedColumn));
   }
 
   return selectColsStr;
@@ -455,7 +458,7 @@ QString FromTable::createGroupByString(API::ISchema& schema) const
     {
       groupByStr.append(", ");
     }
-    groupByStr.append(columnNameFromColumnData(schema, groupCol.data));
+    groupByStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, groupCol.data));
   }
 
   return groupByStr;
@@ -471,15 +474,16 @@ QString FromTable::createOrderByString(API::ISchema& schema) const
       orderByStr.append(", ");
     }
     orderByStr.append(QString("%1 %2")
-      .arg(columnNameFromColumnData(schema, orderCol.data))
+      .arg(m_queryIdentifiers.resolveColumnIdentifier(schema, orderCol.data))
       .arg(orderCol.order == ColumnHelper::EOrder::Ascending ? "ASC" : "DESC"));
   }
 
   return orderByStr;
 }
 
+// TODO: refactor arguments
 void FromTable::appendJoinQuerySubstring(
-  QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId,
+  QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId, const std::optional<API::IID::Type>& foreignKeyRelationshipId,
   API::IID::Type parentTableId, const QString& parentTableAlias,
   API::IID::Type childTableId, const QString& childTableAlias,
   const API::Table& joinTable, const QString& joinTableAlias,
@@ -501,7 +505,7 @@ void FromTable::appendJoinQuerySubstring(
   }
 
   const auto& foreignKeyRef = foreignKeyReference[foreignKeyReferencesIndex];
-  addForeignKeyColumns(childTableAlias, childTableId, foreignKeyRef.primaryForeignKeyColIdMap);
+  addForeignKeyColumns(foreignKeyRelationshipId, foreignKeyRef.primaryForeignKeyColIdMap);
 
   for (const auto& idMapping : foreignKeyRef.primaryForeignKeyColIdMap)
   {
@@ -529,76 +533,6 @@ void FromTable::appendJoinQuerySubstring(
   }
 
   joinStrOut.append(QString(" ON %1").arg(joinOnExpr.toQueryString(schema, boundValues)));
-}
-
-QString FromTable::tableAlias(const std::optional<API::IID::Type> relationshipId) const
-{
-  for (const auto& alias : m_aliases)
-  {
-    if (alias.relationshipId == relationshipId)
-    {
-      return alias.alias;
-    }
-  }
-  return "";
-}
-
-QString FromTable::resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const
-{
-  const auto& table = schema.getTables().at(selectedColumn.tableId);
-  const auto& alias = selectedColumn.tableAlias;
-
-  const auto tableName = (m_isTableAliasesNeeded && !alias.isEmpty() ? alias : table.name);
-  return QString("'%1'.'%2'").arg(tableName).arg(table.columns.at(selectedColumn.columnId).name);
-}
-
-API::IID::Type FromTable::tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const
-{
-  if (relationshipId.has_value())
-  {
-    const auto& relationship = schema.getRelationships().at(relationshipId.value());
-    const auto tableId = m_queryMetaInfo.tableId == relationship.tableFromId ? relationship.tableToId : relationship.tableFromId;
-    return tableId;
-  }
-
-  return m_queryMetaInfo.tableId;
-}
-
-QString FromTable::columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const
-{
-  if (ColumnStatistics::isColumnStatistics(selectedColumn.columnId))
-  {
-    const auto columnStatistics = ColumnStatistics::fromId(selectedColumn.columnId);
-    if (columnStatistics.hasColumn())
-    {
-      return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
-        resolveColumnName(schema, SelectedColumn { selectedColumn.tableAlias, selectedColumn.tableId, columnStatistics.columnId() }));
-    }
-
-    return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method());
-  }
-
-  return resolveColumnName(schema, selectedColumn);
-}
-
-QString FromTable::columnNameFromColumnData(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const
-{
-  const auto columnId = columnData.columnId;
-  const auto tableId = tableIdFromRelationshipId(schema, columnData.relationshipId);
-  const auto& table = schema.getTables().at(tableId);
-
-  if (ColumnStatistics::isColumnStatistics(columnId))
-  {
-    const auto columnStatistics = ColumnStatistics::fromId(columnId);
-    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
-  }
-  else
-  {
-    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
-  }
-
-  const auto alias = tableAlias(columnData.relationshipId);
-  return columnNameFromSelectedColumn(schema, SelectedColumn { alias, tableId, columnId });
 }
 
 }

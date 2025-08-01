@@ -12,6 +12,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace QtSqlLib
@@ -44,21 +45,6 @@ public:
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
 
 private:
-  // TODO: REMOVE
-  struct SelectedColumn
-  {
-    QString tableAlias;
-    API::IID::Type tableId = 0;
-    API::IID::Type columnId = 0;
-  };
-
-  // TODO: REMOVER
-  struct TableAlias
-  {
-    std::optional<API::IID::Type> relationshipId;
-    QString alias;
-  };
-
   bool m_hasColumnsSelected;
   bool m_isTableAliasesNeeded;
 
@@ -66,9 +52,7 @@ private:
   std::vector<API::QueryMetaInfo> m_joins;
 
   QueryIdentifiers m_queryIdentifiers;
-
-  // TODO: CHECK
-  std::vector<SelectedColumn> m_compiledColumnSelection;
+  std::vector<ColumnHelper::ColumnData> m_compiledColumnSelection;
 
   std::unique_ptr<Expr> m_whereExpr;
   std::unique_ptr<Expr> m_havingExpr;
@@ -86,8 +70,7 @@ private:
     const API::ISchema& schema, const API::Table& table,
     API::QueryMetaInfo& queryMetaInfo);
   void addForeignKeyColumns(
-    const QString& childTableAlias,
-    API::IID::Type childTableId,
+    const std::optional<API::IID::Type>& foreignKeyRelationshipId,
     const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap);
 
   QString processJoinsAndCreateQuerySubstring(
@@ -100,24 +83,13 @@ private:
   QString createOrderByString(API::ISchema& schema) const;
 
   void appendJoinQuerySubstring(
-    QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId,
+    QString& joinStrOut, API::ISchema& schema, API::IID::Type relationshipId, const std::optional<API::IID::Type>& foreignKeyRelationshipId,
     API::IID::Type parentTableId, const QString& parentTableAlias,
     API::IID::Type childTableId, const QString& childTableAlias,
     const API::Table& joinTable, const QString& joinTableAlias,
     const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
     int foreignKeyReferencesIndex,
     std::vector<QVariant>& boundValues);
-
-  // TODO: REMOVE
-  QString tableAlias(const std::optional<API::IID::Type> relationshipId = std::nullopt) const;
-  // TODO: REMOVE
-  QString resolveColumnName(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
-
-
-  // TODO: check
-  API::IID::Type tableIdFromRelationshipId(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const;
-  QString columnNameFromSelectedColumn(API::ISchema& schema, const SelectedColumn& selectedColumn) const;
-  QString columnNameFromColumnData(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const;
 
 };
 

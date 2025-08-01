@@ -19,6 +19,7 @@ public:
     const std::optional<QString>& tableAlias = std::nullopt) override;
 
   QString resolveColumnIdentifier(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const override;
+  QString resolveTableIdentifier(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId = std::nullopt) const override;
 
 private:
   struct TableIdentifier
