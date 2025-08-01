@@ -7,14 +7,22 @@
 namespace QtSqlLib
 {
 
-static const QString columnIdentifier(const QString& tableName, const QString& columnName)
+static const QString columnIdentifier(
+  API::ISchema& schema,
+  API::IID::Type tableId,
+  const std::optional<QString>& tableAlias,
+  API::IID::Type columnId,
+  bool bUseTableName)
 {
-  if (tableName.isEmpty())
-  {
-    return QString("'%1'").arg(columnName);
-  }
+  const auto& table = schema.getTables().at(tableId);
+  schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
+  const auto columnName = table.columns.at(columnId).name;
 
-  return QString("'%1'.'%2'").arg(tableName).arg(columnName);
+  if (bUseTableName)
+  {
+    return QString("'%1'.'%2'").arg(tableAlias.has_value() ? tableAlias.value() : table.name).arg(columnName);
+  }
+  return QString("'%1'").arg(columnName);
 }
 
 QueryIdentifiers::QueryIdentifiers() = default;
@@ -24,9 +32,9 @@ QueryIdentifiers::~QueryIdentifiers() = default;
 void QueryIdentifiers::addTableIdentifier(
   const std::optional<API::IID::Type>& relationshipId,
   API::IID::Type tableId,
-  const QString& tableName)
+  const std::optional<QString>& tableAlias)
 {
-  m_tableIdentifiers.emplace_back(TableIdentifier { relationshipId, tableId, tableName });
+  m_tableIdentifiers.emplace_back(TableIdentifier { relationshipId, tableId, tableAlias });
 }
 
 QString QueryIdentifiers::resolveColumnIdentifier(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const
@@ -35,26 +43,19 @@ QString QueryIdentifiers::resolveColumnIdentifier(API::ISchema& schema, const Co
   {
     if (identifier.relationshipId == columnData.relationshipId)
     {
-      const auto& table = schema.getTables().at(identifier.tableId);
       const auto columnId = columnData.columnId;
-
       if (ColumnStatistics::isColumnStatistics(columnId))
       {
         const auto columnStatistics = ColumnStatistics::fromId(columnId);
-        schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnStatistics.columnId());
-
         if (columnStatistics.hasColumn())
         {
-          const auto columnName = table.columns.at(columnStatistics.columnId()).name;
           return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
-            columnIdentifier(identifier.tableName, columnName));
+            columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnStatistics.columnId(), m_tableIdentifiers.size() > 1));
         }
         return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method());
       }
 
-      schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
-      const auto columnName = table.columns.at(columnData.columnId).name;
-      return columnIdentifier(identifier.tableName, columnName);
+      return columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnId, m_tableIdentifiers.size() > 1);
     }
   }
 

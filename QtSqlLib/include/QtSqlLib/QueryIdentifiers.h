@@ -16,7 +16,7 @@ public:
   void addTableIdentifier(
     const std::optional<API::IID::Type>& relationshipId,
     API::IID::Type tableId,
-    const QString& tableName = "") override;
+    const std::optional<QString>& tableAlias = std::nullopt) override;
 
   QString resolveColumnIdentifier(API::ISchema& schema, const ColumnHelper::ColumnData& columnData) const override;
 
@@ -25,7 +25,7 @@ private:
   {
     std::optional<API::IID::Type> relationshipId;
     API::IID::Type tableId;
-    QString tableName;
+    std::optional<QString> tableAlias;
   };
 
   std::vector<TableIdentifier> m_tableIdentifiers;

@@ -19,7 +19,7 @@ public:
   virtual void addTableIdentifier(
     const std::optional<IID::Type>& relationshipId,
     IID::Type tableId,
-    const QString& tableName = "") = 0;
+    const std::optional<QString>& tableAlias = std::nullopt) = 0;
 
   virtual QString resolveColumnIdentifier(ISchema& schema, const ColumnHelper::ColumnData& columnData) const = 0;
 
