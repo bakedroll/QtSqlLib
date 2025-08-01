@@ -48,8 +48,8 @@ public:
 
   QString toQueryString(
     API::ISchema& schema,
-    std::vector<QVariant>& boundValuesOut,
-    const OptionalIID& defaultTableId = std::nullopt) const;
+    const API::IQueryIdentifiers& queryIdentifiers,
+    std::vector<QVariant>& boundValuesOut) const;
 
 private:
   enum class NextTermExpectation

@@ -12,8 +12,8 @@ Logic::~Logic() = default;
 
 QString Logic::toQueryString(
   API::ISchema& /*schema*/,
-  std::vector<QVariant>& /*boundValuesOut*/,
-  const OptionalIID& /*defaultTableId*/) const
+  const API::IQueryIdentifiers& /*queryIdentifiers*/,
+  std::vector<QVariant>& /*boundValuesOut*/) const
 {
   switch (m_operator)
   {

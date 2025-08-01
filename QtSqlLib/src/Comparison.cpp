@@ -20,8 +20,8 @@ Comparison::~Comparison() = default;
 
 QString Comparison::toQueryString(
   API::ISchema& schema,
-  std::vector<QVariant>& boundValuesOut,
-  const OptionalIID& defaultTableId = std::nullopt) const
+  const API::IQueryIdentifiers& queryIdentifiers,
+  std::vector<QVariant>& boundValuesOut) const
 {
   const auto getOperandString = [&schema, &boundValuesOut, &defaultTableId](const Operand& operand) -> QString
   {

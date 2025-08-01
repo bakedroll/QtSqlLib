@@ -12,6 +12,32 @@
 namespace QtSqlLib
 {
 
+// TODO
+void helperFunc(ColumnHelper::ColumnData&& data)
+{
+  printf("blub");
+}
+
+void helperFunc(QVariant&& data)
+{
+  printf("blub");
+}
+
+template<typename T, typename = std::enable_if_t<std::is_enum_v<T> || std::is_fundamental_v<T>>>
+void helperFunc(const T& bla)
+{
+  printf("blub");
+}
+
+template<typename T>
+void test(T&& bla)
+{
+  helperFunc(std::forward<T>(bla));
+}
+
+
+
+
 Expr::Expr()
   : m_nextExpectation(NextTermExpectation::ComparisonOrNestedExpr)
 {
@@ -81,8 +107,8 @@ Expr& Expr::braces(Expr& nestedExpr)
 
 QString Expr::toQueryString(
   API::ISchema& schema,
-  std::vector<QVariant>& boundValuesOut,
-  const OptionalIID& defaultTableId) const
+  const API::IQueryIdentifiers& queryIdentifiers,
+  std::vector<QVariant>& boundValuesOut) const
 {
   if (m_termElements.size() == 0)
   {
@@ -102,7 +128,7 @@ QString Expr::toQueryString(
       result.append(" ");
     }
 
-    result.append(term->toQueryString(schema, boundValuesOut, defaultTableId));
+    result.append(term->toQueryString(schema, queryIdentifiers, boundValuesOut));
   }
 
   return result;

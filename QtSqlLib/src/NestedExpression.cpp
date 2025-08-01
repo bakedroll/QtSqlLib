@@ -14,10 +14,10 @@ NestedExpression::~NestedExpression() = default;
 
 QString NestedExpression::toQueryString(
   API::ISchema& schema,
-  std::vector<QVariant>& boundValuesOut,
-  const OptionalIID& defaultTableId) const
+  const API::IQueryIdentifiers& queryIdentifiers,
+  std::vector<QVariant>& boundValuesOut) const
 {
-  return QString("(%1)").arg(m_nestedExpr->toQueryString(schema, boundValuesOut, defaultTableId));
+  return QString("(%1)").arg(m_nestedExpr->toQueryString(schema, queryIdentifiers, boundValuesOut));
 }
 
 }
