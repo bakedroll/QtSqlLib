@@ -4,8 +4,9 @@
 
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
-#include <QtSqlLib/ColumnID.h>
 #include <QtSqlLib/ColumnHelper.h>
+#include <QtSqlLib/ColumnID.h>
+#include <QtSqlLib/QueryIdentifiers.h>
 
 #include <QString>
 
@@ -59,15 +60,12 @@ private:
   };
 
   bool m_hasColumnsSelected;
-
-  // TODO: CHECK
   bool m_isTableAliasesNeeded;
 
   API::QueryMetaInfo m_queryMetaInfo;
   std::vector<API::QueryMetaInfo> m_joins;
 
-  // TODO: REMOVE
-  std::vector<TableAlias> m_aliases;
+  QueryIdentifiers m_queryIdentifiers;
 
   // TODO: CHECK
   std::vector<SelectedColumn> m_compiledColumnSelection;
@@ -82,7 +80,7 @@ private:
   void throwIfMultipleJoins(API::IID::Type relationshipId) const;
 
   void verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema);
-  void generateTableAliases();
+  void generateQueryIdentifiers(API::ISchema& schema);
 
   void addToSelectedColumns(
     const API::ISchema& schema, const API::Table& table,

@@ -155,10 +155,7 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   const auto& table = schema.getTables().at(m_queryMetaInfo.tableId);
 
   verifyJoinsAndCheckAliasesNeeded(schema);
-  if (m_isTableAliasesNeeded)
-  {
-    generateTableAliases();
-  }
+  generateQueryIdentifiers(schema);
 
   prepareQueryMetaInfoColumns(m_queryMetaInfo, table);
   addToSelectedColumns(schema, table, m_queryMetaInfo);
@@ -273,20 +270,34 @@ void FromTable::verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema)
   }
 }
 
-void FromTable::generateTableAliases()
+void FromTable::generateQueryIdentifiers(API::ISchema& schema)
 {
   auto tableAliasIndex = 0;
-  QString tableAliasBody = "t_alias_%1";
-
-  const auto getNextTableAlias = [&tableAliasIndex, &tableAliasBody]() -> QString
+  const auto getNextTableAlias = [&tableAliasIndex]() -> QString
   {
+    QString tableAliasBody = "t_alias_%1";
     return tableAliasBody.arg(tableAliasIndex++);
   };
 
-  m_aliases.emplace_back(TableAlias { std::nullopt, getNextTableAlias() });
+  m_queryIdentifiers.addTableIdentifier(std::nullopt, m_queryMetaInfo.tableId,
+    m_isTableAliasesNeeded ? std::make_optional<QString>(getNextTableAlias()) : std::nullopt);
+
   for (auto& join : m_joins)
   {
-    m_aliases.emplace_back(TableAlias { join.relationshipId.value(), getNextTableAlias() });
+    const auto relationshipId = join.relationshipId.value();
+
+    m_queryIdentifiers.addTableIdentifier(join.relationshipId, m_queryMetaInfo.tableId,
+      m_isTableAliasesNeeded ? std::make_optional<QString>(getNextTableAlias()) : std::nullopt);
+
+    auto& relationship = schema.getRelationships().at(relationshipId);
+    if (relationship.type == API::RelationshipType::ManyToMany)
+    {
+      const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
+      schema.getSanityChecker().throwIfTableIdNotExisting(linkTableId);
+
+      constexpr auto idBits = sizeof(API::IID::Type) * 8;
+      m_queryIdentifiers.addTableIdentifier(relationshipId | (0x1 << (idBits - 1)), linkTableId);
+    }
   }
 }
 
@@ -370,6 +381,7 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
       const auto parentFromTableId = m_queryMetaInfo.tableId;
       const auto parentFromTableAlias = tableAlias();
 
+      // TODO: remove (also checker)
       const auto linkTableId = schema.getManyToManyLinkTableId(relationshipId);
       schema.getSanityChecker().throwIfTableIdNotExisting(linkTableId);
 
