@@ -85,7 +85,10 @@ public:
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
 
-  template <typename TElem, typename... Args>
+  template <typename TElem, typename... Args, typename = std::enable_if_t<
+    std::is_same_v<TElem, SelectColumn> ||
+    std::is_same_v<TElem, GroupColumn> ||
+    std::is_same_v<TElem, OrderColumn>>>
   static std::vector<TElem> make(const Args&... args)
   {
     const auto size = expectedSize(identity<TElem>(), args...);

@@ -5,7 +5,6 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
 #include <QtSqlLib/ColumnHelper.h>
-#include <QtSqlLib/ColumnID.h>
 #include <QtSqlLib/QueryIdentifiers.h>
 
 #include <QString>

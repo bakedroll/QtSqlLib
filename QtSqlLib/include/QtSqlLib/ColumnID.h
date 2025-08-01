@@ -7,6 +7,7 @@
 namespace QtSqlLib
 {
 
+// TODO: remove
 class ColumnID
 {
 public:
