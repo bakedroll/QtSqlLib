@@ -57,10 +57,15 @@ void ResultSet::resetIteration()
     return;
   }
 
-  m_sqlQuery.seek(-1);
+  m_sqlQuery.seek(QSql::BeforeFirstRow);
   resetNextTupleResult();
   m_retrievedResultKeys.clear();
   m_retrievedJoinResultKeys.clear();
+}
+
+bool ResultSet::isAtBeginning() const
+{
+  return m_isValid && m_sqlQuery.at() == QSql::BeforeFirstRow;
 }
 
 bool ResultSet::hasNextTuple()

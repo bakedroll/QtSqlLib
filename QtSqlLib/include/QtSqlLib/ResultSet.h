@@ -34,6 +34,7 @@ public:
 
   bool isValid() const;
   void resetIteration();
+  bool isAtBeginning() const;
 
   bool hasNextTuple();
   bool hasNextJoinedTuple();

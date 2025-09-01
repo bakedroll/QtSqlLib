@@ -27,6 +27,7 @@ public:
   void close() override;
 
   ResultSet execQuery(API::IQueryElement& query) override;
+  ResultSetPrinter createResultSetPrinter(ResultSet& resultSet, int maxColumnWidth) const override;
 
 private:
   std::unique_ptr<QSqlDatabase> m_db;

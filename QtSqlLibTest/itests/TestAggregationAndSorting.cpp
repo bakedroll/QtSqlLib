@@ -13,6 +13,7 @@ public:
   TestAggregationAndSorting()
   {
     QFile::remove(Funcs::getDefaultDatabaseFilename());
+    setupTestDatabase(m_db);
   }
 
   ~TestAggregationAndSorting() override
@@ -22,9 +23,12 @@ public:
 
   QtSqlLib::Database m_db;
 
+private:
+  static void setupTestDatabase(QtSqlLib::API::IDatabase& m_db);
+
 };
 
-static void setupTestDatabase(QtSqlLib::API::IDatabase& m_db)
+void TestAggregationAndSorting::setupTestDatabase(QtSqlLib::API::IDatabase& m_db)
 {
   SchemaConfigurator configurator;
   configurator.CONFIGURE_TABLE(TableIds::Albums, "albums")
@@ -124,8 +128,6 @@ static void setupTestDatabase(QtSqlLib::API::IDatabase& m_db)
  */
 TEST_F(TestAggregationAndSorting, countAlbums)
 {
-  setupTestDatabase(m_db);
-
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(COUNT_ALL));
 
@@ -138,8 +140,6 @@ TEST_F(TestAggregationAndSorting, countAlbums)
  */
 TEST_F(TestAggregationAndSorting, groupByAlbums)
 {
-  setupTestDatabase(m_db);
-
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
     .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name, MIN(TracksCols::Length), SUM(TracksCols::Length))
@@ -191,8 +191,6 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
  */
 TEST_F(TestAggregationAndSorting, orderByTrackLength)
 {
-  setupTestDatabase(m_db);
-
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name)
     .WHERE(EQUAL(AlbumsCols::Name, "Album 1"))
@@ -230,8 +228,6 @@ TEST_F(TestAggregationAndSorting, orderByTrackLength)
  */
 TEST_F(TestAggregationAndSorting, orderByTrackLengthDesc)
 {
-  setupTestDatabase(m_db);
-
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name)
     .WHERE(EQUAL(AlbumsCols::Name, "Album 1"))
@@ -269,8 +265,6 @@ TEST_F(TestAggregationAndSorting, orderByTrackLengthDesc)
  */
 TEST_F(TestAggregationAndSorting, albumsHavingAtLeast5Tracks)
 {
-  setupTestDatabase(m_db);
-
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
     .JOIN(Relationships::AlbumTracks, TracksCols::Id)
