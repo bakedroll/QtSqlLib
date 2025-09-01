@@ -394,7 +394,7 @@ static void expectCorrectRelations(QtSqlLib::API::IDatabase& m_db)
   results = m_db.execQuery(FROM_TABLE(TableIds::Students)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant)
-    .JOIN_ALL(Relationships::LectureParticipant));;
+    .JOIN_ALL(Relationships::LectureParticipant));
 
   expectStudentsConfidantStudents(results);
   expectLectureParticipantStudents(results);
@@ -403,7 +403,7 @@ static void expectCorrectRelations(QtSqlLib::API::IDatabase& m_db)
   results = m_db.execQuery(FROM_TABLE(TableIds::Professors)
     .SELECT_ALL
     .JOIN_ALL(Relationships::StudentsConfidant)
-    .JOIN_ALL(Relationships::Lecturer));;
+    .JOIN_ALL(Relationships::Lecturer));
 
   expectStudentsConfidantProfessors(results);
   expectLecturerProfessors(results);
@@ -412,7 +412,7 @@ static void expectCorrectRelations(QtSqlLib::API::IDatabase& m_db)
   results = m_db.execQuery(FROM_TABLE(TableIds::Lectures)
     .SELECT_ALL
     .JOIN_ALL(Relationships::Lecturer)
-    .JOIN_ALL(Relationships::LectureParticipant));;
+    .JOIN_ALL(Relationships::LectureParticipant));
 
   expectLecturerLectures(results);
   expectLectureParticipantLectures(results);

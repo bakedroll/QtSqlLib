@@ -34,12 +34,16 @@ public:
 
   bool isValid() const;
   void resetIteration();
+  bool isAtBeginning() const;
 
   bool hasNextTuple();
   bool hasNextJoinedTuple();
 
   TupleView nextTuple();
   TupleView nextJoinedTuple();
+
+  const API::QueryMetaInfo& queryMetaInfo() const;
+  const std::vector<API::QueryMetaInfo>& joinQueryMetaInfos() const;
 
 private:
   struct NextTupleResult

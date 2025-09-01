@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtSqlLib/ResultSet.h>
+#include <QtSqlLib/ResultSetPrinter.h>
 
 #include <QSqlDatabase>
 #include <QString>
@@ -23,6 +24,7 @@ public:
   virtual void close() = 0;
 
   virtual ResultSet execQuery(IQueryElement& query) = 0;
+  virtual ResultSetPrinter createResultSetPrinter(ResultSet& resultSet, int maxColumnWidth = 24) const = 0;
 
 };
 

@@ -61,7 +61,9 @@ enum class TableIds
   Professors,
   Lectures,
   Albums,
-  Tracks
+  Artists,
+  Tracks,
+  SteamingServices
 };
 
 enum class Table1Cols
@@ -103,11 +105,24 @@ enum class AlbumsCols
   Name
 };
 
+enum class ArtistsCols
+{
+  Id,
+  Name
+};
+
 enum class TracksCols
 {
   Id,
   Name,
-  Length
+  Length,
+  Rating
+};
+
+enum class StreamingServicesCols
+{
+  Id,
+  Name
 };
 
 enum class Relationships
@@ -115,6 +130,8 @@ enum class Relationships
   StudentsConfidant,
   LectureParticipant,
   AlbumTracks,
+  AlbumArtists,
+  AlbumStreamingServices,
   Lecturer,
   Special1,
   Special2,

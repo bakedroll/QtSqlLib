@@ -81,6 +81,11 @@ void InsertIntoExt::prepare(API::ISchema& schema)
         "Invalid relationship ID.");
     }
 
+    if (relationship.type == API::RelationshipType::ManyToMany)
+    {
+      m_bIsReturningInsertedIds = true;
+    }
+
     if (linkedTuples.second.linkType == LinkType::ToOne)
     {
       schema.verifyOneToOneRelationshipPrimaryKeysAndGetTableIds(relationshipId, {}, linkedTuples.second.linkedPrimaryKeys.at(0));

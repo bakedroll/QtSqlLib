@@ -99,6 +99,11 @@ ResultSet Database::execQuery(API::IQueryElement& query)
   return execQueryForSchema(*m_schema, query);
 }
 
+ResultSetPrinter Database::createResultSetPrinter(ResultSet& resultSet, int maxColumnWidth) const
+{
+  return ResultSetPrinter(*m_schema, resultSet, maxColumnWidth);
+}
+
 void Database::loadDatabaseFile(const QString& filename)
 {
   m_db = std::make_unique<QSqlDatabase>(QSqlDatabase::addDatabase("QSQLITE", m_databaseName));
