@@ -83,6 +83,10 @@ static API::DataType columnDataType(const API::Table& table, API::IID::Type colu
     {
       return API::DataType::Real;
     }
+    else if (statistics.type() == ColumnStatistics::EType::Count)
+    {
+      return API::DataType::Integer;
+    }
     return table.columns.at(statistics.columnId()).type;
   }
   return table.columns.at(columnId).type;
