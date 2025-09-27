@@ -218,7 +218,7 @@ void ResultSetPrinter::prepareHeaderColumnMetaInfo(
     ColumnMetaInfo metaInfo {
       caption,
       columnDataType(table, column.columnId),
-      std::min(maxColumnWidth, caption.length()),
+      std::min(maxColumnWidth, static_cast<int>(caption.length())),
       column.columnId
     };
 
