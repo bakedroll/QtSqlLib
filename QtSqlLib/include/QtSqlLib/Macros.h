@@ -90,7 +90,10 @@
 #define COL(X, Y) QtSqlLib::ColumnHelper::ColumnData(X, Y)
 
 #define GROUP_BY(...) groupBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(__VA_ARGS__))
+#define GROUP_BY_NOCASE(...) groupBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(__VA_ARGS__), true)
+
 #define ORDER_BY(...) orderBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::OrderColumn>(__VA_ARGS__))
+#define ORDER_BY_NOCASE(...) orderBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::OrderColumn>(__VA_ARGS__), true)
 
 #define ASC ,QtSqlLib::ColumnHelper::EOrder::Ascending
 #define DESC ,QtSqlLib::ColumnHelper::EOrder::Descending

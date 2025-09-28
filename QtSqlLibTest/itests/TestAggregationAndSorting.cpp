@@ -143,7 +143,7 @@ TEST_F(TestAggregationAndSorting, groupByAlbums)
   auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
     .SELECT(AlbumsCols::Id, AlbumsCols::Name, COUNT(AlbumsCols::Id))
     .JOIN(Relationships::AlbumTracks, TracksCols::Id, TracksCols::Name, MIN(TracksCols::Length), SUM(TracksCols::Length))
-    .GROUP_BY(AlbumsCols::Id));
+    .GROUP_BY_CASE(AlbumsCols::Id));
 
   auto numRows = 0;
   while (results.hasNextTuple())

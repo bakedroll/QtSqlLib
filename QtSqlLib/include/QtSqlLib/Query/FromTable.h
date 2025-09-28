@@ -37,8 +37,8 @@ public:
   FromTable& where(Expr& expr);
   FromTable& having(Expr& expr);
 
-  FromTable& groupBy(const ColumnHelper::GroupColumnList& columnIds);
-  FromTable& orderBy(const ColumnHelper::OrderColumnList& columnIds);
+  FromTable& groupBy(const ColumnHelper::GroupColumnList& columnIds, bool caseInsensitive = false);
+  FromTable& orderBy(const ColumnHelper::OrderColumnList& columnIds, bool caseInsensitive = false);
 
   SqlQuery getSqlQuery(const QSqlDatabase& db, API::ISchema& schema, ResultSet& previousQueryResults) override;
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
@@ -58,6 +58,9 @@ private:
 
   ColumnHelper::GroupColumnList m_groupColumns;
   ColumnHelper::OrderColumnList m_orderColumns;
+
+  bool m_isGroupByCaseInsensitive;
+  bool m_isOrderByCaseInsensitive;
 
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(API::IID::Type relationshipId) const;

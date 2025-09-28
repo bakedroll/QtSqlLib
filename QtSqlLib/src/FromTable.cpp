@@ -54,7 +54,9 @@ static void prepareQueryMetaInfoColumns(API::QueryMetaInfo& queryMetaInfo, const
 
 FromTable::FromTable(const API::IID& tableId) :
   m_hasColumnsSelected(false),
-  m_isTableAliasesNeeded(false)
+  m_isTableAliasesNeeded(false),
+  m_isGroupByCaseInsensitive(false),
+  m_isOrderByCaseInsensitive(false)
 {
   m_queryMetaInfo.tableId = tableId.get();
 }
@@ -133,7 +135,7 @@ FromTable& FromTable::having(Expr& expr)
   return *this;
 }
 
-FromTable& FromTable::groupBy(const ColumnHelper::GroupColumnList& columns)
+FromTable& FromTable::groupBy(const ColumnHelper::GroupColumnList& columns, bool caseInsensitive)
 {
   if (!m_groupColumns.empty())
   {
@@ -142,10 +144,11 @@ FromTable& FromTable::groupBy(const ColumnHelper::GroupColumnList& columns)
   }
 
   m_groupColumns = columns;
+  m_isGroupByCaseInsensitive = caseInsensitive;
   return *this;
 }
 
-FromTable& FromTable::orderBy(const ColumnHelper::OrderColumnList& columns)
+FromTable& FromTable::orderBy(const ColumnHelper::OrderColumnList& columns, bool caseInsensitive)
 {
   if (!m_orderColumns.empty())
   {
@@ -154,6 +157,7 @@ FromTable& FromTable::orderBy(const ColumnHelper::OrderColumnList& columns)
   }
 
   m_orderColumns = columns;
+  m_isOrderByCaseInsensitive = caseInsensitive;
   return *this;
 }
 
@@ -194,6 +198,10 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   if (!m_groupColumns.empty())
   {
     queryStr.append(QString(" GROUP BY %1").arg(createGroupByString(schema)));
+    if (m_isGroupByCaseInsensitive)
+    {
+      queryStr.append(" COLLATE NOCASE");
+    }
   }
 
   if (m_havingExpr)
@@ -204,6 +212,10 @@ API::IQuery::SqlQuery FromTable::getSqlQuery(const QSqlDatabase& db, API::ISchem
   if (!m_orderColumns.empty())
   {
     queryStr.append(QString(" ORDER BY %1").arg(createOrderByString(schema)));
+    if (m_isOrderByCaseInsensitive)
+    {
+      queryStr.append(" COLLATE NOCASE");
+    }
   }
 
   queryStr.append(";");
