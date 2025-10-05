@@ -115,6 +115,8 @@ void Database::loadDatabaseFile(const QString& filename)
       QString("Could not load database file: %1.").arg(filename));
   }
 
+  QSqlQuery("PRAGMA foreign_keys = ON;", *m_db).exec();
+
   if (!isVersionTableExisting())
   {
     createOrMigrateTables(0);
