@@ -74,10 +74,31 @@ public:
     return *this;
   }
 
-  template <typename T>
-  Expr& isNull(T&& value)
+  template <typename TLeft, typename TRight>
+  Expr& opIs(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::IsNull, makeVariant(std::forward<T>(value)), QVariant(), false);
+    addComparison(EComparisonOperator::Is, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    return *this;
+  }
+
+  template <typename TLeft, typename TRight>
+  Expr& opNot(TLeft&& lhs, TRight&& rhs)
+  {
+    addComparison(EComparisonOperator::Not, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    return *this;
+  }
+
+  template <typename TLeft, typename TRight>
+  Expr& opLike(TLeft&& lhs, TRight&& rhs)
+  {
+    addComparison(EComparisonOperator::Like, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    return *this;
+  }
+
+  template <typename TLeft, typename TRight>
+  Expr& opIn(TLeft&& lhs, TRight&& rhs)
+  {
+    addComparison(EComparisonOperator::In, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
     return *this;
   }
 

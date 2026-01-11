@@ -43,10 +43,13 @@ QString QueryIdentifiers::resolveColumnIdentifier(API::ISchema& schema, const Co
         const auto columnStatistics = ColumnStatistics::fromId(columnId);
         if (columnStatistics.hasColumn())
         {
-          return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(),
+          return ColumnStatistics::toString(
+            columnStatistics.type(),
+            columnStatistics.method(),
+            columnStatistics.separator(),
             columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnStatistics.columnId()));
         }
-        return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method());
+        return ColumnStatistics::toString(columnStatistics.type(), columnStatistics.method(), columnStatistics.separator());
       }
 
       return columnIdentifier(schema, identifier.tableId, identifier.tableAlias, columnId);

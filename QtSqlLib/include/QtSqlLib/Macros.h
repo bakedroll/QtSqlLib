@@ -59,10 +59,15 @@
 #define GREATER_NOCASE(A, B) greater(A, QVariant(B), true)
 #define GREATER_COL_NOCASE(A, B) greater(A, B, true)
 
-#define ISNULL(A) isNull(A)
+#define IS(A, B) opIs(A, QVariant(B))
+#define NOT(A, B) opNot(A, QVariant(B))
+#define LIKE(A, B) opLike(A, QVariant(B))
+#define IN(A, B) opIn(A, QVariant(B))
 
 #define OR opOr()
 #define AND opAnd()
+
+#define NULL_VAL
 
 #define _(A) braces(QtSqlLib::Expr().A)
 
@@ -107,6 +112,7 @@
 #define COUNT_DISTINCT(X) QtSqlLib::ColumnStatistics::count(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
 #define AVG(X) QtSqlLib::ColumnStatistics::avg(QtSqlLib::ID(X).get()).id()
 #define AVG_DISTINCT(X) QtSqlLib::ColumnStatistics::avg(QtSqlLib::ID(X).get(), QtSqlLib::ColumnStatistics::EMethod::Distict).id()
+#define GROUP_CONCAT(X, Y) QtSqlLib::ColumnStatistics::groupConcat(QtSqlLib::ID(X).get(), Y).id()
 
 #define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
 #define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))

@@ -146,14 +146,60 @@ TEST(TestColumnStatistics, aggregateFunctionAvgEncoding)
 }
 
 /**
+ * @test: Tests the encoding and decoding of aggregate function group_concat with separator in ColumnStatistics.
+ * @expected: Expects same content after reencoding.
+ */
+TEST(TestColumnStatistics, aggregateFunctionGroupConcatEncodingWithSeparator)
+{
+    const IID::Type columnId = 42;
+
+    const auto statistics = ColumnStatistics::groupConcat(columnId, ';');
+    const auto statisticsId = statistics.id();
+
+    EXPECT_TRUE(ColumnStatistics::isColumnStatistics(statisticsId));
+    EXPECT_EQ(statistics.type(), ColumnStatistics::EType::GroupConcat);
+    EXPECT_EQ(statistics.separator(), std::make_optional<char>(';'));
+    EXPECT_EQ(statistics.columnId(), columnId);
+
+    const auto statisticsReencoded = ColumnStatistics::fromId(statisticsId);
+
+    EXPECT_EQ(statisticsReencoded.type(), ColumnStatistics::EType::GroupConcat);
+    EXPECT_EQ(statisticsReencoded.separator(), std::make_optional<char>(';'));
+    EXPECT_EQ(statisticsReencoded.columnId(), columnId);
+}
+
+/**
+ * @test: Tests the encoding and decoding of aggregate function group_concat without separator in ColumnStatistics.
+ * @expected: Expects same content after reencoding.
+ */
+TEST(TestColumnStatistics, aggregateFunctionGroupConcatEncodingWithoutSeparator)
+{
+    const IID::Type columnId = 42;
+
+    const auto statistics = ColumnStatistics::groupConcat(columnId);
+    const auto statisticsId = statistics.id();
+
+    EXPECT_TRUE(ColumnStatistics::isColumnStatistics(statisticsId));
+    EXPECT_EQ(statistics.type(), ColumnStatistics::EType::GroupConcat);
+    EXPECT_EQ(statistics.separator(), std::nullopt);
+    EXPECT_EQ(statistics.columnId(), columnId);
+
+    const auto statisticsReencoded = ColumnStatistics::fromId(statisticsId);
+
+    EXPECT_EQ(statisticsReencoded.type(), ColumnStatistics::EType::GroupConcat);
+    EXPECT_EQ(statisticsReencoded.separator(), std::nullopt);
+    EXPECT_EQ(statisticsReencoded.columnId(), columnId);
+}
+
+/**
  * @test: Tests the distinction between ColumnStatistics ids and conventional column ids
  * @expected: Expects that conventional column ids have a value range of 27 bits.
  */
 TEST(TestColumnStatistics, isColumnStatisticsDistinction)
 {
     EXPECT_FALSE(ColumnStatistics::isColumnStatistics(42));
-    EXPECT_FALSE(ColumnStatistics::isColumnStatistics(0x7FFFFFF));
-    EXPECT_TRUE(ColumnStatistics::isColumnStatistics(0xFFFFFFF));
+    EXPECT_FALSE(ColumnStatistics::isColumnStatistics(0x1FFFFF));
+    EXPECT_TRUE(ColumnStatistics::isColumnStatistics(0x3FFFFF));
 }
 
 }

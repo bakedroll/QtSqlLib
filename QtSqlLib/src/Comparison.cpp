@@ -60,8 +60,17 @@ QString Comparison::toQueryString(
   case EComparisonOperator::Greater:
     operatorStr = ">";
     break;
-  case EComparisonOperator::IsNull:
+  case EComparisonOperator::Is:
     operatorStr = "IS";
+    break;
+  case EComparisonOperator::Not:
+    operatorStr = "NOT";
+    break;
+  case EComparisonOperator::Like:
+    operatorStr = "LIKE";
+    break;
+  case EComparisonOperator::In:
+    operatorStr = "IN";
     break;
   default:
     assert(false);

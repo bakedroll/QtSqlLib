@@ -67,12 +67,38 @@ TEST(TextExpression, validity)
   EXPECT_TRUE(boundValues4.empty());
 
   Expr expr5;
-  expr5.ISNULL(Table1Cols::Number);
+  expr5.IS(Table1Cols::Number, NULL_VAL);
 
   std::vector<QVariant> boundValues5;
   EXPECT_EQ(expr5.toQueryString(schema, queryIdentifiers, boundValues5), "'test'.'number' IS NULL");
 
   EXPECT_TRUE(boundValues5.empty());
+
+  Expr expr6;
+  expr6.NOT(Table1Cols::Number, NULL_VAL);
+
+  std::vector<QVariant> boundValues6;
+  EXPECT_EQ(expr6.toQueryString(schema, queryIdentifiers, boundValues6), "'test'.'number' NOT NULL");
+
+  EXPECT_TRUE(boundValues6.empty());
+
+  Expr expr7;
+  expr7.LIKE(Table1Cols::Text, "foo");
+
+  std::vector<QVariant> boundValues7;
+  EXPECT_EQ(expr7.toQueryString(schema, queryIdentifiers, boundValues7), "'test'.'test' LIKE ?");
+
+  ASSERT_EQ(boundValues7.size(), 1);
+  EXPECT_EQ(boundValues7.at(0), "foo");
+
+  Expr expr8;
+  expr8.IN(Table1Cols::Text, "foo");
+
+  std::vector<QVariant> boundValues8;
+  EXPECT_EQ(expr8.toQueryString(schema, queryIdentifiers, boundValues8), "'test'.'test' IN ?");
+
+  ASSERT_EQ(boundValues8.size(), 1);
+  EXPECT_EQ(boundValues8.at(0), "foo");
 }
 
 /**w

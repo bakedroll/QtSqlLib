@@ -11,7 +11,10 @@ enum class EComparisonOperator
   Less,
   GreaterEqual,
   Greater,
-  IsNull
+  Is,
+  Not,
+  Like,
+  In
 };
 
 }
