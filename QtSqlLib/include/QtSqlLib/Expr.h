@@ -17,6 +17,7 @@ class ISchema;
 namespace QtSqlLib
 {
 
+class Comparison;
 class ITermElement;
 
 class Expr
@@ -33,75 +34,76 @@ public:
   virtual ~Expr();
 
   template <typename TLeft, typename TRight>
-  Expr& equal(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& equal(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Equal, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::Equal, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
-  Expr& unequal(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& unequal(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Unequal, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::Unequal, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
-  Expr& lessEqual(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& lessEqual(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::LessEqual, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::LessEqual, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
-  Expr& less(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& less(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Less, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::Less, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
-  Expr& greaterEqual(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& greaterEqual(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::GreaterEqual, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::GreaterEqual, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
-  Expr& greater(TLeft&& lhs, TRight&& rhs, bool noCase = false)
+  Expr& greater(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Greater, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), noCase);
+    addComparison(EComparisonOperator::Greater, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
   Expr& opIs(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Is, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    addComparison(EComparisonOperator::Is, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
   Expr& opNot(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Not, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    addComparison(EComparisonOperator::Not, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
   Expr& opLike(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::Like, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    addComparison(EComparisonOperator::Like, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
   template <typename TLeft, typename TRight>
   Expr& opIn(TLeft&& lhs, TRight&& rhs)
   {
-    addComparison(EComparisonOperator::In, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)), false);
+    addComparison(EComparisonOperator::In, makeVariant(std::forward<TLeft>(lhs)), makeVariant(std::forward<TRight>(rhs)));
     return *this;
   }
 
+  Expr& noCase();
   Expr& opOr();
   Expr& opAnd();
 
@@ -116,14 +118,15 @@ private:
   enum class NextTermExpectation
   {
     ComparisonOrNestedExpr,
-    LogicalOperator
+    LogicalOperatorOrCollate
   };
 
-  Expr& addComparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs, bool noCase);
+  Expr& addComparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs);
   Expr& addLogic(std::unique_ptr<ITermElement>&& logic);
 
   NextTermExpectation m_nextExpectation;
   std::vector<std::unique_ptr<ITermElement>> m_termElements;
+  Comparison* m_lastComparison;
 
   QVariant makeVariant(ColumnHelper::ColumnData&& data);
   QVariant makeVariant(QVariant&& value);

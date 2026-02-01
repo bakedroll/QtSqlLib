@@ -50,7 +50,7 @@ TEST(TextExpression, validity)
   EXPECT_EQ(boundValues2.at(2), 3);
 
   Expr expr3;
-  expr3.EQUAL_NOCASE(Table1Cols::Text, "test1");
+  expr3.EQUAL(Table1Cols::Text, "test1").NOCASE;
 
   std::vector<QVariant> boundValues3;
   EXPECT_EQ(expr3.toQueryString(schema, queryIdentifiers, boundValues3), "'test'.'test' = ? COLLATE NOCASE");

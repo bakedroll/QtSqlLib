@@ -11,14 +11,26 @@
 namespace QtSqlLib
 {
 
-Expr::Expr()
-  : m_nextExpectation(NextTermExpectation::ComparisonOrNestedExpr)
+Expr::Expr() :
+  m_nextExpectation(NextTermExpectation::ComparisonOrNestedExpr),
+  m_lastComparison(nullptr)
 {
 }
 
 Expr::Expr(Expr&& other) noexcept = default;
 
 Expr::~Expr() = default;
+
+Expr& Expr::noCase()
+{
+  if (m_nextExpectation != NextTermExpectation::LogicalOperatorOrCollate || m_lastComparison == nullptr)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Collate not expected");
+  }
+
+  m_lastComparison->setNoCase(true);
+  return *this;
+}
 
 Expr& Expr::opOr()
 {
@@ -39,7 +51,7 @@ Expr& Expr::braces(Expr& nestedExpr)
 
   m_termElements.emplace_back(std::make_unique<NestedExpression>(nestedExpr));
 
-  m_nextExpectation = NextTermExpectation::LogicalOperator;
+  m_nextExpectation = NextTermExpectation::LogicalOperatorOrCollate;
   return *this;
 }
 
@@ -72,22 +84,24 @@ QString Expr::toQueryString(
   return result;
 }
 
-Expr& Expr::addComparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs, bool noCase)
+Expr& Expr::addComparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs)
 {
   if (m_nextExpectation != NextTermExpectation::ComparisonOrNestedExpr)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Comparison not expected");
   }
 
-  m_termElements.emplace_back(std::make_unique<Comparison>(op, lhs, rhs, noCase));
+  auto pComparison = std::make_unique<Comparison>(op, lhs, rhs);
+  m_lastComparison = pComparison.get();
+  m_termElements.emplace_back(std::move(pComparison));
 
-  m_nextExpectation = NextTermExpectation::LogicalOperator;
+  m_nextExpectation = NextTermExpectation::LogicalOperatorOrCollate;
   return *this;
 }
 
 Expr& Expr::addLogic(std::unique_ptr<ITermElement>&& logic)
 {
-  if (m_nextExpectation != NextTermExpectation::LogicalOperator)
+  if (m_nextExpectation != NextTermExpectation::LogicalOperatorOrCollate)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Logical operator not expected");
   }

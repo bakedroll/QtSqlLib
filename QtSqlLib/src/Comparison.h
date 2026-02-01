@@ -12,13 +12,15 @@ namespace QtSqlLib
 class Comparison : public ITermElement
 {
 public:
-  Comparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs, bool noCase = false);
+  Comparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs);
   ~Comparison() override;
 
   QString toQueryString(
     API::ISchema& schema,
     const API::IQueryIdentifiers& queryIdentifiers,
     std::vector<QVariant>& boundValuesOut) const override;
+
+  void setNoCase(bool noCase);
 
 private:
   bool m_noCase;

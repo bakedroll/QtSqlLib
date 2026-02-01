@@ -7,9 +7,9 @@
 namespace QtSqlLib
 {
 
-Comparison::Comparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs, bool noCase) :
+Comparison::Comparison(EComparisonOperator op, const QVariant& lhs, const QVariant& rhs) :
   ITermElement(),
-  m_noCase(noCase),
+  m_noCase(false),
   m_operator(op),
   m_lhs(lhs),
   m_rhs(rhs)
@@ -79,6 +79,11 @@ QString Comparison::toQueryString(
 
   return QString("%1 %2 %3%4").arg(getOperandString(m_lhs)).arg(operatorStr).arg(getOperandString(m_rhs))
     .arg(m_noCase ? " COLLATE NOCASE" : "");
+}
+
+void Comparison::setNoCase(bool noCase)
+{
+  m_noCase = noCase;
 }
 
 }

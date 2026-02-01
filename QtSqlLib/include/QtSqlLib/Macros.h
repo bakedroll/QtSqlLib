@@ -41,24 +41,6 @@
 #define GREATER(A, B) greater(A, QVariant(B))
 #define GREATER_COL(A, B) greater(A, B)
 
-#define EQUAL_NOCASE(A, B) equal(A, QVariant(B), true)
-#define EQUAL_COL_NOCASE(A, B) equal(A, B, true)
-
-#define UNEQUAL_NOCASE(A, B) unequal(A, QVariant(B), true)
-#define UNEQUAL_COL_NOCASE(A, B) unequal(A, B, true)
-
-#define LESSEQUAL_NOCASE(A, B) lessEqual(A, QVariant(B), true)
-#define LESSEQUAL_COL_NOCASE(A, B) lessEqual(A, B, true)
-
-#define LESS_NOCASE(A, B) less(A, QVariant(B), true)
-#define LESS_COL_NOCASE(A, B) less(A, B, true)
-
-#define GREATEREQUAL_NOCASE(A, B) greaterEqual(A, QVariant(B), true)
-#define GREATEREQUAL_COL_NOCASE(A, B) greaterEqual(A, B, true)
-
-#define GREATER_NOCASE(A, B) greater(A, QVariant(B), true)
-#define GREATER_COL_NOCASE(A, B) greater(A, B, true)
-
 #define IS(A, B) opIs(A, QVariant(B))
 #define NOT(A, B) opNot(A, QVariant(B))
 #define LIKE(A, B) opLike(A, QVariant(B))
@@ -66,6 +48,7 @@
 
 #define OR opOr()
 #define AND opAnd()
+#define NOCASE noCase()
 
 #define NULL_VAL
 
