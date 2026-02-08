@@ -33,6 +33,8 @@ public:
 
   virtual ~Expr();
 
+  bool isEmpty() const;
+
   template <typename TLeft, typename TRight>
   Expr& equal(TLeft&& lhs, TRight&& rhs)
   {
@@ -129,9 +131,11 @@ private:
   Comparison* m_lastComparison;
 
   QVariant makeVariant(ColumnHelper::ColumnData&& data);
+  QVariant makeVariant(ColumnHelper::ColumnAlias&& alias);
   QVariant makeVariant(QVariant&& value);
 
   QVariant makeVariant(const ColumnHelper::ColumnData& data);
+  QVariant makeVariant(const ColumnHelper::ColumnAlias& alias);
   QVariant makeVariant(const QVariant& value);
 
   template<typename T, typename = std::enable_if_t<std::is_enum_v<T> || std::is_fundamental_v<T>>>

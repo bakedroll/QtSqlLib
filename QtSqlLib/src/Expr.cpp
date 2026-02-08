@@ -21,6 +21,11 @@ Expr::Expr(Expr&& other) noexcept = default;
 
 Expr::~Expr() = default;
 
+bool Expr::isEmpty() const
+{
+  return m_termElements.empty();
+}
+
 Expr& Expr::noCase()
 {
   if (m_nextExpectation != NextTermExpectation::LogicalOperatorOrCollate || m_lastComparison == nullptr)
@@ -117,6 +122,11 @@ QVariant Expr::makeVariant(ColumnHelper::ColumnData&& data)
   return QVariant::fromValue<ColumnHelper::ColumnData>(std::forward<ColumnHelper::ColumnData>(data));
 }
 
+QVariant Expr::makeVariant(ColumnHelper::ColumnAlias&& alias)
+{
+  return QVariant::fromValue<ColumnHelper::ColumnAlias>(std::forward<ColumnHelper::ColumnAlias>(alias));
+}
+
 QVariant Expr::makeVariant(QVariant&& value)
 {
   return std::forward<QVariant>(value);
@@ -125,6 +135,11 @@ QVariant Expr::makeVariant(QVariant&& value)
 QVariant Expr::makeVariant(const ColumnHelper::ColumnData& data)
 {
   return QVariant::fromValue<ColumnHelper::ColumnData>(data);
+}
+
+QVariant Expr::makeVariant(const ColumnHelper::ColumnAlias& alias)
+{
+  return QVariant::fromValue<ColumnHelper::ColumnAlias>(alias);
 }
 
 QVariant Expr::makeVariant(const QVariant& value)

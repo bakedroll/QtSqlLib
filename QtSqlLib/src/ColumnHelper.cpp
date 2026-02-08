@@ -3,6 +3,13 @@
 namespace QtSqlLib
 {
 
+ColumnHelper::ColumnAlias::ColumnAlias() = default;
+
+ColumnHelper::ColumnAlias::ColumnAlias(const QString& alias) :
+  alias(alias)
+{
+}
+
 ColumnHelper::SelectColumn::SelectColumn() = default;
 
 ColumnHelper::ColumnData::ColumnData() = default;

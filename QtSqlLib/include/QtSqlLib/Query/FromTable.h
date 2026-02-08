@@ -44,6 +44,12 @@ public:
   ResultSet getQueryResults(API::ISchema& schema, QSqlQuery&& query) override;
 
 private:
+  struct SelectColumnData
+  {
+    ColumnHelper::ColumnData columnData;
+    QString alias;
+  };
+
   bool m_hasColumnsSelected;
   bool m_isTableAliasesNeeded;
 
@@ -51,7 +57,7 @@ private:
   std::vector<API::QueryMetaInfo> m_joins;
 
   QueryIdentifiers m_queryIdentifiers;
-  std::vector<ColumnHelper::ColumnData> m_compiledColumnSelection;
+  std::vector<SelectColumnData> m_compiledColumnSelection;
 
   std::unique_ptr<Expr> m_whereExpr;
   std::unique_ptr<Expr> m_havingExpr;

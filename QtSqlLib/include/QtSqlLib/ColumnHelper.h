@@ -20,17 +20,27 @@ public:
     Descending
   };
 
+  struct ColumnAlias
+  {
+    ColumnAlias();
+    explicit ColumnAlias(const QString& alias);
+
+    QString alias;
+  };
+
   struct SelectColumn
   {
     SelectColumn();
 
     template<typename T>
-    SelectColumn(const T& id) :
-      columnId(castId(id))
+    SelectColumn(const T& id, const QString& alias = "") :
+      columnId(castId(id)),
+      alias(alias)
     {
     }
 
     API::IID::Type columnId = 0;
+    QString alias;
   };
 
   struct ColumnData
@@ -172,6 +182,19 @@ private:
   }
 
   template<typename TElem, typename... Args>
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const SelectColumn& selectColumn, const Args&... tail)
+  {
+    list[currentIndex] = selectColumn;
+    makeIntern(list, currentIndex + 1, tail...);
+  }
+
+  template<typename TElem>
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const SelectColumn& selectColumn)
+  {
+    list[currentIndex] = selectColumn;
+  }
+
+  template<typename TElem, typename... Args>
   static void makeIntern(std::vector<TElem>& list, size_t currentIndex, EOrder order, const Args&... tail)
   {
     list[currentIndex - 1].order = order;
@@ -189,3 +212,4 @@ private:
 }
 
 Q_DECLARE_METATYPE(QtSqlLib::ColumnHelper::ColumnData);
+Q_DECLARE_METATYPE(QtSqlLib::ColumnHelper::ColumnAlias);

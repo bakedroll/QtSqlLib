@@ -329,7 +329,9 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
 {
   for (size_t i=0; i<queryMetaInfo.columns.size(); ++i)
   {
-    const auto columnId = queryMetaInfo.columns.at(i).columnId;
+    const auto& selectColumn = queryMetaInfo.columns.at(i);
+    const auto columnId = selectColumn.columnId;
+    const auto& alias = selectColumn.alias;
     if (contains(table.primaryKeys, columnId))
     {
       queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
@@ -338,7 +340,7 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
     const auto indexInQuery = m_compiledColumnSelection.size();
     queryMetaInfo.columnQueryIndices[i] = indexInQuery;
 
-    m_compiledColumnSelection.emplace_back(makeColumnData(queryMetaInfo.relationshipId, columnId));
+    m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(queryMetaInfo.relationshipId, columnId), alias });
   }
 
   for (const auto& keyColumn : table.primaryKeys)
@@ -353,7 +355,7 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
       queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumn.columnId });
       queryMetaInfo.columnQueryIndices.emplace_back(indexInQuery);
 
-      m_compiledColumnSelection.emplace_back(makeColumnData(queryMetaInfo.relationshipId, keyColumn.columnId));
+      m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(queryMetaInfo.relationshipId, keyColumn.columnId), "" });
     }
   }
 }
@@ -364,7 +366,7 @@ void FromTable::addForeignKeyColumns(
 {
   for (const auto& foreignKey : primaryForeignKeyColumnIdMap)
   {
-    m_compiledColumnSelection.emplace_back(makeColumnData(foreignKeyRelationshipId, foreignKey.second));
+    m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(foreignKeyRelationshipId, foreignKey.second), "" });
   }
 }
 
@@ -444,7 +446,12 @@ QString FromTable::createSelectString(API::ISchema& schema) const
       selectColsStr.append(", ");
     }
 
-    selectColsStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, selectedColumn));
+    selectColsStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, selectedColumn.columnData));
+    if (!selectedColumn.alias.isEmpty())
+    {
+
+      selectColsStr.append(QString(" AS [%1]").arg(selectedColumn.alias));
+    }
   }
 
   return selectColsStr;

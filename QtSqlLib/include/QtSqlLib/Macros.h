@@ -46,6 +46,8 @@
 #define LIKE(A, B) opLike(A, QVariant(B))
 #define IN(A, B) opIn(A, QVariant(B))
 
+#define ALIAS(A) QtSqlLib::ColumnHelper::ColumnAlias(A)
+
 #define OR opOr()
 #define AND opAnd()
 #define NOCASE noCase()
@@ -74,6 +76,8 @@
 
 #define SELECT_ALL selectAll()
 #define SELECT(...) select(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
+
+#define AS_ALIAS(X, Y) QtSqlLib::ColumnHelper::SelectColumn(X, Y)
 
 #define COL(X, Y) QtSqlLib::ColumnHelper::ColumnData(X, Y)
 
