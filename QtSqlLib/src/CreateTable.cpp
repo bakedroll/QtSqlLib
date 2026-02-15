@@ -6,12 +6,6 @@
 namespace QtSqlLib::Query
 {
 
-static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
-{
-  return std::find_if(columns.cbegin(), columns.cend(),
-    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
-}
-
 static QString getDataTypeName(API::DataType type, int varcharLength)
 {
   switch (type)
@@ -69,12 +63,12 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
     str = str.left(str.length() - 2);
   };
 
-  const auto listColumns = [this, &cutTailingComma](const ColumnHelper::SelectColumnList& columns)
+  const auto listColumns = [this, &cutTailingComma](const ColumnHelper::ColumnList& columns)
   {
     QString colNames;
-    for (const auto& col : columns)
+    for (const auto& columnId : columns)
     {
-      colNames += QString("'%1', ").arg(m_table.columns.at(col.columnId).name);
+      colNames += QString("'%1', ").arg(m_table.columns.at(columnId).name);
     }
     cutTailingComma(colNames);
     return colNames;
@@ -89,7 +83,7 @@ API::IQuery::SqlQuery CreateTable::getSqlQuery(
       .arg(column.second.name)
       .arg(getDataTypeName(column.second.type, column.second.varcharLength));
 
-    if (bIsSinglePrimaryKey && (contains(m_table.primaryKeys, column.first)))
+    if (bIsSinglePrimaryKey && (ColumnHelper::contains(m_table.primaryKeys, column.first)))
     {
       columns += " PRIMARY KEY";
     }

@@ -26,12 +26,6 @@ static API::IID::Type relationshipIdForLink(API::IID::Type relationshipId)
   return relationshipId | (0x1 << (idBits - 1));
 }
 
-static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
-{
-  return std::find_if(columns.cbegin(), columns.cend(),
-    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
-}
-
 static ColumnHelper::SelectColumnList getAllTableColumnIds(const API::Table& table)
 {
   ColumnHelper::SelectColumnList columns(table.columns.size());
@@ -330,32 +324,44 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
   for (size_t i=0; i<queryMetaInfo.columns.size(); ++i)
   {
     const auto& selectColumn = queryMetaInfo.columns.at(i);
-    const auto columnId = selectColumn.columnId;
     const auto& alias = selectColumn.alias;
-    if (contains(table.primaryKeys, columnId))
-    {
-      queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
-    }
 
     const auto indexInQuery = m_compiledColumnSelection.size();
     queryMetaInfo.columnQueryIndices[i] = indexInQuery;
 
-    m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(queryMetaInfo.relationshipId, columnId), alias });
+    if (selectColumn.column.canConvert<API::IID::Type>())
+    {
+      const auto columnId = selectColumn.column.value<API::IID::Type>();
+      if (ColumnHelper::contains(table.primaryKeys, columnId))
+      {
+        queryMetaInfo.primaryKeyColumnIndices.emplace_back(i);
+      }
+
+      m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(makeColumnData(queryMetaInfo.relationshipId, columnId)), alias });
+    }
+    else if (selectColumn.column.canConvert<ConcatenatedColumn>())
+    {
+      m_compiledColumnSelection.emplace_back(SelectColumnData{ selectColumn.column, alias });
+    }
+    else
+    {
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Unexpected element type in select columns");
+    }
   }
 
-  for (const auto& keyColumn : table.primaryKeys)
+  for (const auto& columnId : table.primaryKeys)
   {
     if (std::count_if(queryMetaInfo.columns.cbegin(), queryMetaInfo.columns.cend(),
-      [&keyColumn](const ColumnHelper::SelectColumn& col) { return col.columnId == keyColumn.columnId; }) == 0)
+      [&columnId](const ColumnHelper::SelectColumn& col) { return col.isColumnId(columnId); }) == 0)
     {
       const auto primeryKeyColumnIndex = queryMetaInfo.columns.size();
       const auto indexInQuery = m_compiledColumnSelection.size();
 
       queryMetaInfo.primaryKeyColumnIndices.emplace_back(primeryKeyColumnIndex);
-      queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ keyColumn.columnId });
+      queryMetaInfo.columns.emplace_back(ColumnHelper::SelectColumn{ columnId });
       queryMetaInfo.columnQueryIndices.emplace_back(indexInQuery);
 
-      m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(queryMetaInfo.relationshipId, keyColumn.columnId), "" });
+      m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(makeColumnData(queryMetaInfo.relationshipId, columnId)), "" });
     }
   }
 }
@@ -366,7 +372,7 @@ void FromTable::addForeignKeyColumns(
 {
   for (const auto& foreignKey : primaryForeignKeyColumnIdMap)
   {
-    m_compiledColumnSelection.emplace_back(SelectColumnData{ makeColumnData(foreignKeyRelationshipId, foreignKey.second), "" });
+    m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(makeColumnData(foreignKeyRelationshipId, foreignKey.second)), "" });
   }
 }
 
@@ -446,10 +452,21 @@ QString FromTable::createSelectString(API::ISchema& schema) const
       selectColsStr.append(", ");
     }
 
-    selectColsStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, selectedColumn.columnData));
+    if (selectedColumn.column.canConvert<ColumnHelper::ColumnData>())
+    {
+      selectColsStr.append(m_queryIdentifiers.resolveColumnIdentifier(schema, selectedColumn.column.value<ColumnHelper::ColumnData>()));
+    }
+    else if (selectedColumn.column.canConvert<ConcatenatedColumn>())
+    {
+      selectColsStr.append(selectedColumn.column.value<ConcatenatedColumn>().buildString(m_queryIdentifiers, schema));
+    }
+    else
+    {
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Unexpected element type in select columns");
+    }
+
     if (!selectedColumn.alias.isEmpty())
     {
-
       selectColsStr.append(QString(" AS [%1]").arg(selectedColumn.alias));
     }
   }

@@ -157,16 +157,16 @@ void InsertIntoExt::addUpdateForeignKeyColumnsToInsertIntoQuery(
       "Foreign key references table seems to be corrupted.");
   }
 
-  for (const auto& parentKeyCol : parentTable.primaryKeys)
+  for (const auto& parentColumnId : parentTable.primaryKeys)
   {
-    if (!linkedPrimaryKeys.hasValue(parentKeyCol.columnId))
+    if (!linkedPrimaryKeys.hasValue(parentColumnId))
     {
       throw DatabaseException(DatabaseException::Type::QueryError,
-        QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentKeyCol.columnId).name));
+        QString("Missing primary key of tuple hat should be linked ('%1').").arg(parentTable.columns.at(parentColumnId).name));
     }
 
-    m_insertQuery->addColumn(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at(parentKeyCol.columnId)));
-    m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.value(parentKeyCol.columnId));
+    m_insertQuery->addColumn(ID(foreignKeyReferences[0].primaryForeignKeyColIdMap.at(parentColumnId)));
+    m_insertQuery->addForeignKeyValue(linkedPrimaryKeys.value(parentColumnId));
   }
 }
 

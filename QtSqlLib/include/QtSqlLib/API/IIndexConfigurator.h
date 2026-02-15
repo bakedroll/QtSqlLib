@@ -13,7 +13,7 @@ class IIndexConfigurator
 public:
   virtual ~IIndexConfigurator() = default;
 
-  virtual IIndexConfigurator& columns(const ColumnHelper::SelectColumnList& columns) = 0;
+  virtual IIndexConfigurator& columns(const ColumnHelper::ColumnList& columns) = 0;
   virtual IIndexConfigurator& unique() = 0;
 
 };

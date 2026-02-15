@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QMetaType>
+#include <QVariant>
 
 namespace QtSqlLib
 {
@@ -36,24 +37,16 @@ public:
 
     template<typename T>
     SelectColumn(const T& id, const QString& alias = "") :
-      columnId(castId(id)),
+      column(QVariant::fromValue(castId(id))),
       alias(alias)
     {
     }
 
+    SelectColumn(const ConcatenatedColumn& concatenatedColumn, const QString& alias = "");
 
-    SelectColumn(const std::shared_ptr<ConcatenatedColumn>& concatenatedColumn) :
-      concatenatedColumn(concatenatedColumn)
-    {
-    }
+    bool isColumnId(API::IID::Type columnId) const;
 
-    API::IID::Type columnId = 0;
-    //TODO: // or unique_ptr
-    std::shared_ptr<ConcatenatedColumn> concatenatedColumn;
-
-    // https://www.sqlitetutorial.net/sqlite-string-functions/sqlite-concat/
-    // https://thelinuxcode.com/concatenate-two-columns-sqlite-with-space/
-
+    QVariant column;
     QString alias;
   };
 
@@ -75,7 +68,7 @@ public:
     }
 
     std::optional<API::IID::Type> relationshipId;
-    API::IID::Type columnId = 0;
+    API::IID::Type columnId = -1;
   };
 
   struct GroupColumn
@@ -107,20 +100,30 @@ public:
     EOrder order = EOrder::Ascending;
   };
 
+  using ColumnList = std::vector<API::IID::Type>;
   using SelectColumnList = std::vector<SelectColumn>;
   using GroupColumnList = std::vector<GroupColumn>;
   using OrderColumnList = std::vector<OrderColumn>;
 
   template <typename TElem, typename... Args, typename = std::enable_if_t<
+    std::is_same_v<TElem, API::IID::Type> ||
     std::is_same_v<TElem, SelectColumn> ||
     std::is_same_v<TElem, GroupColumn> ||
-    std::is_same_v<TElem, OrderColumn>>>
+    std::is_same_v<TElem, OrderColumn> ||
+    std::is_same_v<TElem, ConcatenatedColumn>>>
   static std::vector<TElem> make(const Args&... args)
   {
     const auto size = expectedSize(Identity<TElem>(), args...);
     std::vector<TElem> list(size);
     makeIntern(list, 0, args...);
     return list;
+  }
+
+  template <typename TElem>
+  static bool contains(const std::vector<TElem>& columns, const TElem& value)
+  {
+    return std::find_if(columns.cbegin(), columns.cend(),
+      [&value](const TElem& element) { return element == value; }) != columns.cend();
   }
 
 private:
@@ -206,6 +209,19 @@ private:
   static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const SelectColumn& selectColumn)
   {
     list[currentIndex] = selectColumn;
+  }
+
+  template<typename TElem, typename... Args>
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const ConcatenatedColumn& concatenatedColumn, const Args&... tail)
+  {
+    list[currentIndex] = SelectColumn(concatenatedColumn);
+    makeIntern(list, currentIndex + 1, tail...);
+  }
+
+  template<typename TElem>
+  static void makeIntern(std::vector<TElem>& list, size_t currentIndex, const ConcatenatedColumn& concatenatedColumn)
+  {
+    list[currentIndex] = SelectColumn(concatenatedColumn);
   }
 
   template<typename TElem, typename... Args>

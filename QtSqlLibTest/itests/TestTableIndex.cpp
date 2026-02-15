@@ -95,7 +95,7 @@ TEST_F(TestTableIndex, exceptionsMustThrowOnInvalidBehavior)
     .COLUMN_VARCHAR(Table1Cols::Text, "text", 128);
 
   // (1)
-  EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1).columns(QtSqlLib::ColumnHelper::SelectColumnList{}), DatabaseException);
+  EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1).columns(QtSqlLib::ColumnHelper::ColumnList{}), DatabaseException);
 
   // (2)
   EXPECT_THROW(configurator.CONFIGURE_INDEX(TableIds::Table1)

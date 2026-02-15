@@ -20,8 +20,8 @@ public:
   virtual ITableConfigurator& notNull() = 0;
   virtual ITableConfigurator& unique() = 0;
 
-  virtual ITableConfigurator& primaryKeys(const ColumnHelper::SelectColumnList& columns) = 0;
-  virtual ITableConfigurator& uniqueCols(const ColumnHelper::SelectColumnList& columns) = 0;
+  virtual ITableConfigurator& primaryKeys(const ColumnHelper::ColumnList& columns) = 0;
+  virtual ITableConfigurator& uniqueCols(const ColumnHelper::ColumnList& columns) = 0;
 
 };
 

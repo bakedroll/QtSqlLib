@@ -5,12 +5,6 @@
 namespace QtSqlLib
 {
 
-static bool contains(const ColumnHelper::SelectColumnList& columns, API::IID::Type value)
-{
-  return std::find_if(columns.cbegin(), columns.cend(),
-    [&value](const ColumnHelper::SelectColumn& col) { return col.columnId == value; }) != columns.cend();
-}
-
 TableConfigurator::TableConfigurator(API::Table& table)
   : m_table(table)
   , m_bIsPrimaryKeysConfigured(false)
@@ -73,7 +67,7 @@ API::ITableConfigurator& TableConfigurator::primaryKey()
   const auto colId = m_lastColumnId.value();
   auto& col = m_table.columns.at(colId);
 
-  if (contains(m_table.primaryKeys, colId))
+  if (ColumnHelper::contains(m_table.primaryKeys, colId))
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       QString("primaryKey() should only be called once for column '%1' of table '%2'.").arg(col.name).arg(m_table.name));
@@ -135,7 +129,7 @@ API::ITableConfigurator& TableConfigurator::unique()
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::SelectColumnList& columns)
+API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::ColumnList& columns)
 {
   if (m_bIsPrimaryKeysConfigured)
   {
@@ -154,7 +148,7 @@ API::ITableConfigurator& TableConfigurator::primaryKeys(const ColumnHelper::Sele
   return *this;
 }
 
-API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::SelectColumnList& columns)
+API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::ColumnList& columns)
 {
   if (columns.empty())
   {

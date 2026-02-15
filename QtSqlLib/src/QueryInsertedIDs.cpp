@@ -23,9 +23,9 @@ API::IQuery::SqlQuery QueryInsertedIDs::getSqlQuery(const QSqlDatabase& db, API:
   const auto& table = schema.getTables().at(m_tableId);
 
   QString keyColumns;
-  for (const auto& primaryKey : table.primaryKeys)
+  for (const auto& columnId : table.primaryKeys)
   {
-    keyColumns += QString("'%1'.'%2', ").arg(table.name).arg(table.columns.at(primaryKey.columnId).name);
+    keyColumns += QString("'%1'.'%2', ").arg(table.name).arg(table.columns.at(columnId).name);
   }
   keyColumns = keyColumns.left(keyColumns.length() - 2);
 
@@ -51,7 +51,18 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery&& qu
   std::iota(columnQueryIndices.begin(), columnQueryIndices.end(), 1);
   std::iota(primaryKeyColumnIndices.begin(), primaryKeyColumnIndices.end(), 0);
 
-  API::QueryMetaInfo queryMetaInfo { m_tableId, std::nullopt, table.primaryKeys, columnQueryIndices, primaryKeyColumnIndices };
+  API::QueryMetaInfo queryMetaInfo {
+    m_tableId,
+    std::nullopt,
+    ColumnHelper::SelectColumnList(table.primaryKeys.size()),
+    columnQueryIndices,
+    primaryKeyColumnIndices
+  };
+
+  std::transform(table.primaryKeys.cbegin(), table.primaryKeys.cend(), queryMetaInfo.columns.begin(), [](const API::IID::Type columnId) {
+    return ColumnHelper::SelectColumn(columnId);
+  });
+
   return ResultSet(std::move(query), std::move(queryMetaInfo), {} );
 }
 

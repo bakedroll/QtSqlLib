@@ -45,7 +45,7 @@ private:
     QString caption;
     API::DataType type;
     int width;
-    API::IID::Type columnId;
+    size_t columnIndex;
   };
 
   struct ColumnMetaInfoLocation
@@ -71,9 +71,12 @@ private:
 
   std::vector<API::IID::Type> m_receivedRelationships;
 
+  QueryIdentifiers createQueryIdentifiers() const;
+
   static void prepareHeaderColumnMetaInfo(
     API::ISchema& schema,
     const API::QueryMetaInfo& queryMetaInfo,
+    const QueryIdentifiers& queryIdentifiers,
     int maxColumnWidth,
     std::vector<ColumnMetaInfo>& columnMetaInfoList,
     std::map<RelationshipId, ColumnMetaInfoLocation>& columnMetaInfoLocations);

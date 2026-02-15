@@ -265,4 +265,28 @@ TEST_F(TestResultSetPrinter, printNullJoins)
   expectResult(printer, expectedResult);
 }
 
+/**
+ * @test: Test if concatenated columns are printed correctly.
+ * @expected: The concatenated column caption and values are printed as expected.
+ */
+TEST_F(TestResultSetPrinter, printConcatenatedColumns)
+{
+  const std::vector<QString> expectedResult = {
+    " 'albums'.'id' | 'tracks'.'id' | CONCAT('albums'.'name', \" - \", 'tracks'.'name') ",
+    "---------------------------------------------------------------------------------",
+    " 1             | 1             | Album 1 - Track 1                               ",
+    " 1             | 2             | Album 1 - Track 2 with much longer name         ",
+    " 2             | 3             | Album 2 - Track 1                               ",
+    " 2             | 4             | Album 2 - Track 2                               ",
+    " 2             | 5             | Album 2 - Track 3                               ",
+  };
+
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Albums)
+    .SELECT(AlbumsCols::Id)
+    .JOIN(Relationships::AlbumTracks, TracksCols::Id, AS_ALIAS(CONCAT(AlbumsCols::Name, " - ", COL(Relationships::AlbumTracks, TracksCols::Name)), "album_tracks")));
+
+  auto printer = m_db.createResultSetPrinter(results, 100);
+  expectResult(printer, expectedResult);
+}
+
 }

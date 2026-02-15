@@ -7,6 +7,7 @@
 #include <QtSqlLib/API/ITableConfigurator.h>
 #include <QtSqlLib/ColumnHelper.h>
 #include <QtSqlLib/ColumnStatistics.h>
+#include <QtSqlLib/ConcatenatedColumn.h>
 #include <QtSqlLib/Database.h>
 #include <QtSqlLib/DatabaseException.h>
 #include <QtSqlLib/Expr.h>

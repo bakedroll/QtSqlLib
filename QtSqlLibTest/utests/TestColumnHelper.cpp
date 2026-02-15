@@ -24,10 +24,10 @@ TEST(TestColumnHelper, createSelectColumn)
 
     EXPECT_EQ(list.size(), 4);
 
-    EXPECT_EQ(list.at(0).columnId, static_cast<QtSqlLib::API::IID::Type>(EColumns::COL1));
-    EXPECT_EQ(list.at(1).columnId, 5);
-    EXPECT_EQ(list.at(2).columnId, static_cast<QtSqlLib::API::IID::Type>(EColumns::COL2));
-    EXPECT_EQ(list.at(3).columnId, COUNT(EColumns::COL2));
+    EXPECT_EQ(list.at(0).column.value<QtSqlLib::API::IID::Type>(), static_cast<QtSqlLib::API::IID::Type>(EColumns::COL1));
+    EXPECT_EQ(list.at(1).column.value<QtSqlLib::API::IID::Type>(), 5);
+    EXPECT_EQ(list.at(2).column.value<QtSqlLib::API::IID::Type>(), static_cast<QtSqlLib::API::IID::Type>(EColumns::COL2));
+    EXPECT_EQ(list.at(3).column.value<QtSqlLib::API::IID::Type>(), COUNT(EColumns::COL2));
 }
 
 /**

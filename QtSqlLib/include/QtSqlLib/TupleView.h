@@ -38,6 +38,8 @@ public:
     return columnValueIntern(QtSqlLib::ID<T>(columnId));
   }
 
+  QVariant columnValueAtIndex(size_t index) const;
+
 private:
   int m_queryPos;
   const QSqlQuery& m_sqlQuery;

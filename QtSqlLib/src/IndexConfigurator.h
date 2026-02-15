@@ -13,7 +13,7 @@ public:
   IndexConfigurator(API::Index& index);
   ~IndexConfigurator() override;
 
-  IIndexConfigurator& columns(const ColumnHelper::SelectColumnList& columns) override;
+  IIndexConfigurator& columns(const ColumnHelper::ColumnList& columns) override;
   IIndexConfigurator& unique() override;
 
 private:

@@ -82,8 +82,8 @@ void Schema::configureRelationships()
         relationship.second.onDeleteAction,
         {} };
 
-      ColumnHelper::SelectColumnList indexedColumns;
-      for (const auto& keyCol : parentPrimaryKeyColIds)
+      ColumnHelper::ColumnList indexedColumns;
+      for (const auto& columnId : parentPrimaryKeyColIds)
       {
         API::IID::Type nextAvailableChildTableColid = 0;
         while (childTable.columns.count(nextAvailableChildTableColid) > 0)
@@ -91,7 +91,7 @@ void Schema::configureRelationships()
           nextAvailableChildTableColid++;
         }
 
-        const auto& parentKeyCol = parentTable.columns.at(keyCol.columnId);
+        const auto& parentKeyCol = parentTable.columns.at(columnId);
 
         API::Column foreignKeyColumn;
         foreignKeyColumn.name = QString("rel_%1_foreign_key_%2").arg(relationship.first).arg(parentKeyCol.name);
@@ -99,11 +99,11 @@ void Schema::configureRelationships()
         foreignKeyColumn.varcharLength = parentKeyCol.varcharLength;
 
         childTable.columns[nextAvailableChildTableColid] = foreignKeyColumn;
-        foreignKeyReference.primaryForeignKeyColIdMap[keyCol.columnId] = nextAvailableChildTableColid;
+        foreignKeyReference.primaryForeignKeyColIdMap[columnId] = nextAvailableChildTableColid;
 
         if (relationship.second.bForeignKeyIndexingEnabled)
         {
-          indexedColumns.emplace_back(ColumnHelper::SelectColumn { nextAvailableChildTableColid });
+          indexedColumns.emplace_back(nextAvailableChildTableColid);
         }
       }
 
@@ -140,22 +140,22 @@ void Schema::configureRelationships()
           relationship.second.onDeleteAction,
           {} };
 
-        ColumnHelper::SelectColumnList indexedColumns;
-        for (const auto& refKeyCol : refTable.primaryKeys)
+        ColumnHelper::ColumnList indexedColumns;
+        for (const auto& columnId : refTable.primaryKeys)
         {
-          const auto& refCol = refTable.columns.at(refKeyCol.columnId);
+          const auto& refCol = refTable.columns.at(columnId);
 
           API::Column col;
           col.name = QString("%1_%2_%3").arg(refTable.name).arg(refCol.name).arg(currentColId);
           col.type = refCol.type;
 
-          foreignKeyReference.primaryForeignKeyColIdMap[refKeyCol.columnId] = currentColId;
+          foreignKeyReference.primaryForeignKeyColIdMap[columnId] = currentColId;
           linkTable.columns[currentColId] = col;
           linkTable.primaryKeys.emplace_back(currentColId);
 
           if (relationship.second.bForeignKeyIndexingEnabled)
           {
-            indexedColumns.emplace_back(ColumnHelper::SelectColumn { currentColId });
+            indexedColumns.emplace_back(currentColId);
           }
 
           currentColId++;
@@ -195,12 +195,12 @@ void Schema::validateAndPrepareIndices()
     }
 
     const auto& table = m_tables.at(index.tableId);
-    for (const auto& col : index.columns)
+    for (const auto& columnId : index.columns)
     {
-      if (table.columns.count(col.columnId) == 0)
+      if (table.columns.count(columnId) == 0)
       {
         throw DatabaseException(DatabaseException::Type::InvalidId,
-          QString("Index cannot be created. Table with id '%1' has no column id '%2'").arg(index.tableId).arg(col.columnId));
+          QString("Index cannot be created. Table with id '%1' has no column id '%2'").arg(index.tableId).arg(columnId));
       }
     }
 
@@ -230,9 +230,9 @@ void Schema::validatePrimaryKeys(const PrimaryKey& tupleKeyValues) const
   m_sanityChecker->throwIfTableIdNotExisting(tableId);
   const auto& table = m_tables.at(tableId);
 
-  for (const auto& primaryKey : table.primaryKeys)
+  for (const auto& columnId : table.primaryKeys)
   {
-    if (colIds.count(primaryKey.columnId) == 0)
+    if (colIds.count(columnId) == 0)
     {
       throw DatabaseException(DatabaseException::Type::InvalidSyntax,
         "Column id expected to be a primary key.");

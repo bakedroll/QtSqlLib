@@ -60,8 +60,8 @@ struct Table
   std::map<IID::Type, Column> columns;
   RelationshipToForeignKeyReferencesMap relationshipToForeignKeyReferencesMap;
 
-  ColumnHelper::SelectColumnList primaryKeys;
-  ColumnHelper::SelectColumnList uniqueColIds;
+  ColumnHelper::ColumnList primaryKeys;
+  ColumnHelper::ColumnList uniqueColIds;
 };
 
 enum class RelationshipType
@@ -85,7 +85,7 @@ struct Index
 {
   IID::Type tableId = 0;
   QString name;
-  ColumnHelper::SelectColumnList columns;
+  ColumnHelper::ColumnList columns;
   bool isUnique = false;
 };
 

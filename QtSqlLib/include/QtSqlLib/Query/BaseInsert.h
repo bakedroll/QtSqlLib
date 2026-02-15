@@ -25,7 +25,7 @@ private:
   void throwIfColumnIdAlreadyExisting(API::IID::Type id) const;
 
   API::IID::Type m_tableId;
-  ColumnHelper::SelectColumnList m_columns;
+  ColumnHelper::ColumnList m_columns;
 
 };
 

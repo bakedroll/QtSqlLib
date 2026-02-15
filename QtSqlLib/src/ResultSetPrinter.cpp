@@ -1,6 +1,7 @@
 #include <QtSqlLib/ResultSetPrinter.h>
 
 #include <QtSqlLib/ColumnStatistics.h>
+#include <QtSqlLib/ConcatenatedColumn.h>
 #include <QtSqlLib/DatabaseException.h>
 
 #include <cmath>
@@ -106,10 +107,11 @@ ResultSetPrinter::ResultSetPrinter(
 
   maxColumnWidth = std::max(maxColumnWidth, 5);
 
-  prepareHeaderColumnMetaInfo(schema, m_resultSet.queryMetaInfo(), maxColumnWidth, m_columnMetaInfoList, m_columnMetaInfoLocations);
+  const auto queryIdentifiers = createQueryIdentifiers();
+  prepareHeaderColumnMetaInfo(schema, m_resultSet.queryMetaInfo(), queryIdentifiers, maxColumnWidth, m_columnMetaInfoList, m_columnMetaInfoLocations);
   for (const auto& joinQueryMetaInfo : m_resultSet.joinQueryMetaInfos())
   {
-    prepareHeaderColumnMetaInfo(schema, joinQueryMetaInfo, maxColumnWidth, m_columnMetaInfoList, m_columnMetaInfoLocations);
+    prepareHeaderColumnMetaInfo(schema, joinQueryMetaInfo, queryIdentifiers, maxColumnWidth, m_columnMetaInfoList, m_columnMetaInfoLocations);
   }
 
   while (m_resultSet.hasNextTuple())
@@ -191,9 +193,21 @@ QString ResultSetPrinter::nextPrinterLine()
   return line;
 }
 
+QueryIdentifiers ResultSetPrinter::createQueryIdentifiers() const
+{
+  QueryIdentifiers queryIdentifiers;
+  queryIdentifiers.addTableIdentifier(m_resultSet.queryMetaInfo().relationshipId, m_resultSet.queryMetaInfo().tableId);
+  for (const auto& joinQueryMetaInfo : m_resultSet.joinQueryMetaInfos())
+  {
+    queryIdentifiers.addTableIdentifier(joinQueryMetaInfo.relationshipId, joinQueryMetaInfo.tableId);
+  }
+  return queryIdentifiers;
+}
+
 void ResultSetPrinter::prepareHeaderColumnMetaInfo(
   API::ISchema& schema,
   const API::QueryMetaInfo& queryMetaInfo,
+  const QueryIdentifiers& queryIdentifiers,
   int maxColumnWidth,
   std::vector<ColumnMetaInfo>& columnMetaInfoList,
   std::map<RelationshipId, ColumnMetaInfoLocation>& columnMetaInfoLocations)
@@ -204,25 +218,38 @@ void ResultSetPrinter::prepareHeaderColumnMetaInfo(
   ColumnMetaInfoLocation metaInfoLocation;
   metaInfoLocation.begin = columnMetaInfoList.size();
 
-  QueryIdentifiers queryIdentifiers;
-  queryIdentifiers.addTableIdentifier(relationshipId, tableId);
   const auto& table = schema.getTables().at(tableId);
 
-  for (const auto& column : queryMetaInfo.columns)
+  for (size_t i=0; i<queryMetaInfo.columns.size(); ++i)
   {
-    ColumnHelper::ColumnData columnData;
-    columnData.relationshipId = relationshipId;
-    columnData.columnId = column.columnId;
+    const auto& column = queryMetaInfo.columns.at(i);
 
-    const auto caption = queryIdentifiers.resolveColumnIdentifier(schema, columnData);
-    ColumnMetaInfo metaInfo {
+    QString caption;
+    API::DataType dataType = API::DataType::Text;
+    if (column.column.canConvert<API::IID::Type>())
+    {
+      ColumnHelper::ColumnData columnData;
+      columnData.relationshipId = relationshipId;
+      columnData.columnId = column.column.value<API::IID::Type>();
+
+      caption = queryIdentifiers.resolveColumnIdentifier(schema, columnData);
+      dataType = columnDataType(table, columnData.columnId);
+    }
+    else if (column.column.canConvert<ConcatenatedColumn>())
+    {
+      caption = column.column.value<ConcatenatedColumn>().buildString(queryIdentifiers, schema);
+    }
+    else
+    {
+      throw DatabaseException(DatabaseException::Type::UnexpectedError, "Unexpected element type in select columns");
+    }
+
+    columnMetaInfoList.emplace_back(ColumnMetaInfo {
       caption,
-      columnDataType(table, column.columnId),
+      dataType,
       std::min(maxColumnWidth, static_cast<int>(caption.length())),
-      column.columnId
-    };
-
-    columnMetaInfoList.emplace_back(metaInfo);
+      i
+    });
   }
 
   metaInfoLocation.end = columnMetaInfoList.size();
@@ -245,7 +272,7 @@ void ResultSetPrinter::prepareResultColumnMetaInfo(
   for (auto i=metaInfoLocation.begin; i<metaInfoLocation.end; ++i)
   {
     auto& columnMetaInfo = columnMetaInfoList.at(i);
-    const auto value = tupleView.columnValue(columnMetaInfo.columnId);
+    const auto value = tupleView.columnValueAtIndex(columnMetaInfo.columnIndex);
     columnMetaInfo.width = std::clamp(determineValueTextLength(value, columnMetaInfo.type), columnMetaInfo.width, maxColumnWidth);
   }
 }
@@ -302,7 +329,7 @@ void ResultSetPrinter::writeColumnValues(const TupleView& tupleView, std::vector
   for (auto i=location.begin; i<location.end; ++i)
   {
     const auto& metaInfo = m_columnMetaInfoList.at(i);
-    values[i] = tupleView.columnValue(metaInfo.columnId);
+    values[i] = tupleView.columnValueAtIndex(metaInfo.columnIndex);
   }
 }
 

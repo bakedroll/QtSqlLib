@@ -12,15 +12,15 @@
 #define AUTO_INCREMENT autoIncrement()
 #define NOT_NULL notNull()
 
-#define PRIMARY_KEYS(...) primaryKeys(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
-#define UNIQUE_COLS(...) uniqueCols(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
+#define PRIMARY_KEYS(...) primaryKeys(QtSqlLib::ColumnHelper::make<QtSqlLib::API::IID::Type>(__VA_ARGS__))
+#define UNIQUE_COLS(...) uniqueCols(QtSqlLib::ColumnHelper::make<QtSqlLib::API::IID::Type>(__VA_ARGS__))
 
 #define ON_DELETE(X) onDelete(X)
 #define ON_UPDATE(X) onUpdate(X)
 #define ENABLE_FOREIGN_KEY_INDEXING enableForeignKeyIndexing()
 
 #define UNIQUE unique()
-#define COLUMNS(...) columns(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
+#define COLUMNS(...) columns(QtSqlLib::ColumnHelper::make<QtSqlLib::API::IID::Type>(__VA_ARGS__))
 
 // Expr
 #define EQUAL(A, B) equal(A, QVariant(B))
@@ -78,6 +78,7 @@
 #define SELECT(...) select(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
 #define AS_ALIAS(X, Y) QtSqlLib::ColumnHelper::SelectColumn(X, Y)
+#define CONCAT(...) QtSqlLib::ConcatenatedColumn(__VA_ARGS__)
 
 #define COL(X, Y) QtSqlLib::ColumnHelper::ColumnData(X, Y)
 

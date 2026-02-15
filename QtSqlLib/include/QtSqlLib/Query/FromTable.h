@@ -5,6 +5,7 @@
 #include <QtSqlLib/API/IID.h>
 #include <QtSqlLib/API/SchemaTypes.h>
 #include <QtSqlLib/ColumnHelper.h>
+#include <QtSqlLib/ConcatenatedColumn.h>
 #include <QtSqlLib/QueryIdentifiers.h>
 
 #include <QString>
@@ -46,7 +47,7 @@ public:
 private:
   struct SelectColumnData
   {
-    ColumnHelper::ColumnData columnData;
+    QVariant column;
     QString alias;
   };
 

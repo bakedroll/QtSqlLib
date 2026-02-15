@@ -42,11 +42,17 @@ PrimaryKey TupleView::primaryKey() const
     auto& primaryKeyValue = values.at(i);
     const auto columnIndex = primaryKeyIndices.at(i);
     const auto queryIndex = m_queryMetaInfo.columnQueryIndices.at(columnIndex);
-    primaryKeyValue.columnId = m_queryMetaInfo.columns.at(columnIndex).columnId;
+    primaryKeyValue.columnId = m_queryMetaInfo.columns.at(columnIndex).column.value<API::IID::Type>();
     primaryKeyValue.value = m_sqlQuery.value(static_cast<int>(queryIndex));
   }
 
   return PrimaryKey(m_queryMetaInfo.tableId, std::move(values));
+}
+
+QVariant TupleView::columnValueAtIndex(size_t index) const
+{
+  throwIfInvalidated();
+  return m_sqlQuery.value(static_cast<int>(m_queryMetaInfo.columnQueryIndices.at(index)));
 }
 
 bool TupleView::hasColumnValueIntern(const API::IID& columnId) const
@@ -54,7 +60,7 @@ bool TupleView::hasColumnValueIntern(const API::IID& columnId) const
   auto& columns = m_queryMetaInfo.columns;
   for (size_t i=0; i<columns.size(); ++i)
   {
-    if (columns.at(i).columnId == columnId.get())
+    if (columns.at(i).isColumnId(columnId.get()))
     {
       return true;
     }
@@ -69,7 +75,7 @@ QVariant TupleView::columnValueIntern(const API::IID& columnId) const
   auto& columns = m_queryMetaInfo.columns;
   for (size_t i=0; i<columns.size(); ++i)
   {
-    if (columns.at(i).columnId == columnId.get())
+    if (columns.at(i).isColumnId(columnId.get()))
     {
       return m_sqlQuery.value(static_cast<int>(m_queryMetaInfo.columnQueryIndices.at(i)));
     }

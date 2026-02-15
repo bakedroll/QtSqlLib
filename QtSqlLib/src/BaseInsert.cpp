@@ -18,14 +18,14 @@ BaseInsert::~BaseInsert() = default;
 void BaseInsert::addColumn(const API::IID& id)
 {
   throwIfColumnIdAlreadyExisting(id.get());
-  m_columns.emplace_back(ColumnHelper::SelectColumn{ id.get() });
+  m_columns.emplace_back(id.get());
 }
 
 void BaseInsert::throwIfColumnIdAlreadyExisting(API::IID::Type id) const
 {
-  for (const auto& col : m_columns)
+  for (const auto& columnId : m_columns)
   {
-    if (col.columnId == id)
+    if (columnId == id)
     {
       throw DatabaseException(DatabaseException::Type::InvalidId,
         QString("More than one column with id %1 specified.").arg(id));
@@ -42,11 +42,11 @@ QSqlQuery BaseInsert::getQSqlQuery(const QSqlDatabase& db, API::ISchema& schema)
   QString columnsString;
   QString valuesString;
 
-  for (const auto& col : m_columns)
+  for (const auto& columnId : m_columns)
   {
-    schema.getSanityChecker().throwIfColumnIdNotExisting(table, col.columnId);
+    schema.getSanityChecker().throwIfColumnIdNotExisting(table, columnId);
 
-    columnsString += QString("'%1', ").arg(table.columns.at(col.columnId).name);
+    columnsString += QString("'%1', ").arg(table.columns.at(columnId).name);
     valuesString += "?, ";
   }
 

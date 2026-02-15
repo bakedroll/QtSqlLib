@@ -14,7 +14,7 @@ IndexConfigurator::IndexConfigurator(API::Index& index) :
 
 IndexConfigurator::~IndexConfigurator() = default;
 
-API::IIndexConfigurator& IndexConfigurator::columns(const ColumnHelper::SelectColumnList& columns)
+API::IIndexConfigurator& IndexConfigurator::columns(const ColumnHelper::ColumnList& columns)
 {
   if (m_columnsConfigured)
   {
