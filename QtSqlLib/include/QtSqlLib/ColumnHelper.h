@@ -11,6 +11,8 @@
 namespace QtSqlLib
 {
 
+class ConcatenatedColumn;
+
 class ColumnHelper
 {
 public:
@@ -39,7 +41,19 @@ public:
     {
     }
 
+
+    SelectColumn(const std::shared_ptr<ConcatenatedColumn>& concatenatedColumn) :
+      concatenatedColumn(concatenatedColumn)
+    {
+    }
+
     API::IID::Type columnId = 0;
+    //TODO: // or unique_ptr
+    std::shared_ptr<ConcatenatedColumn> concatenatedColumn;
+
+    // https://www.sqlitetutorial.net/sqlite-string-functions/sqlite-concat/
+    // https://thelinuxcode.com/concatenate-two-columns-sqlite-with-space/
+
     QString alias;
   };
 
