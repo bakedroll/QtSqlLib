@@ -51,7 +51,7 @@ void RelationshipPreparationData::toOne(const PrimaryKey& tupleKeyValues)
 
   m_type = RelationshipType::ToOne;
   m_toTupleKeyValuesList.emplace_back(tupleKeyValues);
-  m_expectedCall = ExpectedCall::Complete;
+  m_expectedCall = ExpectedCall::Attributes;
 }
 
 void RelationshipPreparationData::toMany(const std::vector<PrimaryKey>& tupleKeyValuesList)
@@ -64,12 +64,30 @@ void RelationshipPreparationData::toMany(const std::vector<PrimaryKey>& tupleKey
 
   m_type = RelationshipType::ToMany;
   m_toTupleKeyValuesList = tupleKeyValuesList;
-  m_expectedCall = ExpectedCall::Complete;
+  m_expectedCall = ExpectedCall::Attributes;
+}
+
+void RelationshipPreparationData::attributeValue(const API::IID& attributeId, const QVariant& value)
+{
+  if (m_expectedCall != ExpectedCall::Attributes)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "attributeValue() call not expected.");
+  }
+
+  if (m_type != RelationshipType::ToOne)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "Attribute value can not be set for linking to many tuples.");
+  }
+
+  throwIfAttributeIdAlreadyExisting(attributeId.get());
+  m_attributeValues.emplace_back(std::make_pair(attributeId.get(), value));
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAffectedTableData(API::ISchema& schema)
 {
-  if (m_expectedCall != ExpectedCall::Complete)
+  if (m_expectedCall != ExpectedCall::Attributes)
   {
     throw DatabaseException(DatabaseException::Type::InvalidSyntax,
       "LinkTuples query incomplete.");
@@ -97,6 +115,11 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::resolveAf
   }
 
   return determineAffectedChildTableData(schema, relationship, tableFromId, tableToId);
+}
+
+const std::vector<std::pair<API::IID::Type, QVariant>>& RelationshipPreparationData::attributeValues() const
+{
+  return m_attributeValues;
 }
 
 RelationshipPreparationData::AffectedData RelationshipPreparationData::determineAffectedChildTableData(
@@ -210,6 +233,17 @@ RelationshipPreparationData::AffectedData RelationshipPreparationData::determine
   }
 
   return affectedData;
+}
+
+void RelationshipPreparationData::throwIfAttributeIdAlreadyExisting(API::IID::Type id) const
+{
+  if (std::find_if(m_attributeValues.cbegin(), m_attributeValues.cend(), [id](const std::pair<API::IID::Type, QVariant>& value) {
+    return value.first == id;
+  }) != m_attributeValues.cend())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidId,
+      QString("More than one attribute with id %1 specified.").arg(id));
+  }
 }
 
 }

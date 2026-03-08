@@ -30,6 +30,11 @@ QString Comparison::toQueryString(
       const auto columnData = operand.value<ColumnHelper::ColumnData>();
       return queryIdentifiers.resolveColumnIdentifier(schema, columnData);
     }
+    if (operand.canConvert<ColumnHelper::Attribute>())
+    {
+      const auto attribute = operand.value<ColumnHelper::Attribute>();
+      return queryIdentifiers.resolveAttributeIdentifier(schema, attribute);
+    }
     if (operand.canConvert<ColumnHelper::ColumnAlias>())
     {
       return QString("[%1]").arg(operand.value<ColumnHelper::ColumnAlias>().alias);

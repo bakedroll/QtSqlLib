@@ -44,6 +44,12 @@ LinkTuples& LinkTuples::toMany(const std::vector<PrimaryKey>& tupleKeyValuesList
   return *this;
 }
 
+LinkTuples& LinkTuples::attributeValue(const API::IID& attributeId, const QVariant& value)
+{
+  m_relationshipPreparationData.attributeValue(attributeId, value);
+  return *this;
+}
+
 void LinkTuples::prepare(API::ISchema& schema)
 {
   const auto affectedData = m_relationshipPreparationData.resolveAffectedTableData(schema);
@@ -66,6 +72,11 @@ void LinkTuples::prepare(API::ISchema& schema)
     for (const auto& column : colValuesMap)
     {
       batchInsertQuery->values(ID(column.first), column.second);
+    }
+
+    for (const auto& attributeValue : m_relationshipPreparationData.attributeValues())
+    {
+      batchInsertQuery->values(ID(attributeValue.first), { attributeValue.second });
     }
 
     addQuery(std::move(batchInsertQuery));

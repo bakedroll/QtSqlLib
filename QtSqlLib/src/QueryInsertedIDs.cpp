@@ -55,7 +55,9 @@ ResultSet QueryInsertedIDs::getQueryResults(API::ISchema& schema, QSqlQuery&& qu
     m_tableId,
     std::nullopt,
     ColumnHelper::SelectColumnList(table.primaryKeys.size()),
+    {},
     columnQueryIndices,
+    {},
     primaryKeyColumnIndices
   };
 

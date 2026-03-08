@@ -96,7 +96,7 @@ TEST_F(TestColumnSelection, concatenatedColumns)
  */
 TEST_F(TestColumnSelection, concatenatedColumnsOfJoinedTables)
 {
-  const QString expectedQueryStr("SELECT CONCAT('table1'.'id', \"_\", 'table2'.'text'), 'table1'.'id', 'table2'.'id', 'table2'.'foreign_key' " \
+  const QString expectedQueryStr("SELECT CONCAT('table1'.'id', \"_\", 'table2'.'text'), 'table1'.'id', 'table2'.'id' " \
     "FROM 'table1' " \
     "LEFT JOIN 'table2' " \
     "ON 'table1'.'id' = 'table2'.'foreign_key';");

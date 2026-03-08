@@ -1187,4 +1187,70 @@ TEST_F(TestRelationship, specialRelationships)
   expectSpecialRelation6Students(results);
 }
 
+/**
+ * @test: Tests the bidirectional retrieval of a many-to-many relationship between entries of the same table.
+ * @expected: Results are containing references between elements from both directions.
+ */
+TEST_F(TestRelationship, bidirationalQueryingManyToMany)
+{
+  SchemaConfigurator configurator;
+  configurator.CONFIGURE_TABLE(TableIds::Students, "students")
+    .COLUMN(StudentsCols::Id, "id", DataType::Integer).NOT_NULL
+    .COLUMN(StudentsCols::Name, "name", DataType::Text).NOT_NULL
+    .PRIMARY_KEYS(StudentsCols::Id, StudentsCols::Name);
+
+  configurator.CONFIGURE_RELATIONSHIP(Relationships::Special1, TableIds::Students, TableIds::Students, QtSqlLib::API::RelationshipType::ManyToMany);
+
+  m_db.initialize(configurator, Funcs::getDefaultDatabaseFilename());
+
+  const auto paul = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+    .VALUE(StudentsCols::Id, 0)
+    .VALUE(StudentsCols::Name, "Paul")
+    .RETURN_IDS).nextTuple().primaryKey();
+
+  const auto mary = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+    .VALUE(StudentsCols::Id, 1)
+    .VALUE(StudentsCols::Name, "Mary")
+    .RETURN_IDS).nextTuple().primaryKey();
+
+  const auto john = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+    .VALUE(StudentsCols::Id, 2)
+    .VALUE(StudentsCols::Name, "John")
+    .RETURN_IDS).nextTuple().primaryKey();
+
+  const auto sarah = m_db.execQuery(INSERT_INTO_EXT(TableIds::Students)
+    .VALUE(StudentsCols::Id, 3)
+    .VALUE(StudentsCols::Name, "Sarah")
+    .RETURN_IDS).nextTuple().primaryKey();
+
+  m_db.execQuery(LINK_TUPLES(Relationships::Special1)
+    .FROM_ONE(paul)
+    .TO_MANY({ mary, john }));
+
+  m_db.execQuery(LINK_TUPLES(Relationships::Special1)
+    .FROM_ONE(sarah)
+    .TO_MANY({ mary, paul, sarah }));
+
+  auto results = m_db.execQuery(FROM_TABLE(TableIds::Students)
+    .SELECT_ALL
+    .JOIN_ALL(Relationships::Special1)
+    .BIDIRECTIONAL);
+
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
+    "Paul", QVariantList() << "Mary" << "John" << "Sarah");
+
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
+    "Mary", QVariantList() << "Paul" << "Sarah");
+
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
+    "John", QVariantList() << "Paul");
+
+  Funcs::expectRelations(results, Relationships::Special1,
+    TableIds::Students, StudentsCols::Name, TableIds::Students, StudentsCols::Name,
+    "Sarah", QVariantList() << "Mary" << "Paul" << "Sarah");
+}
+
 }

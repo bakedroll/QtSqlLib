@@ -35,6 +35,10 @@ public:
   FromTable& joinAll(const API::IID& relationshipId);
   FromTable& join(const API::IID& relationshipId, const ColumnHelper::SelectColumnList& columns);
 
+  FromTable& bidirectional();
+
+  FromTable& selectAttributes(const ColumnHelper::ColumnList& attributes);
+
   FromTable& where(Expr& expr);
   FromTable& having(Expr& expr);
 
@@ -59,6 +63,7 @@ private:
 
   QueryIdentifiers m_queryIdentifiers;
   std::vector<SelectColumnData> m_compiledColumnSelection;
+  std::vector<API::IID::Type> m_bidirectionalRelationshipIds;
 
   std::unique_ptr<Expr> m_whereExpr;
   std::unique_ptr<Expr> m_havingExpr;
@@ -71,14 +76,12 @@ private:
 
   void throwIfMultipleSelects() const;
   void throwIfMultipleJoins(API::IID::Type relationshipId) const;
+  void throwIfMultipleSelectAttributes() const;
 
   void verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema);
   void generateQueryIdentifiers(API::ISchema& schema);
 
   void addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const API::Table& table);
-  void addForeignKeyColumns(
-    const std::optional<API::IID::Type>& foreignKeyRelationshipId,
-    const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap);
 
   QString processJoinsAndCreateQuerySubstring(
     API::ISchema& schema,
@@ -89,13 +92,27 @@ private:
   QString createGroupByString(API::ISchema& schema) const;
   QString createOrderByString(API::ISchema& schema) const;
 
+  Expr createJoinExpression(
+    const std::optional<API::IID::Type>& relationshipIdFromTable,
+    const std::optional<API::IID::Type>& relationshipIdToTable,
+    const API::ForeignKeyReference& foreignKeyReference) const;
+
+  Expr createUnequalIdsExpression(
+    const std::optional<API::IID::Type>& relationshipIdFromTable,
+    const std::optional<API::IID::Type>& relationshipIdToTable,
+    const API::ForeignKeyReference& foreignKeyReference) const;
+
+  Expr createEqualForeignKeysExpression(
+    const std::optional<API::IID::Type>& relationshipIdLinkTable,
+    const API::ForeignKeyReference& foreignKeyReferenceLeft,
+    const API::ForeignKeyReference& foreignKeyReferenceRight) const;
+
   void appendJoinQuerySubstring(
-    QString& joinStrOut, API::ISchema& schema, const API::Table& joinTable,
-    API::IID::Type relationshipId, const std::optional<API::IID::Type>& foreignKeyRelationshipId,
+    QString& joinStrOut, API::ISchema& schema, const API::Table& joinTable, API::IID::Type relationshipId,
     const std::optional<API::IID::Type>& relationshipIdFromTable, const std::optional<API::IID::Type>& relationshipIdToTable,
     const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
     int foreignKeyReferencesIndex,
-    bool noJoinAlias,
+    bool isLinkTableJoin,
     std::vector<QVariant>& boundValues);
 
 };

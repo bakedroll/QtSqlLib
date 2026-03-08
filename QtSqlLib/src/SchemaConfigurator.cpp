@@ -81,7 +81,7 @@ API::IRelationshipConfigurator& SchemaConfigurator::configureRelationship(const 
       "Please use OneToMany instead.");
   }
 
-  const API::Relationship relationship{ tableFromId.get(), tableToId.get(), type };
+  const API::Relationship relationship{ tableFromId.get(), tableToId.get(), type};
 
   m_schema->getRelationships()[relId] = relationship;
   m_relationshipConfigurators.emplace_back(std::make_unique<RelationshipConfigurator>(m_schema->getRelationships().at(relId)));

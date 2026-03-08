@@ -46,14 +46,17 @@ public:
   void toOne(const PrimaryKey& tupleKeyValues);
   void toMany(const std::vector<PrimaryKey>& tupleKeyValuesList);
 
+  void attributeValue(const API::IID& attributeId, const QVariant& value);
+
   AffectedData resolveAffectedTableData(API::ISchema& schema);
+  const std::vector<std::pair<API::IID::Type, QVariant>>& attributeValues() const;
 
 private:
   enum class ExpectedCall
   {
     From,
     To,
-    Complete
+    Attributes
   };
 
   enum class RelationshipType
@@ -70,11 +73,15 @@ private:
   PrimaryKey m_fromTupleKeyValues;
   std::vector<PrimaryKey> m_toTupleKeyValuesList;
 
+  std::vector<std::pair<API::IID::Type, QVariant>> m_attributeValues;
+
   AffectedData determineAffectedChildTableData(
     API::ISchema& schema, const API::Relationship& relationship,
     API::IID::Type fromTableId, API::IID::Type toTableId);
   AffectedData determineAffectedLinkTableData(
     API::ISchema& schema, API::IID::Type fromTableId, API::IID::Type toTableId);
+
+  void throwIfAttributeIdAlreadyExisting(API::IID::Type id) const;
 
 };
 

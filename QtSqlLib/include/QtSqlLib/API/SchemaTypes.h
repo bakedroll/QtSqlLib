@@ -43,6 +43,14 @@ struct Column
   bool bIsUnique = false;
 };
 
+struct Attribute
+{
+  QString name;
+  DataType type = DataType::Integer;
+  int varcharLength = 0;
+  bool bIsNotNull = false;
+};
+
 struct ForeignKeyReference
 {
   IID::Type referenceTableId = 0;
@@ -79,6 +87,8 @@ struct Relationship
   ForeignKeyAction onUpdateAction = ForeignKeyAction::NoAction;
   ForeignKeyAction onDeleteAction = ForeignKeyAction::NoAction;
   bool bForeignKeyIndexingEnabled = false;
+
+  std::map<IID::Type, Attribute> attributes = {};
 };
 
 struct Index
@@ -94,7 +104,9 @@ struct QueryMetaInfo
   API::IID::Type tableId = 0;
   std::optional<API::IID::Type> relationshipId;
   ColumnHelper::SelectColumnList columns;
+  ColumnHelper::ColumnList attributes;
   std::vector<size_t> columnQueryIndices;
+  std::vector<size_t> attributeQueryIndices;
   std::vector<size_t> primaryKeyColumnIndices;
 };
 

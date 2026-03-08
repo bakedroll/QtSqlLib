@@ -162,15 +162,9 @@ API::ITableConfigurator& TableConfigurator::uniqueCols(const ColumnHelper::Colum
 
 bool TableConfigurator::isColumnNameExisting(const QString& name) const
 {
-  for (const auto& column : m_table.columns)
-  {
-    if (column.second.name.toLower() == name.toLower())
-    {
-      return true;
-    }
-  }
-
-  return false;
+  return std::find_if(m_table.columns.cbegin(), m_table.columns.cend(), [&name](const std::pair<API::IID::Type, API::Column>& column) {
+    return column.second.name.toLower() == name.toLower();
+  }) != m_table.columns.cend();
 }
 
 void TableConfigurator::checkColumn() const

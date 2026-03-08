@@ -44,9 +44,14 @@ bool Funcs::isResultTuplesContaining(
 void Funcs::expectRelations(
   QtSqlLib::ResultSet& results, IID::Type relationshipId,
   IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
-  const QVariant& fromValue, const QVariantList& toValues)
+  const QVariant& fromValue, const QVariantList& toValues,
+  std::optional<IID::Type> attributeId, const QVariantList& attributeValues)
 {
   ASSERT_TRUE(isResultTuplesContaining(results, fromTableId, fromColId, fromValue));
+  if (attributeId.has_value())
+  {
+    EXPECT_EQ(toValues.size(), attributeValues.size());
+  }
 
   results.resetIteration();
 
@@ -69,6 +74,11 @@ void Funcs::expectRelations(
             if (nextJoined.columnValue(toColId) == toValues.at(i))
             {
               matchingToValuesIndices.insert(i);
+
+              if (attributeId.has_value())
+              {
+                EXPECT_EQ(nextJoined.attributeValue(attributeId.value()), attributeValues.at(i));
+              }
               break;
             }
           }

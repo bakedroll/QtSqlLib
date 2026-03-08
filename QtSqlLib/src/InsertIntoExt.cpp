@@ -31,7 +31,8 @@ InsertIntoExt& InsertIntoExt::linkToOneTuple(const API::IID& relationshipId, con
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId.get());
 
-  m_linkedTuplesMap[relationshipId.get()] = { LinkType::ToOne, { tupleKeyValues } };
+  m_linkedTuplesMap[relationshipId.get()] = { LinkType::ToOne, { tupleKeyValues }, {} };
+  m_lastLinkedRelationshipId = relationshipId.get();
   return *this;
 }
 
@@ -41,7 +42,20 @@ InsertIntoExt& InsertIntoExt::linkToManyTuples(
 {
   throwIdLinkedTupleAlreadyExisting(relationshipId.get());
 
-  m_linkedTuplesMap[relationshipId.get()] = { LinkType::ToMany, tupleKeyValuesList };
+  m_linkedTuplesMap[relationshipId.get()] = { LinkType::ToMany, tupleKeyValuesList, {} };
+  m_lastLinkedRelationshipId = relationshipId.get();
+  return *this;
+}
+
+InsertIntoExt& InsertIntoExt::attributeValue(const API::IID& attributeId, const QVariant& value)
+{
+  if (!m_lastLinkedRelationshipId)
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      QString("Expected linking to set attribute value for attribute id %1.").arg(attributeId.get()));
+  }
+
+  m_linkedTuplesMap.at(m_lastLinkedRelationshipId.value()).attributeValues.emplace_back(std::make_pair(attributeId.get(), value));
   return *this;
 }
 
@@ -182,6 +196,11 @@ void InsertIntoExt::addLinkTuplesQueriesForRelationshipIds(const std::vector<API
     (linkedTuples.linkType == LinkType::ToOne
       ? linkTupleQuery->toOne(linkedTuples.linkedPrimaryKeys.at(0))
       : linkTupleQuery->toMany(linkedTuples.linkedPrimaryKeys));
+
+    for (const auto& attributeValue : linkedTuples.attributeValues)
+    {
+      linkTupleQuery->attributeValue(ID(attributeValue.first), attributeValue.second);
+    }
 
     addQuery(std::move(linkTupleQuery));
   }

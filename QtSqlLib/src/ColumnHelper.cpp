@@ -41,4 +41,6 @@ ColumnHelper::OrderColumn::OrderColumn(const ColumnData& coldata) :
 {
 }
 
+ColumnHelper::Attribute::Attribute() = default;
+
 };

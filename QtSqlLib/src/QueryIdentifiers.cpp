@@ -59,6 +59,12 @@ QString QueryIdentifiers::resolveColumnIdentifier(API::ISchema& schema, const Co
   throw DatabaseException(DatabaseException::Type::UnexpectedError, "Could not resolve column name due to unknown table identifier.");
 }
 
+QString QueryIdentifiers::resolveAttributeIdentifier(API::ISchema& schema, const ColumnHelper::Attribute& attribute) const
+{
+  const auto linkTableId = schema.getManyToManyLinkTableId(attribute.relationshipId);
+  return columnIdentifier(schema, linkTableId, std::nullopt, attribute.attributeId);
+}
+
 QString QueryIdentifiers::resolveTableIdentifier(API::ISchema& schema, const std::optional<API::IID::Type>& relationshipId) const
 {
   for (const auto& identifier : m_tableIdentifiers)

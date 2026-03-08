@@ -8,6 +8,9 @@
 #define COLUMN(X, Y, Z) column(QtSqlLib::ID(X), Y, Z)
 #define COLUMN_VARCHAR(X, Y, Z) column(QtSqlLib::ID(X), Y, QtSqlLib::API::DataType::Varchar, Z)
 
+#define ATTRIBUTE(X, Y, Z) attribute(QtSqlLib::ID(X), Y, Z)
+#define ATTRIBUTE_VARCHAR(X, Y, Z) attribute(QtSqlLib::ID(X), Y, QtSqlLib::API::DataType::Varchar, Z)
+
 #define PRIMARY_KEY primaryKey()
 #define AUTO_INCREMENT autoIncrement()
 #define NOT_NULL notNull()
@@ -69,6 +72,8 @@
 #define VALUES(X, Y) values(QtSqlLib::ID(X), Y)
 #define VALUE(X, Y) value(QtSqlLib::ID(X), Y)
 
+#define ATTRIBUTE_VALUE(X, Y) attributeValue(QtSqlLib::ID(X), Y)
+
 #define SET(X, Y) set(QtSqlLib::ID(X), Y)
 
 #define WHERE(X) where(QtSqlLib::Expr().X)
@@ -77,10 +82,13 @@
 #define SELECT_ALL selectAll()
 #define SELECT(...) select(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
 
+#define SELECT_ATTRIBUTES(...) selectAttributes(QtSqlLib::ColumnHelper::make<QtSqlLib::API::IID::Type>(__VA_ARGS__))
+
 #define AS_ALIAS(X, Y) QtSqlLib::ColumnHelper::SelectColumn(X, Y)
 #define CONCAT(...) QtSqlLib::ConcatenatedColumn(__VA_ARGS__)
 
 #define COL(X, Y) QtSqlLib::ColumnHelper::ColumnData(X, Y)
+#define ATTR(X, Y) QtSqlLib::ColumnHelper::Attribute(X, Y)
 
 #define GROUP_BY(...) groupBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(__VA_ARGS__))
 #define GROUP_BY_NOCASE(...) groupBy(QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::GroupColumn>(__VA_ARGS__), true)
@@ -104,6 +112,8 @@
 
 #define JOIN_ALL(X) joinAll(QtSqlLib::ID(X))
 #define JOIN(X, ...) join(QtSqlLib::ID(X), QtSqlLib::ColumnHelper::make<QtSqlLib::ColumnHelper::SelectColumn>(__VA_ARGS__))
+
+#define BIDIRECTIONAL bidirectional()
 
 #define LINK_TO_ONE_TUPLE(X, Y) linkToOneTuple(QtSqlLib::ID(X), Y)
 #define LINK_TO_MANY_TUPLES(X, ...) linkToManyTuples(QtSqlLib::ID(X), __VA_ARGS__)

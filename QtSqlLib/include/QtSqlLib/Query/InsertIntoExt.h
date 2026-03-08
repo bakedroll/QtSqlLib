@@ -8,6 +8,7 @@
 
 #include <QVariant>
 
+#include <optional>
 #include <vector>
 
 namespace QtSqlLib::Query
@@ -24,6 +25,8 @@ public:
   InsertIntoExt& value(const API::IID& columnId, const QVariant& value);
   InsertIntoExt& linkToOneTuple(const API::IID& relationshipId, const PrimaryKey& tupleKeyValues);
   InsertIntoExt& linkToManyTuples(const API::IID& relationshipId, const std::vector<PrimaryKey>& tupleKeyValuesList);
+
+  InsertIntoExt& attributeValue(const API::IID& attributeId, const QVariant& value);
 
   InsertIntoExt& returnIds();
 
@@ -47,11 +50,13 @@ private:
   {
     LinkType linkType;
     std::vector<PrimaryKey> linkedPrimaryKeys;
+    std::vector<std::pair<API::IID::Type, QVariant>> attributeValues;
   };
 
   API::IID::Type m_tableId;
   bool m_bIsReturningInsertedIds;
   std::map<API::IID::Type, LinkedTuples> m_linkedTuplesMap;
+  std::optional<API::IID::Type> m_lastLinkedRelationshipId;
 
   void addUpdateForeignKeyColumnsToInsertIntoQuery(
     API::ISchema& schema, API::IID::Type relationshipId,

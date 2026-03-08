@@ -29,6 +29,8 @@
 
 #include <QtSqlLib/Macros.h>
 
+#include <optional>
+
 namespace QtSqlLibTest
 {
 
@@ -126,6 +128,12 @@ enum class StreamingServicesCols
   Name
 };
 
+enum class Attributes
+{
+  Grade,
+  Notes
+};
+
 enum class Relationships
 {
   StudentsConfidant,
@@ -158,7 +166,8 @@ public:
   static void expectRelations(
     QtSqlLib::ResultSet& results, IID::Type relationshipId,
     IID::Type fromTableId, IID::Type fromColId, IID::Type toTableId, IID::Type toColId,
-    const QVariant& fromValue, const QVariantList& toValues);
+    const QVariant& fromValue, const QVariantList& toValues,
+    std::optional<IID::Type> attributeId, const QVariantList& attributeValues);
 
   template<typename TTableId, typename TColumnId>
   static bool isResultTuplesContaining(
@@ -176,10 +185,22 @@ public:
   {
     return expectRelations(
       results, QtSqlLib::ID(relationshipId).get(), QtSqlLib::ID(fromTableId).get(), QtSqlLib::ID(fromColId).get(),
-      QtSqlLib::ID(toTableId).get(), QtSqlLib::ID(toColId).get(), fromValue, toValues);
+      QtSqlLib::ID(toTableId).get(), QtSqlLib::ID(toColId).get(), fromValue, toValues,
+      std::nullopt, QVariantList());
   }
 
-
+  template<typename TRelationshipId, typename TTableId, typename TColumnAId, typename TColumnBId, typename TAttributeId>
+  static void expectRelationsWithAttributes(
+    QtSqlLib::ResultSet& results, const TRelationshipId& relationshipId,
+    const TTableId& fromTableId, const TColumnAId& fromColId, const TTableId& toTableId, const TColumnBId& toColId,
+    const QVariant& fromValue, const QVariantList& toValues,
+    const TAttributeId& attributeId, QVariantList& attributeValues)
+  {
+    return expectRelations(
+      results, QtSqlLib::ID(relationshipId).get(), QtSqlLib::ID(fromTableId).get(), QtSqlLib::ID(fromColId).get(),
+      QtSqlLib::ID(toTableId).get(), QtSqlLib::ID(toColId).get(), fromValue, toValues,
+      QtSqlLib::ID(attributeId).get(), attributeValues);
+  }
 };
 
 }

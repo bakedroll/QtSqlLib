@@ -132,10 +132,12 @@ private:
 
   QVariant makeVariant(ColumnHelper::ColumnData&& data);
   QVariant makeVariant(ColumnHelper::ColumnAlias&& alias);
+  QVariant makeVariant(ColumnHelper::Attribute&& attribute);
   QVariant makeVariant(QVariant&& value);
 
   QVariant makeVariant(const ColumnHelper::ColumnData& data);
   QVariant makeVariant(const ColumnHelper::ColumnAlias& alias);
+  QVariant makeVariant(const ColumnHelper::Attribute& attribute);
   QVariant makeVariant(const QVariant& value);
 
   template<typename T, typename = std::enable_if_t<std::is_enum_v<T> || std::is_fundamental_v<T>>>

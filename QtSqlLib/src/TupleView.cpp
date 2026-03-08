@@ -57,15 +57,10 @@ QVariant TupleView::columnValueAtIndex(size_t index) const
 
 bool TupleView::hasColumnValueIntern(const API::IID& columnId) const
 {
-  auto& columns = m_queryMetaInfo.columns;
-  for (size_t i=0; i<columns.size(); ++i)
-  {
-    if (columns.at(i).isColumnId(columnId.get()))
-    {
-      return true;
-    }
-  }
-  return false;
+  const auto& columns = m_queryMetaInfo.columns;
+  return std::find_if(columns.cbegin(), columns.cend(), [&columnId](const ColumnHelper::SelectColumn& column) {
+    return column.isColumnId(columnId.get());
+  }) != columns.cend();
 }
 
 QVariant TupleView::columnValueIntern(const API::IID& columnId) const
@@ -78,6 +73,29 @@ QVariant TupleView::columnValueIntern(const API::IID& columnId) const
     if (columns.at(i).isColumnId(columnId.get()))
     {
       return m_sqlQuery.value(static_cast<int>(m_queryMetaInfo.columnQueryIndices.at(i)));
+    }
+  }
+  return {};
+}
+
+bool TupleView::hasAttributeValueIntern(const API::IID& attributeId) const
+{
+  auto& attributes = m_queryMetaInfo.attributes;
+  return std::find_if(attributes.cbegin(), attributes.cend(), [&attributeId](const API::IID::Type& attribute) {
+    return attribute == attributeId.get();
+  }) != attributes.cend();
+}
+
+QVariant TupleView::attributeValueIntern(const API::IID& attributeId) const
+{
+  throwIfInvalidated();
+
+  auto& attributes = m_queryMetaInfo.attributes;
+  for (size_t i=0; i<attributes.size(); ++i)
+  {
+    if (attributes.at(i) == attributeId.get())
+    {
+      return m_sqlQuery.value(static_cast<int>(m_queryMetaInfo.attributeQueryIndices.at(i)));
     }
   }
   return {};

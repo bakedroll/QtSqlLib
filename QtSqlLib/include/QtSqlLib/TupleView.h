@@ -38,6 +38,18 @@ public:
     return columnValueIntern(QtSqlLib::ID<T>(columnId));
   }
 
+  template <typename T>
+  bool hasAttributeValue(const T& attributeId) const
+  {
+    return hasAttributeValueIntern(QtSqlLib::ID<T>(attributeId));
+  }
+
+  template <typename T>
+  QVariant attributeValue(const T& attributeId) const
+  {
+    return attributeValueIntern(QtSqlLib::ID<T>(attributeId));
+  }
+
   QVariant columnValueAtIndex(size_t index) const;
 
 private:
@@ -47,6 +59,9 @@ private:
 
   bool hasColumnValueIntern(const API::IID& columnId) const;
   QVariant columnValueIntern(const API::IID& columnId) const;
+
+  bool hasAttributeValueIntern(const API::IID& attributeId) const;
+  QVariant attributeValueIntern(const API::IID& attributeId) const;
 
   void throwIfInvalidated() const;
 

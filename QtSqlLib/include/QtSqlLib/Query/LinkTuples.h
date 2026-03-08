@@ -28,6 +28,8 @@ public:
   LinkTuples& toOne(const PrimaryKey& tupleKeyValues);
   LinkTuples& toMany(const std::vector<PrimaryKey>& tupleKeyValuesList);
 
+  LinkTuples& attributeValue(const API::IID& attributeId, const QVariant& value);
+
   void prepare(API::ISchema& schema) override;
 
 private:

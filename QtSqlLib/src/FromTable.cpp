@@ -12,6 +12,11 @@
 namespace QtSqlLib::Query
 {
 
+static bool containsId(const std::vector<API::IID::Type>& container, API::IID::Type value)
+{
+  return std::find(container.cbegin(), container.cend(), value) != container.cend();
+}
+
 static ColumnHelper::ColumnData makeColumnData(const std::optional<API::IID::Type>& relationshipId, API::IID::Type columnId)
 {
   ColumnHelper::ColumnData data;
@@ -44,6 +49,7 @@ static void prepareQueryMetaInfoColumns(API::QueryMetaInfo& queryMetaInfo, const
     queryMetaInfo.columns = getAllTableColumnIds(table);
   }
   queryMetaInfo.columnQueryIndices.resize(queryMetaInfo.columns.size(), 0);
+  queryMetaInfo.attributeQueryIndices.resize(queryMetaInfo.attributes.size(), 0);
 }
 
 FromTable::FromTable(const API::IID& tableId) :
@@ -77,7 +83,6 @@ FromTable& FromTable::select(const ColumnHelper::SelectColumnList& columns)
 
   m_queryMetaInfo.columns = columns;
   m_hasColumnsSelected = true;
-
   return *this;
 }
 
@@ -86,8 +91,7 @@ FromTable& FromTable::joinAll(const API::IID& relationshipId)
   throwIfMultipleJoins(relationshipId.get());
 
   // empty JoinData::m_columnInfo implies all column ids
-  m_joins.emplace_back(API::QueryMetaInfo { -1, relationshipId.get(), {}, {}, {} });
-
+  m_joins.emplace_back(API::QueryMetaInfo { -1, relationshipId.get(), {}, {}, {}, {}, {} });
   return *this;
 }
 
@@ -100,8 +104,37 @@ FromTable& FromTable::join(const API::IID& relationshipId, const ColumnHelper::S
     throw DatabaseException(DatabaseException::Type::InvalidSyntax, "At least one column must be selected");
   }
 
-  m_joins.emplace_back(API::QueryMetaInfo { -1, relationshipId.get(), columns, {}, {} });
+  m_joins.emplace_back(API::QueryMetaInfo { -1, relationshipId.get(), columns, {}, {}, {}, {} });
+  return *this;
+}
 
+FromTable& FromTable::bidirectional()
+{
+  if (m_joins.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "bidirational() needs a join to be applicable.");
+  }
+
+  const auto lastJoinRelationshipId = m_joins.rbegin()->relationshipId.value();
+  if (containsId(m_bidirectionalRelationshipIds, lastJoinRelationshipId))
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "bidirational() only applicable once per join.");
+  }
+
+  m_bidirectionalRelationshipIds.emplace_back(lastJoinRelationshipId);
+  return *this;
+}
+
+FromTable& FromTable::selectAttributes(const ColumnHelper::ColumnList& attributes)
+{
+  if (m_joins.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax, "Expected join to select attributes");
+  }
+
+  throwIfMultipleSelectAttributes();
+
+  m_joins.rbegin()->attributes = attributes;
   return *this;
 }
 
@@ -250,6 +283,15 @@ void FromTable::throwIfMultipleJoins(API::IID::Type relationshipId) const
   }
 }
 
+void FromTable::throwIfMultipleSelectAttributes() const
+{
+  if (!m_joins.rbegin()->attributes.empty())
+  {
+    throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+      "selectAttributes() should only be called once per join.");
+  }
+}
+
 void FromTable::verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema)
 {
   std::set<API::IID::Type> joinTableIds;
@@ -261,6 +303,19 @@ void FromTable::verifyJoinsAndCheckAliasesNeeded(API::ISchema& schema)
 
     schema.getSanityChecker().throwIfRelationshipIsNotExisting(relationshipId);
     const auto& relationship = schema.getRelationships().at(relationshipId);
+
+    if (!join.attributes.empty() && relationship.type != API::RelationshipType::ManyToMany)
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        QString("Attributes can only be selected for many-to-many joins."));
+    }
+
+    if (containsId(m_bidirectionalRelationshipIds, relationshipId) &&
+      (relationship.tableFromId != relationship.tableToId || relationship.type != API::RelationshipType::ManyToMany))
+    {
+      throw DatabaseException(DatabaseException::Type::InvalidSyntax,
+        QString("Bidirectional joins are only applicable for many-to-many relationships between same tables."));
+    }
 
     if (m_queryMetaInfo.tableId == relationship.tableFromId)
     {
@@ -349,6 +404,16 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
     }
   }
 
+  for (size_t i=0; i<queryMetaInfo.attributes.size(); ++i)
+  {
+    const auto& selectAttributeId = queryMetaInfo.attributes.at(i);
+
+    const auto indexInQuery = m_compiledColumnSelection.size();
+    queryMetaInfo.attributeQueryIndices[i] = indexInQuery;
+
+    m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(ColumnHelper::Attribute(queryMetaInfo.relationshipId.value(), selectAttributeId)), "" });
+  }
+
   for (const auto& columnId : table.primaryKeys)
   {
     if (std::count_if(queryMetaInfo.columns.cbegin(), queryMetaInfo.columns.cend(),
@@ -363,16 +428,6 @@ void FromTable::addToSelectedColumns(API::QueryMetaInfo& queryMetaInfo, const AP
 
       m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(makeColumnData(queryMetaInfo.relationshipId, columnId)), "" });
     }
-  }
-}
-
-void FromTable::addForeignKeyColumns(
-  const std::optional<API::IID::Type>& foreignKeyRelationshipId,
-  const API::PrimaryForeignKeyColumnIdMap& primaryForeignKeyColumnIdMap)
-{
-  for (const auto& foreignKey : primaryForeignKeyColumnIdMap)
-  {
-    m_compiledColumnSelection.emplace_back(SelectColumnData{ QVariant::fromValue(makeColumnData(foreignKeyRelationshipId, foreignKey.second)), "" });
   }
 }
 
@@ -403,12 +458,12 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
       const auto secondForeignKeyRefIndex = (parentFromTableId == parentToTableId ? 1 : 0);
 
       appendJoinQuerySubstring(
-        joinStr, schema, linkTable, relationshipId, relationshipIdForLink(relationshipId),
+        joinStr, schema, linkTable, relationshipId,
         std::nullopt, relationshipIdForLink(relationshipId),
         foreignKeyReferences, 0, true, boundValues);
 
       appendJoinQuerySubstring(
-        joinStr, schema, joinTable, relationshipId, relationshipIdForLink(relationshipId),
+        joinStr, schema, joinTable, relationshipId,
         relationshipId, relationshipIdForLink(relationshipId),
         foreignKeyReferences, secondForeignKeyRefIndex, false, boundValues);
     }
@@ -422,18 +477,16 @@ QString FromTable::processJoinsAndCreateQuerySubstring(
         ? joinTable.relationshipToForeignKeyReferencesMap
         : table.relationshipToForeignKeyReferencesMap);
 
-      std::optional<API::IID::Type> foreignKeyRelationshipId = std::nullopt;
       std::optional<API::IID::Type> relationshipIdParentTable = join.relationshipId;
       std::optional<API::IID::Type> relationshipIdChildTable = std::nullopt;
 
       if (needToSwapParentChild)
       {
-        foreignKeyRelationshipId = relationshipId;
         std::swap(relationshipIdParentTable, relationshipIdChildTable);
       }
 
       appendJoinQuerySubstring(
-        joinStr, schema, joinTable, relationshipId, foreignKeyRelationshipId,
+        joinStr, schema, joinTable, relationshipId,
         relationshipIdParentTable, relationshipIdChildTable,
         foreignKeyReferences, 0, false, boundValues);
     }
@@ -459,6 +512,11 @@ QString FromTable::createSelectString(API::ISchema& schema) const
     else if (selectedColumn.column.canConvert<ConcatenatedColumn>())
     {
       selectColsStr.append(selectedColumn.column.value<ConcatenatedColumn>().buildString(m_queryIdentifiers, schema));
+    }
+    else if (selectedColumn.column.canConvert<ColumnHelper::Attribute>())
+    {
+      const auto attribute = selectedColumn.column.value<ColumnHelper::Attribute>();
+      selectColsStr.append(m_queryIdentifiers.resolveAttributeIdentifier(schema, attribute));
     }
     else
     {
@@ -506,13 +564,78 @@ QString FromTable::createOrderByString(API::ISchema& schema) const
   return orderByStr;
 }
 
+Expr FromTable::createJoinExpression(
+  const std::optional<API::IID::Type>& relationshipIdFromTable,
+  const std::optional<API::IID::Type>& relationshipIdToTable,
+  const API::ForeignKeyReference& foreignKeyReference) const
+{
+  Expr expr;
+  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+  {
+    if (!expr.isEmpty())
+    {
+      expr.opAnd();
+    }
+
+    expr.equal(
+      makeColumnData(relationshipIdFromTable, idMapping.first),
+      makeColumnData(relationshipIdToTable, idMapping.second));
+  }
+
+  return expr;
+}
+
+Expr FromTable::createUnequalIdsExpression(
+  const std::optional<API::IID::Type>& relationshipIdFromTable,
+  const std::optional<API::IID::Type>& relationshipIdToTable,
+  const API::ForeignKeyReference& foreignKeyReference) const
+{
+  Expr expr;
+  for (const auto& idMapping : foreignKeyReference.primaryForeignKeyColIdMap)
+  {
+    if (!expr.isEmpty())
+    {
+      expr.opOr();
+    }
+
+    expr.unequal(
+      makeColumnData(relationshipIdFromTable, idMapping.first),
+      makeColumnData(relationshipIdToTable, idMapping.first));
+  }
+
+  return expr;
+}
+
+Expr FromTable::createEqualForeignKeysExpression(
+  const std::optional<API::IID::Type>& relationshipIdLinkTable,
+  const API::ForeignKeyReference& foreignKeyReferenceLeft,
+  const API::ForeignKeyReference& foreignKeyReferenceRight) const
+{
+  Expr expr;
+  for (const auto& idMapping : foreignKeyReferenceLeft.primaryForeignKeyColIdMap)
+  {
+    if (!expr.isEmpty())
+    {
+      expr.opAnd();
+    }
+
+    const auto foreignKeyIdLeft = idMapping.second;
+    const auto foreignKeyIdRight = foreignKeyReferenceRight.primaryForeignKeyColIdMap.at(idMapping.first);
+
+    expr.equal(
+      makeColumnData(relationshipIdLinkTable, foreignKeyIdLeft),
+      makeColumnData(relationshipIdLinkTable, foreignKeyIdRight));
+  }
+
+  return expr;
+}
+
 void FromTable::appendJoinQuerySubstring(
-  QString& joinStrOut, API::ISchema& schema, const API::Table& joinTable,
-  API::IID::Type relationshipId, const std::optional<API::IID::Type>& foreignKeyRelationshipId,
+  QString& joinStrOut, API::ISchema& schema, const API::Table& joinTable, API::IID::Type relationshipId,
   const std::optional<API::IID::Type>& relationshipIdFromTable, const std::optional<API::IID::Type>& relationshipIdToTable,
   const API::RelationshipToForeignKeyReferencesMap& foreignKeyReferences,
   int foreignKeyReferencesIndex,
-  bool noJoinAlias,
+  bool isLinkTableJoin,
   std::vector<QVariant>& boundValues)
 {
   const auto parentTableId = m_queryIdentifiers.tableId(relationshipIdFromTable);
@@ -521,37 +644,53 @@ void FromTable::appendJoinQuerySubstring(
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
   }
 
-  Expr joinOnExpr;
-
   const auto& foreignKeyReference = foreignKeyReferences.at({ relationshipId, parentTableId });
   if (static_cast<int>(foreignKeyReference.size()) <= foreignKeyReferencesIndex)
   {
     throw DatabaseException(DatabaseException::Type::UnexpectedError, "Foreign keys configuration seems to be corrupted.");
   }
 
-  const auto& foreignKeyRef = foreignKeyReference[foreignKeyReferencesIndex];
-  addForeignKeyColumns(foreignKeyRelationshipId, foreignKeyRef.primaryForeignKeyColIdMap);
-
-  for (const auto& idMapping : foreignKeyRef.primaryForeignKeyColIdMap)
-  {
-    if (idMapping.first != foreignKeyRef.primaryForeignKeyColIdMap.cbegin()->first)
-    {
-      joinOnExpr.opAnd();
-    }
-
-    joinOnExpr.equal(
-      makeColumnData(relationshipIdFromTable, idMapping.first),
-      makeColumnData(relationshipIdToTable, idMapping.second));
-  }
-
   joinStrOut.append(QString(" LEFT JOIN '%1'").arg(joinTable.name));
 
-  if (m_isTableAliasesNeeded && !noJoinAlias)
+  if (m_isTableAliasesNeeded && !isLinkTableJoin)
   {
     joinStrOut.append(QString(" AS '%1'").arg(m_queryIdentifiers.resolveTableIdentifier(schema, relationshipId)));
   }
 
-  joinStrOut.append(QString(" ON %1").arg(joinOnExpr.toQueryString(schema, m_queryIdentifiers, boundValues)));
+  QString joinStr;
+  if (containsId(m_bidirectionalRelationshipIds, relationshipId))
+  {
+    const auto& foreignKeyRefLeft = foreignKeyReference[foreignKeyReferencesIndex];
+    const auto& foreignKeyRefRight = foreignKeyReference[1 - foreignKeyReferencesIndex];
+
+    auto joinExprLeft = createJoinExpression(relationshipIdFromTable, relationshipIdToTable, foreignKeyRefLeft);
+    auto joinExprRight = createJoinExpression(relationshipIdFromTable, relationshipIdToTable, foreignKeyRefRight);
+
+    Expr joinOnExpr;
+    joinOnExpr.braces(joinExprLeft).opOr().braces(joinExprRight);
+
+    if (!isLinkTableJoin)
+    {
+      auto idsUnequal = createUnequalIdsExpression(std::nullopt, relationshipId, foreignKeyRefLeft);
+      auto foreignKeysEqual = createEqualForeignKeysExpression(relationshipIdToTable, foreignKeyRefLeft, foreignKeyRefRight);
+
+      Expr excludeSelfRefExpr;
+      excludeSelfRefExpr.braces(joinOnExpr).opAnd().braces(Expr().braces(idsUnequal).opOr().braces(foreignKeysEqual));
+
+      joinStr = excludeSelfRefExpr.toQueryString(schema, m_queryIdentifiers, boundValues);
+    }
+    else
+    {
+      joinStr = joinOnExpr.toQueryString(schema, m_queryIdentifiers, boundValues);
+    }
+  }
+  else
+  {
+    auto joinOnExpr = createJoinExpression(relationshipIdFromTable, relationshipIdToTable, foreignKeyReference[foreignKeyReferencesIndex]);
+    joinStr = joinOnExpr.toQueryString(schema, m_queryIdentifiers, boundValues);
+  }
+
+  joinStrOut.append(QString(" ON %1").arg(joinStr));
 }
 
 }

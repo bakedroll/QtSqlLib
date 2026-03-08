@@ -8,6 +8,17 @@
 namespace QtSqlLib
 {
 
+static API::IID::Type nextFreeLinkTableColumnId(const std::map<API::IID::Type, API::Attribute>& attributes, API::IID::Type fromId)
+{
+  while (std::find_if(attributes.cbegin(), attributes.cend(), [&fromId](const std::pair<API::IID::Type, API::Attribute>& attribute) {
+    return attribute.first == fromId;
+  }) != attributes.cend())
+  {
+    fromId++;
+  }
+  return fromId;
+}
+
 Schema::Schema() = default;
 
 Schema::~Schema() = default;
@@ -124,7 +135,7 @@ void Schema::configureRelationships()
       linkTable.name = QString("rel_%1_link_%2_to_%3")
         .arg(relationship.first).arg(parentTable.name).arg(childTable.name);
 
-      auto currentColId = 0U;
+      auto currentColId = nextFreeLinkTableColumnId(relationship.second.attributes, 0);
       auto nextAvailableTableId = 0U;
       while (m_tables.count(nextAvailableTableId) > 0)
       {
@@ -158,7 +169,7 @@ void Schema::configureRelationships()
             indexedColumns.emplace_back(currentColId);
           }
 
-          currentColId++;
+          currentColId = nextFreeLinkTableColumnId(relationship.second.attributes, currentColId + 1);
         }
 
         linkTable.relationshipToForeignKeyReferencesMap[{ relationship.first, refTableId }].emplace_back(foreignKeyReference);
@@ -175,6 +186,17 @@ void Schema::configureRelationships()
 
       addRefTableColumns(parentTableId, parentTable);
       addRefTableColumns(childTableId, childTable);
+
+      for (const auto& attribute : relationship.second.attributes)
+      {
+        API::Column col;
+        col.name = attribute.second.name;
+        col.type = attribute.second.type;
+        col.varcharLength = attribute.second.varcharLength;
+        col.bIsNotNull = attribute.second.bIsNotNull;
+
+        linkTable.columns[attribute.first] = col;
+      }
 
       m_tables[nextAvailableTableId] = linkTable;
       m_mapManyToManyRelationshipToLinkTableId[relationship.first] = nextAvailableTableId;

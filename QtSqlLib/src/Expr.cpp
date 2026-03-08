@@ -127,6 +127,11 @@ QVariant Expr::makeVariant(ColumnHelper::ColumnAlias&& alias)
   return QVariant::fromValue<ColumnHelper::ColumnAlias>(std::forward<ColumnHelper::ColumnAlias>(alias));
 }
 
+QVariant Expr::makeVariant(ColumnHelper::Attribute&& attribute)
+{
+  return QVariant::fromValue<ColumnHelper::Attribute>(std::forward<ColumnHelper::Attribute>(attribute));
+}
+
 QVariant Expr::makeVariant(QVariant&& value)
 {
   return std::forward<QVariant>(value);
@@ -140,6 +145,11 @@ QVariant Expr::makeVariant(const ColumnHelper::ColumnData& data)
 QVariant Expr::makeVariant(const ColumnHelper::ColumnAlias& alias)
 {
   return QVariant::fromValue<ColumnHelper::ColumnAlias>(alias);
+}
+
+QVariant Expr::makeVariant(const ColumnHelper::Attribute& attribute)
+{
+  return QVariant::fromValue<ColumnHelper::Attribute>(attribute);
 }
 
 QVariant Expr::makeVariant(const QVariant& value)

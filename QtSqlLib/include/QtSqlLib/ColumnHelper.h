@@ -100,6 +100,21 @@ public:
     EOrder order = EOrder::Ascending;
   };
 
+  struct Attribute
+  {
+    Attribute();
+
+    template<typename TRel, typename TID>
+    Attribute(const TRel& relId, const TID& id) :
+      relationshipId(castId(relId)),
+      attributeId(castId(id))
+    {
+    }
+
+    API::IID::Type relationshipId = -1;
+    API::IID::Type attributeId = -1;
+  };
+
   using ColumnList = std::vector<API::IID::Type>;
   using SelectColumnList = std::vector<SelectColumn>;
   using GroupColumnList = std::vector<GroupColumn>;
@@ -243,3 +258,4 @@ private:
 
 Q_DECLARE_METATYPE(QtSqlLib::ColumnHelper::ColumnData);
 Q_DECLARE_METATYPE(QtSqlLib::ColumnHelper::ColumnAlias);
+Q_DECLARE_METATYPE(QtSqlLib::ColumnHelper::Attribute);
