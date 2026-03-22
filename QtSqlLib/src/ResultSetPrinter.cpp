@@ -10,22 +10,22 @@ namespace QtSqlLib
 {
 
 static constexpr const char* s_blobText = "<BLOB>";
-static constexpr int s_blobTextLength = std::char_traits<char>::length(s_blobText);
+static constexpr size_t s_blobTextLength = std::char_traits<char>::length(s_blobText);
 
 static constexpr const char* s_nullText = "NULL";
-static constexpr int s_nullTextLength = std::char_traits<char>::length(s_nullText);
+static constexpr size_t s_nullTextLength = std::char_traits<char>::length(s_nullText);
 
-static int integerLength(qlonglong value)
+static size_t integerLength(qlonglong value)
 {
   return value == 0 ? 1 : (static_cast<int>(std::log(std::abs(value)) / std::log(10.0)) + (value < 0 ? 2 : 1));
 }
 
-static int realLength(double value)
+static size_t realLength(double value)
 {
   return QVariant(value).toString().length();
 }
 
-static int determineValueTextLength(const QVariant& value, API::DataType type)
+static size_t determineValueTextLength(const QVariant& value, API::DataType type)
 {
   if (value.isNull())
   {
@@ -273,7 +273,7 @@ void ResultSetPrinter::prepareResultColumnMetaInfo(
   {
     auto& columnMetaInfo = columnMetaInfoList.at(i);
     const auto value = tupleView.columnValueAtIndex(columnMetaInfo.columnIndex);
-    columnMetaInfo.width = std::clamp(determineValueTextLength(value, columnMetaInfo.type), columnMetaInfo.width, maxColumnWidth);
+    columnMetaInfo.width = std::clamp(static_cast<int>(determineValueTextLength(value, columnMetaInfo.type)), columnMetaInfo.width, maxColumnWidth);
   }
 }
 
